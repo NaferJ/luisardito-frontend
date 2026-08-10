@@ -1,4 +1,4 @@
-import { Analytics } from '@vercel/analytics/next'
+﻿import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { SideDecor } from '@/components/side-decor'
@@ -8,9 +8,9 @@ const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 export const metadata: Metadata = {
-  title: 'Recent — Design inspiration, curated daily',
+  title: 'Luisardito — One creator, a whole universe',
   description:
-    'A daily curation of exceptional design, websites and tools. Browse design, websites, OG images, app screenshots and icons.',
+    'The home of the Luisardito universe: Luisardito, Luisardium and Luisarvoid. Explore the channels and the community rewards shop.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -53,3 +53,5 @@ export default function RootLayout({
     </html>
   )
 }
+
+

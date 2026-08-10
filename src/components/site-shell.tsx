@@ -10,7 +10,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <div className="flex justify-end">
           <OnlineStatus />
         </div>
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="page-transition min-w-0 flex-1">{children}</main>
       </div>
     </div>
   )

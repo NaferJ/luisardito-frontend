@@ -1,5 +1,5 @@
 export const browseLinks = [
-  { label: "Design", href: "/" },
+  { label: "Design", href: "/design" },
   { label: "Websites", href: "/websites" },
   { label: "OG Images", href: "/og-images" },
   { label: "App Screenshots", href: "/app-screenshots" },
@@ -28,3 +28,4 @@ export const categoryFilters = [
 ] as const
 
 export const avatarColors = ["bg-gold-highlight", "bg-gold-bright", "bg-gold-deep", "bg-gray-medium"]
+

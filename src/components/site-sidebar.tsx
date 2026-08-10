@@ -1,17 +1,15 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { browseLinks, resourceLinks, avatarColors } from "@/lib/nav-data"
 import { cn } from "@/lib/utils"
 
 function Logo() {
   return (
-    <Link href="/" aria-label="Recent" className="inline-block text-foreground">
-      <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <path d="M0 0.38C0 0.17 0.17 0 0.38 0H22c5.52 0 10 4.48 10 10s-4.48 10-10 10H0V0.38Z" fill="currentColor" />
-        <rect y="20" width="32" height="12" fill="currentColor" />
-      </svg>
+    <Link href="/" aria-label="Luisardito" className="inline-block text-foreground">
+      <Image src="/icon.svg" alt="Luisardito" width={26} height={26} className="text-foreground" />
     </Link>
   )
 }
