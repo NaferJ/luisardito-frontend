@@ -13,6 +13,27 @@ This is a frontend-only app — there are no API routes, no database, no CMS
 in this repo. Styling is Tailwind utility classes only (no CSS-in-JS, no
 styled-components). Geist fonts via `next/font/google`.
 
+## Color palette and theme
+
+The project uses a custom **grayscale + gold** palette (no default Tailwind
+colors in data files). All theme tokens are defined as CSS variables in
+`src/app/globals.css` under `:root`, `.dark`, and `@media (prefers-color-scheme: dark)`.
+
+- **Grayscale:** `#D9D9D9` (lightest) → `#BFBFBF` (light) → `#8C8C8C` (medium) → `#262626` (dark) → `#0D0D0D` (darkest)
+- **Gold:** `#FFE87A` (highlight) → `#F3C044` (bright) → `#D49A22` (core) → `#8F5E0A` (deep) → `#3A2300` (shadow)
+- Theme tokens: `--gold`, `--gold-foreground`, `--gold-highlight`, `--gold-bright`, `--gold-core`, `--gold-deep`, `--gold-shadow`, `--gray-lightest` through `--gray-darkest`
+- Tailwind classes: `bg-gold`, `text-gold-foreground`, `bg-gold-core`, `bg-gray-dark`, etc.
+- **Never use hardcoded Tailwind preset colors** (`bg-blue-600`, `bg-sky-300`, etc.) — always use the palette tokens.
+
+## Side decorations (shader)
+
+- Animated side decorations use `@paper-design/shaders-react` (`<Dithering>` component).
+- Located in `src/components/side-decor.tsx`, rendered in `src/app/layout.tsx` (root layout, so it persists across route changes).
+- Left side: flows left→right. Right side: mirrored (`scaleX(-1)`) + phase-offset (`frame={5000}`) so the two sides are out of sync.
+- Dark mode detection: checks `.dark`/`.light` class on `<html>`, falls back to `prefers-color-scheme`.
+- `prefers-reduced-motion: reduce` → `speed={0}` (static shader).
+- Fades in on mount (`opacity 0→1`, 0.6s transition) to prevent color flash.
+
 ## Code conventions
 
 - **English only** in code, comments, logs, identifiers, and commit messages. No
