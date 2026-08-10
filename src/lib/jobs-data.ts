@@ -16,7 +16,7 @@ export const jobs: Job[] = [
     location: "San Francisco",
     salary: "$150,000–$280,000",
     posted: "2w ago",
-    logoBg: "bg-blue-600",
+    logoBg: "bg-gold-core",
   },
   {
     id: "exa-design-eng",
@@ -25,7 +25,7 @@ export const jobs: Job[] = [
     location: "San Francisco",
     salary: "$150,000–$280,000",
     posted: "2w ago",
-    logoBg: "bg-blue-600",
+    logoBg: "bg-gold-core",
   },
   {
     id: "vercel-senior-pd",
@@ -42,7 +42,7 @@ export const jobs: Job[] = [
     title: "Staff Design Engineer",
     location: "Remote",
     posted: "2w ago",
-    logoBg: "bg-neutral-800",
+    logoBg: "bg-gray-dark",
   },
   {
     id: "runway-sr",
@@ -51,7 +51,7 @@ export const jobs: Job[] = [
     location: "Remote, United States",
     salary: "$220,000–$290,000",
     posted: "2w ago",
-    logoBg: "bg-neutral-900",
+    logoBg: "bg-gray-darkest",
   },
   {
     id: "elevenlabs-pd",
@@ -59,7 +59,7 @@ export const jobs: Job[] = [
     title: "Product Designer",
     location: "London, New York, San Francisco, Warsaw · Remote",
     posted: "2w ago",
-    logoBg: "bg-neutral-700",
+    logoBg: "bg-gray-medium",
   },
   {
     id: "vercel-visual",
@@ -77,7 +77,7 @@ export const jobs: Job[] = [
     location: "San Francisco, New York · Remote, United States",
     salary: "$220,000–$280,000",
     posted: "2w ago",
-    logoBg: "bg-neutral-900",
+    logoBg: "bg-gray-darkest",
   },
   {
     id: "cursor-de",
@@ -85,6 +85,6 @@ export const jobs: Job[] = [
     title: "Design Engineer",
     location: "San Francisco, New York",
     posted: "2w ago",
-    logoBg: "bg-neutral-800",
+    logoBg: "bg-gray-dark",
   },
 ]
