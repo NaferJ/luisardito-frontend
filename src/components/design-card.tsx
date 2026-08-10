@@ -36,7 +36,7 @@ export function DesignCard({
       onClick={onOpen}
       aria-label={`Open ${card.title}`}
       className={cn(
-        "group relative mb-4 block w-full overflow-hidden rounded-2xl bg-secondary text-left ring-0 ring-signal/0 transition-[transform,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal hover:ring-2 hover:ring-signal/50",
+        "group relative mb-4 block w-full overflow-hidden rounded-2xl bg-secondary text-left ring-0 ring-gold/0 transition-[transform,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold hover:ring-2 hover:ring-gold/50",
         card.aspect,
       )}
     >
@@ -48,7 +48,7 @@ export function DesignCard({
       />
 
       {card.badge === "star" && (
-        <span className="absolute top-2.5 left-2.5 flex size-6 items-center justify-center rounded-full bg-emerald-500 text-background">
+        <span className="absolute top-2.5 left-2.5 flex size-6 items-center justify-center rounded-full bg-gold-core text-background">
           <Star className="size-3.5 fill-current" aria-hidden="true" />
         </span>
       )}

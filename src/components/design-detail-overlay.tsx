@@ -102,7 +102,7 @@ export function DesignDetailOverlay({
               aria-label="Save design"
               className={cn(
                 "flex size-8 shrink-0 items-center justify-center rounded-full transition-colors",
-                saved ? "bg-signal text-signal-foreground" : "bg-secondary text-foreground hover:bg-accent",
+                saved ? "bg-gold text-gold-foreground" : "bg-secondary text-foreground hover:bg-accent",
               )}
             >
               <Bookmark className={cn("size-3.5", saved && "fill-current")} aria-hidden="true" />

@@ -20,7 +20,7 @@ export function FilterPills() {
             className={cn(
               "h-8 rounded-full px-3.5 text-[13px] font-medium transition-colors",
               active === filter
-                ? "bg-signal text-signal-foreground"
+                ? "bg-gold text-gold-foreground"
                 : "bg-secondary text-muted-foreground hover:text-foreground",
             )}
           >

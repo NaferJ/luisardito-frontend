@@ -27,4 +27,4 @@ export const categoryFilters = [
   "Packaging",
 ] as const
 
-export const avatarColors = ["bg-amber-300", "bg-rose-300", "bg-sky-300", "bg-violet-500"]
+export const avatarColors = ["bg-gold-highlight", "bg-gold-bright", "bg-gold-deep", "bg-gray-medium"]

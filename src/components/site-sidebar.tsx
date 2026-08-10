@@ -29,7 +29,7 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
       {active && (
         <span
           aria-hidden="true"
-          className="size-1.5 rounded-full bg-signal shadow-[0_0_0_3px_oklch(0.56_0.26_279_/_0.18)]"
+          className="size-1.5 rounded-full bg-gold shadow-[0_0_0_3px_#D49A22_/_0.25]"
         />
       )}
     </Link>
@@ -87,7 +87,7 @@ export function SiteSidebar() {
                 className={cn("size-7 rounded-full border-2 border-background", color)}
               />
             ))}
-            <span className="flex size-7 items-center justify-center rounded-full border-2 border-background bg-violet-600 text-[11px] font-medium text-background">
+            <span className="flex size-7 items-center justify-center rounded-full border-2 border-background bg-gold-core text-[11px] font-medium text-background">
               H
             </span>
           </div>
