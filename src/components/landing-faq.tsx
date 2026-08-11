@@ -13,8 +13,8 @@ export function LandingFaq() {
       </div>
 
       <div className="flex flex-col gap-2">
-        {faqItems.map((item, index) => (
-          <FaqItem key={item.question} item={item} index={index} />
+        {faqItems.map((item) => (
+          <FaqItem key={item.question} item={item} />
         ))}
       </div>
     </section>
@@ -23,10 +23,8 @@ export function LandingFaq() {
 
 function FaqItem({
   item,
-  index,
 }: {
   item: { question: string; answer: string }
-  index: number
 }) {
   const [open, setOpen] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)

@@ -84,6 +84,7 @@ export function SideDecor({ side }: SideDecorProps) {
     // Skip animation on first mount or when reduced motion is preferred
     if (!mounted || reducedMotion) {
       currentColorRef.current = targetColor
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- snap to target when animation is disabled
       setDisplayColor(targetColor)
       return
     }
@@ -115,7 +116,6 @@ export function SideDecor({ side }: SideDecorProps) {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       // currentColorRef holds the live animated value — no stale closure problem
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetColor, mounted, reducedMotion])
 
   // Offset the right side's animation phase so the two sides are out of sync

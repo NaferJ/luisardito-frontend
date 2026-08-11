@@ -304,8 +304,18 @@
   top: 0;
   width: 0%;
   height: 100%;
-  background: var(--gold);
+  background: #05401A;
   border-radius: 9999px;
+}
+
+.dark .progress-fill {
+  background: #588C23;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .progress-fill {
+    background: #588C23;
+  }
 }
 
 .progress-dot.active .progress-fill {

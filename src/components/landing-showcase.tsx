@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react"
 import Image from "next/image"
 import { showcaseSlides, type ShowcaseSlide, type SocialLink } from "@/lib/landing-data"
 import { cn } from "@/lib/utils"
@@ -8,6 +8,31 @@ import { cn } from "@/lib/utils"
 const IMAGE_DELAY_MS = 200
 const SLIDE_TRANSITION_MS = 500
 const MUTE_COOKIE = "luisardito-showcase-muted"
+
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
+
+function subscribeReducedMotion(callback: () => void): () => void {
+  const mq = window.matchMedia(REDUCED_MOTION_QUERY)
+  mq.addEventListener("change", callback)
+  return () => mq.removeEventListener("change", callback)
+}
+
+function getReducedMotionSnapshot(): boolean {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches
+}
+
+function getReducedMotionServerSnapshot(): boolean {
+  return false
+}
+
+/** Subscribes to the prefers-reduced-motion media query (hydration-safe). */
+function usePrefersReducedMotion(): boolean {
+  return useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  )
+}
 
 function SocialIcon({ label }: { label: string }) {
   const className = "size-4"
@@ -208,7 +233,7 @@ function HorizontalSlide({
       <div className="flex flex-1 items-center justify-center">
         <div
           className={cn(
-            "relative w-[654px] transition-all duration-500 ease-out",
+            "relative w-[560px] transition-all duration-500 ease-out",
             expanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none",
           )}
         >
@@ -288,8 +313,9 @@ function VerticalSlide({
       </div>
 
       {/* Right: vertical videos — same position as horizontal video */}
-      <div className="flex flex-1 flex-wrap items-start justify-center gap-4">
-        {videos.map((video, i) => {
+      <div className="flex flex-1 items-center justify-center">
+        <div className="flex w-full flex-wrap items-center justify-center gap-3 sm:w-[560px] sm:flex-nowrap">
+          {videos.map((video, i) => {
           const isVisible = i <= activeVideoIndex
           const isActive = i === activeVideoIndex
           return (
@@ -307,7 +333,7 @@ function VerticalSlide({
               >
                 <video
                   src={video}
-                  className="aspect-[9/16] w-40 object-cover opacity-60 sm:w-52"
+                  className="aspect-[9/16] w-36 object-cover opacity-60 sm:w-44"
                   playsInline
                   loop
                   muted
@@ -316,7 +342,7 @@ function VerticalSlide({
                 />
               </div>
               {/* The actual video, sharp and on top */}
-              <div className="relative aspect-[9/16] w-40 overflow-hidden rounded-2xl bg-secondary sm:w-52">
+              <div className="relative aspect-[9/16] w-36 overflow-hidden rounded-2xl bg-secondary sm:w-44">
                 <video
                   ref={(el) => {
                     if (videoRefs.current) videoRefs.current[i] = el
@@ -342,6 +368,7 @@ function VerticalSlide({
             </div>
           )
         })}
+        </div>
       </div>
     </div>
   )
@@ -365,7 +392,7 @@ export function LandingShowcase() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [phase, setPhase] = useState<"image" | "expanded">("image")
   const [activeVideoIndex, setActiveVideoIndex] = useState(0)
-  const [reducedMotion, setReducedMotion] = useState(false)
+  const reducedMotion = usePrefersReducedMotion()
 
   // Global player state
   const [isPlaying, setIsPlaying] = useState(true)
@@ -381,11 +408,14 @@ export function LandingShowcase() {
   const slide = showcaseSlides[currentSlide]
   const isVertical = !!slide.verticalVideos
 
-  // Load mute preference from cookie on mount
+  // Load mute preference from cookie on mount.
+  // Reading the cookie during render would cause a hydration mismatch (the
+  // cookie only exists on the client), so this must happen in an effect.
   useEffect(() => {
     const saved = getCookie(MUTE_COOKIE)
     if (saved !== null) {
       const muted = saved === "true"
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time client-only init from cookie
       setIsMuted(muted)
       isMutedRef.current = muted
     }
@@ -418,15 +448,6 @@ export function LandingShowcase() {
   useEffect(() => {
     isVerticalRef.current = isVertical
   }, [isVertical])
-
-  // Check reduced motion preference
-  useEffect(() => {
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
-    setReducedMotion(motionQuery.matches)
-    const handler = () => setReducedMotion(motionQuery.matches)
-    motionQuery.addEventListener("change", handler)
-    return () => motionQuery.removeEventListener("change", handler)
-  }, [])
 
   // Global play/pause — pauses all, resumes only the active video
   const togglePlay = useCallback(() => {
@@ -477,8 +498,10 @@ export function LandingShowcase() {
     }
   }, [])
 
-  // Main timing sequence for each slide — only restarts on slide change, NOT on play/pause
+  // Main timing sequence for each slide — only restarts on slide change, NOT on play/pause.
+  // resetSlide coordinates state resets with video-element side effects, so it must run here.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- coordinated state + video reset on slide change
     resetSlide()
     const timers: ReturnType<typeof setTimeout>[] = []
 
@@ -608,9 +631,9 @@ export function LandingShowcase() {
   )
 
   return (
-    <section id="showcase" className="flex flex-col gap-4 py-8">
+    <section id="showcase" className="flex flex-col gap-4 pt-8 pb-0">
       {/* Slide content — fixed min-height prevents section from jumping between slides */}
-      <div key={currentSlide} className="min-h-[280px]">
+      <div key={currentSlide} className="min-h-[380px]">
         {isVertical ? (
           <VerticalSlide
             slide={slide}

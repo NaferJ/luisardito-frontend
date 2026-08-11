@@ -68,7 +68,7 @@ export function SiteSidebar() {
 
       <div className="flex flex-col gap-3">
         <p className="text-[13px] leading-relaxed font-medium text-foreground">
-          A daily curation of exceptional design, websites and tools.
+          The community hub for Luisardito, Luisardium and Luisarvoid.
         </p>
         <div className="flex items-center gap-2">
           <button
@@ -91,7 +91,7 @@ export function SiteSidebar() {
           </div>
         </div>
         <p className="text-[13px] leading-relaxed text-muted-foreground">
-          Join 940 creatives, including 315 who signed up yesterday.
+          Join 587 members, including 12 who joined last month.
         </p>
 
         <div className="mt-2 flex items-center gap-4 border-t border-border pt-3 text-[13px] text-muted-foreground">

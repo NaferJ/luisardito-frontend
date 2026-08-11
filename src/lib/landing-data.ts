@@ -29,8 +29,8 @@ export const channels: Channel[] = [
     ],
     socials: [
       { label: "YouTube", href: "https://www.youtube.com/@luisarditoprime" },
-      { label: "TikTok", href: "https://www.tiktok.com/@luisarditoprime" },
-      { label: "Instagram", href: "https://www.instagram.com/@luisarditoprime" },
+      { label: "TikTok", href: "https://www.tiktok.com/@luisardox" },
+      { label: "Instagram", href: "https://www.instagram.com/luisarditooo/" },
     ],
   },
   {
@@ -43,8 +43,6 @@ export const channels: Channel[] = [
     ],
     socials: [
       { label: "YouTube", href: "https://www.youtube.com/@Luisardium" },
-      { label: "TikTok", href: "https://www.tiktok.com/@Luisardium" },
-      { label: "Instagram", href: "https://www.instagram.com/@Luisardium" },
     ],
   },
   {
@@ -55,13 +53,13 @@ export const channels: Channel[] = [
     platforms: [
       { label: "YouTube", href: "https://www.youtube.com/@Luisarvoid" },
       { label: "TikTok", href: "https://www.tiktok.com/@Luisarvoid" },
-      { label: "Instagram", href: "https://www.instagram.com/@Luisarvoid" },
+      { label: "Instagram", href: "https://www.instagram.com/luisarvoid/" },
       { label: "Facebook", href: "https://www.facebook.com/@Luisarvoid" },
     ],
     socials: [
       { label: "YouTube", href: "https://www.youtube.com/@Luisarvoid" },
       { label: "TikTok", href: "https://www.tiktok.com/@Luisarvoid" },
-      { label: "Instagram", href: "https://www.instagram.com/@Luisarvoid" },
+      { label: "Instagram", href: "https://www.instagram.com/luisarvoid/" },
     ],
   },
   {
@@ -92,33 +90,31 @@ export const showcaseSlides: ShowcaseSlide[] = [
   {
     channelId: "luisardito",
     name: "Luisardito",
-    description: "The flagship channel. Streams, content and the origin of the universe. Join the community and be part of it.",
+    description: "The main channel. Planned videos, big productions, events and series.",
     socials: [
       { label: "YouTube", href: "https://www.youtube.com/@luisarditoprime" },
-      { label: "TikTok", href: "https://www.tiktok.com/@luisarditoprime" },
-      { label: "Instagram", href: "https://www.instagram.com/@luisarditoprime" },
+      { label: "TikTok", href: "https://www.tiktok.com/@luisardox" },
+      { label: "Instagram", href: "https://www.instagram.com/luisarditooo/" },
     ],
     video: "/landing/videos/luisardito-1.mp4",
   },
   {
     channelId: "luisardium",
     name: "Luisardium",
-    description: "A parallel element of the universe. Different content, same energy. Explore another side of the community.",
+    description: "The gameplay channel. A lot of variety, a lot of games. Another side of the community.",
     socials: [
       { label: "YouTube", href: "https://www.youtube.com/@Luisardium" },
-      { label: "TikTok", href: "https://www.tiktok.com/@Luisardium" },
-      { label: "Instagram", href: "https://www.instagram.com/@Luisardium" },
     ],
     video: "/landing/videos/luisardium-1.mp4",
   },
   {
     channelId: "luisarvoid",
     name: "Luisarvoid",
-    description: "The void. Short-form content across YouTube, TikTok and Instagram. Bite-sized pieces of the universe.",
+    description: "The short-form channel. Clips, shorts and bite-sized content across every platform.",
     socials: [
       { label: "YouTube", href: "https://www.youtube.com/@Luisarvoid" },
       { label: "TikTok", href: "https://www.tiktok.com/@Luisarvoid" },
-      { label: "Instagram", href: "https://www.instagram.com/@Luisarvoid" },
+      { label: "Instagram", href: "https://www.instagram.com/luisarvoid/" },
     ],
     verticalVideos: [
       "/landing/videos/luisarvoid-1.mp4",
@@ -128,12 +124,22 @@ export const showcaseSlides: ShowcaseSlide[] = [
   },
 ]
 
-export type ShopFeature = {
+export type CommunityFeature = {
   title: string
   description: string
 }
 
-export const shopFeatures: ShopFeature[] = [
+export const communityFeatures: CommunityFeature[] = [
+  {
+    title: "Content for every format",
+    description:
+      "Long-form videos, gameplays and short-form clips. Three channels, each built for a different way to watch.",
+  },
+  {
+    title: "Active across every platform",
+    description:
+      "Streams, videos, clips and posts. The community shows up everywhere Luisardito does.",
+  },
   {
     title: "Earn by being active",
     description:
@@ -143,16 +149,6 @@ export const shopFeatures: ShopFeature[] = [
     title: "Redeem exclusive rewards",
     description:
       "Spend points on official merch, VIP access, exclusive emojis and special community rewards.",
-  },
-  {
-    title: "Transparent and verified",
-    description:
-      "Every point is accounted for. Track your full history of points earned and redemptions in your profile.",
-  },
-  {
-    title: "Climb the leaderboard",
-    description:
-      "See where you stand among the community and work your way up the rankings.",
   },
 ]
 
@@ -183,15 +179,31 @@ export const faqItems: FaqItem[] = [
       "Official merch, VIP access, exclusive emojis and other special rewards. The catalog is updated regularly with new items.",
   },
   {
-    question: "Who runs Luisarvoid?",
+    question: "How long do I wait for my rewards?",
     answer:
-      "Luisarvoid is owned and developed by NaferJ, who also builds and maintains the shop and this site.",
+      "Reward fulfillment is announced by Luisardito. Wait for an official announcement with details on delivery and timing for each reward.",
   },
   {
     question: "Where can I follow along?",
     answer:
-      "Luisardito and Luisardium are on YouTube. Luisarvoid is on YouTube, TikTok, Instagram and Facebook. Links are in the channels section above.",
+      "Luisardito is on YouTube, TikTok and Instagram. Luisardium is on YouTube. Luisarvoid is on YouTube, TikTok, Instagram and Facebook. Links are in the channels section above.",
   },
 ]
 
 export const shopUrl = "https://shop.luisardito.com"
+export const discordUrl = "https://discord.gg/z3Q24jennz"
+export const redditUrl = "https://www.reddit.com/r/OSITOGANG/"
+
+export type MakerSocial = {
+  label: string
+  href: string
+}
+
+export const makerSocials: MakerSocial[] = [
+  { label: "GitHub", href: "https://github.com/NaferJ" },
+  { label: "Instagram", href: "https://www.instagram.com/naferjml/" },
+  { label: "X", href: "https://x.com/NaferJ1" },
+]
+
+// Placeholder — create the account at ko-fi.com and update this URL.
+export const kofiUrl = "https://ko-fi.com/naferj"
