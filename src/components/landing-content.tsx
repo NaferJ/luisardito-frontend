@@ -1,34 +1,8 @@
 import Image from "next/image"
 import { ArrowUpRight } from "lucide-react"
-import { channels, shopFeatures, shopUrl, type Channel } from "@/lib/landing-data"
+import { shopFeatures, shopUrl } from "@/lib/landing-data"
 import { LandingFaq } from "@/components/landing-faq"
-import { cn } from "@/lib/utils"
-
-function ChannelCard({ channel }: { channel: Channel }) {
-  return (
-    <a
-      href={channel.platforms[0]?.href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={cn(
-        "group relative block overflow-hidden rounded-2xl bg-secondary text-left ring-0 ring-gold/0 transition-[transform,box-shadow] duration-200 hover:ring-2 hover:ring-gold/50",
-        // NaferJ as the fourth card
-        channel.behind && "z-10",
-        !channel.behind && "z-20",
-      )}
-    >
-      <div className="relative size-24 overflow-hidden sm:size-28">
-        <Image
-          src={`/landing/channels/${channel.id}.jpg`}
-          alt={channel.name}
-          fill
-          sizes="112px"
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-        />
-      </div>
-    </a>
-  )
-}
+import { LandingShowcase } from "@/components/landing-showcase"
 
 export function LandingContent() {
   return (
@@ -45,7 +19,7 @@ export function LandingContent() {
           {/* Ambient glow: blurred, scaled-up copy of the image bleeding out behind the hero */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -inset-x-2 -inset-y-4 scale-[1.03] blur-2xl"
+            className="pointer-events-none absolute -inset-x-1 -inset-y-2 scale-[1.02] blur-xl"
           >
             <Image
               src="/landing/hero.png"
@@ -70,14 +44,8 @@ export function LandingContent() {
         </div>
       </section>
 
-      {/* Channels — the 4 squares, NaferJ tucked behind Luisarvoid */}
-      <section id="channels" className="flex flex-col gap-4 py-40">
-        <div className="flex flex-wrap items-start gap-3">
-          {channels.map((channel) => (
-            <ChannelCard key={channel.id} channel={channel} />
-          ))}
-        </div>
-      </section>
+      {/* Channels showcase — animated timed sequence */}
+      <LandingShowcase />
 
       {/* Shop */}
       <section id="shop" className="flex flex-col gap-4">

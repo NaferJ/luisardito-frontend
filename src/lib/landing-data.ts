@@ -3,13 +3,18 @@ export type ChannelPlatform = {
   href: string
 }
 
+export type SocialLink = {
+  label: string
+  href: string
+}
+
 export type Channel = {
   id: string
   name: string
   handle: string
   description: string
   platforms: ChannelPlatform[]
-  /** When true the card is rendered tucked behind another card (NaferJ behind Luisarvoid). */
+  socials: SocialLink[]
   behind?: boolean
 }
 
@@ -22,6 +27,11 @@ export const channels: Channel[] = [
     platforms: [
       { label: "YouTube", href: "https://www.youtube.com/@luisarditoprime" },
     ],
+    socials: [
+      { label: "YouTube", href: "https://www.youtube.com/@luisarditoprime" },
+      { label: "TikTok", href: "https://www.tiktok.com/@luisarditoprime" },
+      { label: "Instagram", href: "https://www.instagram.com/@luisarditoprime" },
+    ],
   },
   {
     id: "luisardium",
@@ -30,6 +40,11 @@ export const channels: Channel[] = [
     description: "A parallel element of the universe.",
     platforms: [
       { label: "YouTube", href: "https://www.youtube.com/@Luisardium" },
+    ],
+    socials: [
+      { label: "YouTube", href: "https://www.youtube.com/@Luisardium" },
+      { label: "TikTok", href: "https://www.tiktok.com/@Luisardium" },
+      { label: "Instagram", href: "https://www.instagram.com/@Luisardium" },
     ],
   },
   {
@@ -43,6 +58,11 @@ export const channels: Channel[] = [
       { label: "Instagram", href: "https://www.instagram.com/@Luisarvoid" },
       { label: "Facebook", href: "https://www.facebook.com/@Luisarvoid" },
     ],
+    socials: [
+      { label: "YouTube", href: "https://www.youtube.com/@Luisarvoid" },
+      { label: "TikTok", href: "https://www.tiktok.com/@Luisarvoid" },
+      { label: "Instagram", href: "https://www.instagram.com/@Luisarvoid" },
+    ],
   },
   {
     id: "naferj",
@@ -52,7 +72,59 @@ export const channels: Channel[] = [
     platforms: [
       { label: "GitHub", href: "https://github.com/NaferJ" },
     ],
+    socials: [
+      { label: "GitHub", href: "https://github.com/NaferJ" },
+    ],
     behind: true,
+  },
+]
+
+export type ShowcaseSlide = {
+  channelId: string
+  name: string
+  description: string
+  socials: SocialLink[]
+  video?: string
+  verticalVideos?: string[]
+}
+
+export const showcaseSlides: ShowcaseSlide[] = [
+  {
+    channelId: "luisardito",
+    name: "Luisardito",
+    description: "The flagship channel. Streams, content and the origin of the universe. Join the community and be part of it.",
+    socials: [
+      { label: "YouTube", href: "https://www.youtube.com/@luisarditoprime" },
+      { label: "TikTok", href: "https://www.tiktok.com/@luisarditoprime" },
+      { label: "Instagram", href: "https://www.instagram.com/@luisarditoprime" },
+    ],
+    video: "/landing/videos/luisardito-1.mp4",
+  },
+  {
+    channelId: "luisardium",
+    name: "Luisardium",
+    description: "A parallel element of the universe. Different content, same energy. Explore another side of the community.",
+    socials: [
+      { label: "YouTube", href: "https://www.youtube.com/@Luisardium" },
+      { label: "TikTok", href: "https://www.tiktok.com/@Luisardium" },
+      { label: "Instagram", href: "https://www.instagram.com/@Luisardium" },
+    ],
+    video: "/landing/videos/luisardium-1.mp4",
+  },
+  {
+    channelId: "luisarvoid",
+    name: "Luisarvoid",
+    description: "The void. Short-form content across YouTube, TikTok and Instagram. Bite-sized pieces of the universe.",
+    socials: [
+      { label: "YouTube", href: "https://www.youtube.com/@Luisarvoid" },
+      { label: "TikTok", href: "https://www.tiktok.com/@Luisarvoid" },
+      { label: "Instagram", href: "https://www.instagram.com/@Luisarvoid" },
+    ],
+    verticalVideos: [
+      "/landing/videos/luisarvoid-1.mp4",
+      "/landing/videos/luisarvoid-2.mp4",
+      "/landing/videos/luisarvoid-3.mp4",
+    ],
   },
 ]
 
