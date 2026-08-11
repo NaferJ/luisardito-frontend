@@ -1,4 +1,44 @@
 import { SiteShell } from "@/components/site-shell"
+import { makerSocials, kofiUrl } from "@/lib/landing-data"
+import { cn } from "@/lib/utils"
+
+function MakerSocialIcon({ label }: { label: string }) {
+  const className = "size-5"
+  switch (label) {
+    case "GitHub":
+      return (
+        <svg className={cn(className, "text-foreground")} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+        </svg>
+      )
+    case "Instagram":
+      return (
+        <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <radialGradient id="instagram-gradient" cx="30%" cy="107%" r="150%">
+              <stop offset="0%" stopColor="#fdf497" />
+              <stop offset="5%" stopColor="#fdf497" />
+              <stop offset="45%" stopColor="#fd5949" />
+              <stop offset="60%" stopColor="#d6249f" />
+              <stop offset="90%" stopColor="#285AEB" />
+            </radialGradient>
+          </defs>
+          <path
+            fill="url(#instagram-gradient)"
+            d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"
+          />
+        </svg>
+      )
+    case "X":
+      return (
+        <svg className={cn(className, "text-foreground")} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      )
+    default:
+      return null
+  }
+}
 
 export default function InfoPage() {
   return (
@@ -7,25 +47,57 @@ export default function InfoPage() {
         <div className="flex flex-col items-center gap-5">
           <h1 className="text-5xl font-semibold text-foreground sm:text-6xl">Info</h1>
           <p className="max-w-md text-[15px] leading-relaxed text-pretty text-muted-foreground">
-            Recent is a curated feed of exceptional design, websites and digital products. It is built for
-            designers, developers and anyone interested in thoughtful digital work.
+            Made by the community, for the community.
           </p>
         </div>
 
         <div className="flex max-w-xl flex-col gap-4 text-left text-[14px] leading-relaxed text-pretty text-foreground">
           <p>
-            Founded in 2023, Recent began as a way to collect the best design work posted on X into one place. In
-            2026, we reignited the abandoned project and expanded to inspiration from Instagram, websites, tools and
-            more.
+            Three channels, one community. Luisardito, Luisardium and Luisarvoid, each with its own
+            content and style.
           </p>
           <p>
-            Recent also takes the place of Godly, the popular website inspiration gallery, with a broader feed that
-            goes beyond sites alone.
+            This is the place where all of it comes together — the channels, the community and the
+            shop, the official rewards platform for being active.
           </p>
           <p>
-            We take pride in our selections and always value quality over quantity. We aim to feature a broad range
-            of work, but only when it feels like it belongs here.
+            Built and maintained by NaferJ, who also owns the Luisarvoid channel. Made by the
+            community, for the community.
           </p>
+        </div>
+
+        {/* Maker — NaferJ */}
+        <div className="flex flex-col items-center gap-4 pt-2">
+          <div className="flex items-center gap-4">
+            {makerSocials.map((social) => (
+              <a
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={social.label}
+              >
+                <MakerSocialIcon label={social.label} />
+              </a>
+            ))}
+            {/* Ko-fi — support the maker */}
+            <a
+              href={kofiUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Support on Ko-fi"
+            >
+              <svg
+                className="size-5"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+                style={{ color: "#FF5E5B" }}
+              >
+                <path d="M11.351 2.715c-2.7 0-4.986.025-6.83.26C2.078 3.285 0 5.154 0 8.61c0 3.506.182 6.13 1.585 8.493 1.584 2.701 4.233 4.182 7.662 4.182h.83c4.209 0 6.494-2.234 7.637-4a9.5 9.5 0 0 0 1.091-2.338C21.792 14.688 24 12.22 24 9.208v-.415c0-3.247-2.13-5.507-5.792-5.87-1.558-.156-2.65-.208-6.857-.208m0 1.947c4.208 0 5.09.052 6.571.182 2.624.311 4.13 1.584 4.13 4v.39c0 2.156-1.792 3.844-3.87 3.844h-.935l-.156.649c-.208 1.013-.597 1.818-1.039 2.546-.909 1.428-2.545 3.064-5.922 3.064h-.805c-2.571 0-4.831-.883-6.078-3.195-1.09-2-1.298-4.155-1.298-7.506 0-2.181.857-3.402 3.012-3.714 1.533-.233 3.559-.26 6.39-.26m6.547 2.287c-.416 0-.65.234-.65.546v2.935c0 .311.234.545.65.545 1.324 0 2.051-.754 2.051-2s-.727-2.026-2.052-2.026m-10.39.182c-1.818 0-3.013 1.48-3.013 3.142 0 1.533.858 2.857 1.949 3.897.727.701 1.87 1.429 2.649 1.896a1.47 1.47 0 0 0 1.507 0c.78-.467 1.922-1.195 2.623-1.896 1.117-1.039 1.974-2.364 1.974-3.897 0-1.662-1.247-3.142-3.039-3.142-1.065 0-1.792.545-2.338 1.298-.493-.753-1.246-1.298-2.312-1.298" />
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
     </SiteShell>

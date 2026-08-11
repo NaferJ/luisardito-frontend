@@ -28,7 +28,15 @@ export function DesignDetailOverlay({
   onNavigate: (nextIndex: number) => void
 }) {
   const [saved, setSaved] = useState(false)
+  const [savedCardId, setSavedCardId] = useState<string | undefined>(undefined)
   const card = cards[index]
+
+  // Reset saved state when switching to a different card (render-time adjustment
+  // avoids calling setState inside an effect — see React "you might not need an effect").
+  if (card?.id !== savedCardId) {
+    setSavedCardId(card?.id)
+    setSaved(false)
+  }
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -43,10 +51,6 @@ export function DesignDetailOverlay({
       document.body.style.overflow = ""
     }
   }, [index, cards.length, onClose, onNavigate])
-
-  useEffect(() => {
-    setSaved(false)
-  }, [card?.id])
 
   if (!card) return null
 
