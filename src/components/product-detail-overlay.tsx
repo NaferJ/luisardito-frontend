@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight, X, Gift } from "lucide-react"
 import type { Producto } from "@/types"
 import { useUser } from "@/components/user-provider"
 import { cn } from "@/lib/utils"
+import { extractDominantColors } from "@/lib/extract-color"
+import { setOverlayColors } from "@/lib/overlay-color-store"
 
 export function ProductDetailOverlay({
   products,
@@ -42,6 +44,28 @@ export function ProductDetailOverlay({
       document.body.style.overflow = ""
     }
   }, [index, products.length, onClose, onNavigate])
+
+  // Drive the side shader's color from the dominant colors of the currently
+  // open product image. Skips the local placeholder (no useful color to
+  // sample). Stale results from rapid arrow navigation are ignored via the
+  // cancelled flag; the store is cleared once when the overlay unmounts.
+  // SideDecor picks the candidate with the best contrast against the current
+  // background, so a dark image won't produce an invisible dark shader color.
+  const imageSrc = product?.imagen || product?.imagen_url || null
+  useEffect(() => {
+    if (!imageSrc) return
+    let cancelled = false
+    extractDominantColors(imageSrc).then((colors) => {
+      if (!cancelled) setOverlayColors(colors.length > 0 ? colors : null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [imageSrc])
+
+  useEffect(() => {
+    return () => setOverlayColors(null)
+  }, [])
 
   if (!product) return null
 

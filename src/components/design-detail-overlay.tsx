@@ -5,6 +5,8 @@ import Image from "next/image"
 import { Bookmark, ChevronLeft, ChevronRight, X } from "lucide-react"
 import type { DesignCardData } from "@/components/design-card"
 import { cn } from "@/lib/utils"
+import { extractDominantColors } from "@/lib/extract-color"
+import { setOverlayColors } from "@/lib/overlay-color-store"
 
 const statRows = (card: DesignCardData) => [
   { label: "Impressions", value: card.impressions },
@@ -51,6 +53,28 @@ export function DesignDetailOverlay({
       document.body.style.overflow = ""
     }
   }, [index, cards.length, onClose, onNavigate])
+
+  // Drive the side shader's color from the dominant colors of the currently
+  // open design image. Stale results from rapid arrow navigation are ignored
+  // via the cancelled flag; the store is cleared once when the overlay
+  // unmounts. SideDecor picks the candidate with the best contrast against
+  // the current background, so a dark image won't produce an invisible dark
+  // shader color.
+  const imageSrc = card?.image || null
+  useEffect(() => {
+    if (!imageSrc) return
+    let cancelled = false
+    extractDominantColors(imageSrc).then((colors) => {
+      if (!cancelled) setOverlayColors(colors.length > 0 ? colors : null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [imageSrc])
+
+  useEffect(() => {
+    return () => setOverlayColors(null)
+  }, [])
 
   if (!card) return null
 
