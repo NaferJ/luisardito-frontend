@@ -285,6 +285,28 @@
   transform-origin: top center;
 }
 
+/* Detail overlay: image/media area fades + scales in.
+   The backdrop blur is on a separate static layer (no animation) so
+   backdrop-filter always paints correctly — animating opacity on an
+   element with backdrop-filter causes the blur to disappear mid-animation.
+   The metadata sidebar is a separate static element (no animation) so
+   the feed can never show through it; the "slide-in" illusion comes
+   from the feed itself shifting right via a Tailwind transition. */
+@keyframes overlay-media-fade-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.overlay-media {
+  animation: overlay-media-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-media {
+    animation: none;
+  }
+}
+
 /* Showcase progress dots — thin bars, fill left to right */
 .progress-dot {
   position: relative;

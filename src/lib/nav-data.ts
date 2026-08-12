@@ -1,5 +1,5 @@
 export const browseLinks = [
-  { label: "Design", href: "/design" },
+  { label: "Shop", href: "/shop" },
   { label: "Websites", href: "/websites" },
   { label: "OG Images", href: "/og-images" },
   { label: "App Screenshots", href: "/app-screenshots" },
@@ -10,6 +10,13 @@ export const resourceLinks = [
   { label: "Tools", href: "/tools" },
   { label: "Skills", href: "/skills" },
   { label: "Jobs", href: "/jobs" },
+] as const
+
+export const accountLinks = [
+  { label: "Canjes", href: "/shop/canjes" },
+  { label: "Historial", href: "/shop/historial" },
+  { label: "Leaderboard", href: "/shop/leaderboard" },
+  { label: "Perfil", href: "/shop/perfil" },
 ] as const
 
 export const categoryFilters = [

@@ -2,6 +2,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { SideDecor } from '@/components/side-decor'
+import { UserProvider } from '@/components/user-provider'
+import { getCurrentUser } from '@/lib/auth'
 import './globals.css'
 
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
@@ -37,21 +39,23 @@ export const viewport: Viewport = {
   themeColor: [{ media: '(prefers-color-scheme: light)', color: 'white' }],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const user = await getCurrentUser()
+
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
       <body className="font-sans antialiased">
-        <SideDecor side="left" />
-        <SideDecor side="right" />
-        {children}
+        <UserProvider user={user}>
+          <SideDecor side="left" />
+          <SideDecor side="right" />
+          {children}
+        </UserProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )
 }
-
-

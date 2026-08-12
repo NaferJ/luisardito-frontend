@@ -1,17 +1,20 @@
 "use client"
 
 import { useState } from "react"
-import { DesignCard, type DesignCardData } from "@/components/design-card"
-import { DesignDetailOverlay } from "@/components/design-detail-overlay"
-import { JobListingsPanel } from "@/components/job-listings-panel"
+import { DesignCard } from "@/components/design-card"
+import { ProductDetailOverlay } from "@/components/product-detail-overlay"
+import { productToCard } from "@/lib/product-mapper"
 import { cn } from "@/lib/utils"
+import type { Producto } from "@/types"
 
-export function DesignFeed({ cards }: { cards: DesignCardData[] }) {
+export function ProductFeed({ products }: { products: Producto[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+
+  const cards = products.map((p, i) => productToCard(p, i))
 
   return (
     <>
-      {/* When a design is open, the feed shifts right by 292px to uncover
+      {/* When a product is open, the feed shifts right by 292px to uncover
           the static metadata sidebar. The sidebar itself never moves —
           this shift is what creates the "panel sliding in from the left"
           illusion, matching the reference. */}
@@ -21,18 +24,14 @@ export function DesignFeed({ cards }: { cards: DesignCardData[] }) {
           openIndex !== null && "lg:translate-x-[292px]",
         )}
       >
-        {cards.slice(0, 2).map((card, i) => (
+        {cards.map((card, i) => (
           <DesignCard key={card.id} card={card} onOpen={() => setOpenIndex(i)} />
-        ))}
-        <JobListingsPanel />
-        {cards.slice(2).map((card, i) => (
-          <DesignCard key={card.id} card={card} onOpen={() => setOpenIndex(i + 2)} />
         ))}
       </div>
 
       {openIndex !== null && (
-        <DesignDetailOverlay
-          cards={cards}
+        <ProductDetailOverlay
+          products={products}
           index={openIndex}
           onClose={() => setOpenIndex(null)}
           onNavigate={setOpenIndex}
