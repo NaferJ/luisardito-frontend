@@ -40,6 +40,36 @@ function productSlug(product: Producto): string {
   return product.slug || String(product.id)
 }
 
+/**
+ * Distributes items row-major across N columns (item 0 → col 0, item 1 → col 1,
+ * ... item N → col 0, item N+1 → col 1...). This guarantees every column is
+ * populated, unlike CSS multi-column which flows top-to-bottom and can leave
+ * trailing columns empty when there are few items.
+ *
+ * The leaderboard widget is injected into the first column after the second
+ * card, matching the reference feed pattern.
+ */
+function distributeColumns(
+  cards: ReturnType<typeof productToCard>[],
+  columnCount: number,
+  leaderboard: LeaderboardEntry[],
+  onOpen: (i: number) => void,
+) {
+  const columns: React.ReactNode[][] = Array.from({ length: columnCount }, () => [])
+  cards.forEach((card, i) => {
+    columns[i % columnCount].push(
+      <DesignCard key={card.id} card={card} onOpen={() => onOpen(i)} />,
+    )
+    // Insert leaderboard into the first column after the second card.
+    if (i === 1 && leaderboard.length > 0) {
+      columns[0].push(
+        <LeaderboardAside key="leaderboard-aside" entries={leaderboard} />,
+      )
+    }
+  })
+  return columns
+}
+
 export function ProductFeed({
   products,
   leaderboard = [],
@@ -73,6 +103,17 @@ export function ProductFeed({
     onOverlayNavigate?.(nextIndex)
   }
 
+  const handleOpen = (i: number) => {
+    setOpenIndex(i)
+    onCardOpen?.(productSlug(products[i]))
+  }
+
+  // Pre-compute column distributions for each responsive breakpoint.
+  // The reference uses a flex row of columns with min-w-0 flex-1 children.
+  const cols2 = distributeColumns(cards, 2, leaderboard, handleOpen)
+  const cols3 = distributeColumns(cards, 3, leaderboard, handleOpen)
+  const cols4 = distributeColumns(cards, 4, leaderboard, handleOpen)
+
   return (
     <>
       {/* When a product is open, the feed shifts right by 292px to uncover
@@ -81,26 +122,34 @@ export function ProductFeed({
           illusion, matching the reference. */}
       <div
         className={cn(
-          "columns-2 gap-4 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:columns-3 lg:columns-4 [&>*]:break-inside-avoid motion-reduce:transition-none",
+          "transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
           openIndex !== null && "lg:translate-x-[292px]",
         )}
       >
-        {cards.map((card, i) => (
-          <DesignCard
-            key={card.id}
-            card={card}
-            onOpen={() => {
-              setOpenIndex(i)
-              onCardOpen?.(productSlug(products[i]))
-            }}
-          />
-        )).flatMap((card, i) =>
-          // Insert the leaderboard aside after the second card, matching the
-          // reference feed pattern (see JobListingsPanel in design-feed).
-          i === 1 && leaderboard.length > 0
-            ? [card, <LeaderboardAside key="leaderboard-aside" entries={leaderboard} />]
-            : [card],
-        )}
+        {/* 2 columns on mobile */}
+        <div className="flex items-start gap-3 sm:hidden">
+          {cols2.map((col, i) => (
+            <div key={i} className="min-w-0 flex-1">
+              {col}
+            </div>
+          ))}
+        </div>
+        {/* 3 columns on sm-md */}
+        <div className="hidden flex items-start gap-3 sm:flex lg:hidden">
+          {cols3.map((col, i) => (
+            <div key={i} className="min-w-0 flex-1">
+              {col}
+            </div>
+          ))}
+        </div>
+        {/* 4 columns on lg+ */}
+        <div className="hidden flex items-start gap-3 lg:flex">
+          {cols4.map((col, i) => (
+            <div key={i} className="min-w-0 flex-1">
+              {col}
+            </div>
+          ))}
+        </div>
       </div>
 
       {openIndex !== null && (

@@ -51,7 +51,7 @@ export function DesignCard({
           src={card.image || "/placeholder.svg"}
           alt={card.alt}
           fill
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+          sizes="(min-width: 2560px) 11vw, (min-width: 1920px) 12vw, (min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover"
         />
 

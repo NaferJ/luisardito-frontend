@@ -1,20 +1,40 @@
 'use client'
 
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useState, useCallback } from 'react'
 import type { Usuario } from '@/types'
 
-const UserContext = createContext<Usuario | null>(null)
+const UserContext = createContext<{
+  user: Usuario | null
+  updateUser: (updates: Partial<Usuario>) => void
+} | null>(null)
 
 export function UserProvider({
-  user,
+  user: initialUser,
   children,
 }: {
   user: Usuario | null
   children: React.ReactNode
 }) {
-  return <UserContext.Provider value={user}>{children}</UserContext.Provider>
+  const [user, setUser] = useState<Usuario | null>(initialUser)
+
+  const updateUser = useCallback((updates: Partial<Usuario>) => {
+    setUser((prev) => (prev ? { ...prev, ...updates } : prev))
+  }, [])
+
+  return (
+    <UserContext.Provider value={{ user, updateUser }}>
+      {children}
+    </UserContext.Provider>
+  )
 }
 
 export function useUser(): Usuario | null {
-  return useContext(UserContext)
+  const ctx = useContext(UserContext)
+  return ctx?.user ?? null
+}
+
+/** Returns a function to update the current user's fields (e.g. puntos after redemption). */
+export function useUpdateUser(): (updates: Partial<Usuario>) => void {
+  const ctx = useContext(UserContext)
+  return ctx?.updateUser ?? (() => {})
 }

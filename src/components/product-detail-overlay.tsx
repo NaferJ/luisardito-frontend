@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, X, Gift } from "lucide-react"
 import type { Producto } from "@/types"
-import { useUser } from "@/components/user-provider"
+import { useUser, useUpdateUser } from "@/components/user-provider"
 import { cn } from "@/lib/utils"
 import { extractDominantColors } from "@/lib/extract-color"
 import { setOverlayColors } from "@/lib/overlay-color-store"
@@ -21,15 +21,27 @@ export function ProductDetailOverlay({
   onNavigate: (nextIndex: number) => void
 }) {
   const user = useUser()
+  const updateUser = useUpdateUser()
   const [redeeming, setRedeeming] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
   const [resultProductId, setResultProductId] = useState<number | undefined>(undefined)
   const product = products[index]
 
+  // Clear result when navigating to a different product.
+  // Uses a ref-like comparison so the clear only happens on product change,
+  // not immediately after setting a result for the current product.
   if (product?.id !== resultProductId && result !== null) {
     setResultProductId(product?.id)
     setResult(null)
   }
+
+  // Countdown timer for the post-redemption cooldown.
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [cooldown])
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -95,11 +107,26 @@ export function ProductDetailOverlay({
       })
       const data = await response.json()
       if (response.ok) {
+        // Set resultProductId HERE so the render-phase clear above
+        // doesn't immediately wipe the result we just set.
+        setResultProductId(product.id)
         setResult({ success: true, message: "Redemption successful! Check your canjes." })
+
+        // 5-second cooldown to prevent accidental double-redemption.
+        setCooldown(5)
+
+        // Optimistically update the user's points so the sidebar
+        // reflects the new balance immediately without a page reload.
+        const precioPagado = (data as { precio_pagado?: number }).precio_pagado
+        if (user && typeof precioPagado === "number") {
+          updateUser({ puntos: user.puntos - precioPagado })
+        }
       } else {
+        setResultProductId(product.id)
         setResult({ success: false, message: data.error || data.message || "Redemption failed" })
       }
     } catch {
+      setResultProductId(product.id)
       setResult({ success: false, message: "Network error. Try again." })
     } finally {
       setRedeeming(false)
@@ -191,16 +218,21 @@ export function ProductDetailOverlay({
                 <button
                   type="button"
                   onClick={handleRedeem}
-                  disabled={!canRedeem || redeeming}
+                  disabled={!canRedeem || redeeming || cooldown > 0}
                   className={cn(
                     "flex h-10 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-medium transition-opacity",
-                    canRedeem && !redeeming
+                    canRedeem && !redeeming && cooldown === 0
                       ? "bg-foreground text-background hover:opacity-85"
                       : "bg-secondary text-muted-foreground cursor-not-allowed",
                   )}
                 >
                   {redeeming ? (
                     <span className="size-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  ) : cooldown > 0 ? (
+                    <>
+                      <Gift className="size-4 opacity-50" aria-hidden="true" />
+                      Canjear ({cooldown}s)
+                    </>
                   ) : (
                     <>
                       <Gift className="size-4" aria-hidden="true" />
