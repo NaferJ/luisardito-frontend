@@ -28,14 +28,15 @@ export async function updateCanjeEstado(
   return {}
 }
 
-/** Return a redemption (refund points to user). */
-export async function devolverCanje(id: string): Promise<{ error?: string }> {
+/** Return a redemption (refund points to user). Optionally include a reason. */
+export async function devolverCanje(id: string, motivo?: string): Promise<{ error?: string }> {
   const token = await getAuthToken()
   if (!token) return { error: "Not authenticated" }
 
   const response = await fetch(`${API_BASE_URL}/api/canjes/${id}/devolver`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(motivo ? { motivo } : {}),
     cache: "no-store",
   })
 

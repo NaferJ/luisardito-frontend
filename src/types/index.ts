@@ -226,6 +226,11 @@ export interface Canje {
   precio_al_canje?: number
   estado: 'pendiente' | 'entregado' | 'cancelado' | 'devuelto'
   fecha: string
+  /** Sequelize association — backend returns capitalized field names. */
+  Producto?: Producto
+  /** Sequelize association — backend returns capitalized field names. */
+  Usuario?: Usuario
+  /** Lowercase aliases for backward compatibility. */
   producto?: Producto
   usuario?: Usuario
 }

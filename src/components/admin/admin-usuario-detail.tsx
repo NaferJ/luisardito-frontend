@@ -248,7 +248,7 @@ export function AdminUsuarioDetail({
           <div className="flex flex-col gap-1.5">
             {canjes.slice(0, 10).map((c) => (
               <div key={c.id} className="flex items-center justify-between gap-3 text-[13px]">
-                <span className="truncate text-foreground">{c.producto?.nombre ?? "Unknown"}</span>
+                <span className="truncate text-foreground">{c.Producto?.nombre ?? c.producto?.nombre ?? "Unknown"}</span>
                 <span className="shrink-0 text-muted-foreground">{formatDate(c.fecha)}</span>
                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                   {c.estado}

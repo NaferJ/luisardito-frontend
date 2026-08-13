@@ -50,15 +50,15 @@ function formatDate(dateString: string): string {
 }
 
 function canjePrice(c: Canje): number {
-  return c.precio_al_canje ?? c.producto?.precio ?? 0
+  return c.precio_al_canje ?? c.Producto?.precio ?? c.producto?.precio ?? 0
 }
 
 function canjeName(c: Canje): string {
-  return c.producto?.nombre ?? "Product unavailable"
+  return c.Producto?.nombre ?? c.producto?.nombre ?? "Product unavailable"
 }
 
 function canjeImage(c: Canje): string | null {
-  return c.producto?.imagen_url ?? c.producto?.imagen ?? null
+  return c.Producto?.imagen_url ?? c.Producto?.imagen ?? c.producto?.imagen_url ?? c.producto?.imagen ?? null
 }
 
 export function CanjesList({ canjes }: { canjes: Canje[]; userPoints: number }) {

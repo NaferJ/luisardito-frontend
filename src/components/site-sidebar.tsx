@@ -8,6 +8,7 @@ import { browseLinks, resourceLinks, accountLinks, adminLinks, avatarColors } fr
 import { getKickOAuthUrl } from "@/lib/kick-auth"
 import { logout } from "@/app/shop/auth/actions"
 import { useUser } from "@/components/user-provider"
+import { PendingCanjesBadge } from "@/components/pending-canjes-badge"
 import { cn } from "@/lib/utils"
 
 function Logo() {
@@ -116,7 +117,10 @@ export function SiteSidebar() {
             <div className="flex flex-col gap-2.5">
               <span className="text-muted-foreground">Admin</span>
               {adminLinks.map((link) => (
-                <NavLink key={link.href} href={link.href} label={link.label} active={pathname === link.href} />
+                <div key={link.href} className="flex items-center">
+                  <NavLink href={link.href} label={link.label} active={pathname === link.href} />
+                  {link.href === "/shop/admin/canjes" && <PendingCanjesBadge />}
+                </div>
               ))}
             </div>
           )}
