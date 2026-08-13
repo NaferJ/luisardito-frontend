@@ -140,6 +140,10 @@ export interface Producto {
   stock: number
   imagen?: string
   imagen_url?: string
+  /** Original pixel width of the product image (from Cloudinary upload). NULL until populated. */
+  imagen_width?: number | null
+  /** Original pixel height of the product image (from Cloudinary upload). NULL until populated. */
+  imagen_height?: number | null
   estado: 'borrador' | 'publicado' | 'eliminado'
   created_at: string
   updated_at: string
@@ -147,6 +151,18 @@ export interface Producto {
   slug?: string
   descuento?: DescuentoProducto
   promocion_id?: number | null
+  /** Most recent non-cancelled redemption of this product, or null if never redeemed. */
+  ultimo_canje?: {
+    usuario_id: number
+    nickname: string
+    display_name?: string
+    avatar?: string
+    kick_data?: {
+      avatar_url?: string
+      username?: string
+    } | null
+    fecha: string
+  } | null
   promociones_activas?: Array<{
     id: number
     codigo: string | null

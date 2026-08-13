@@ -254,7 +254,14 @@ export function ProductDetailOverlay({
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 bg-background/70 backdrop-blur-[8px]"
           />
-          <div className="overlay-media relative aspect-[4/3] w-full max-w-2xl overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border">
+          <div
+            className="overlay-media relative w-full max-w-2xl overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border"
+            style={
+              product.imagen_width && product.imagen_height
+                ? { aspectRatio: `${product.imagen_width} / ${product.imagen_height}` }
+                : { aspectRatio: "4 / 3" }
+            }
+          >
             <Image
               src={product.imagen || product.imagen_url || "/placeholder.svg"}
               alt={product.nombre}

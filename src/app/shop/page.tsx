@@ -1,9 +1,12 @@
-import { FilterPills } from "@/components/filter-pills"
-import { ProductFeed } from "@/components/product-feed"
+import { ShopBrowse } from "@/components/shop-browse"
 import { getProducts } from "@/lib/products"
+import { getTopLeaderboard } from "@/lib/leaderboard"
 
 export default async function ShopPage() {
-  const products = await getProducts()
+  const [products, leaderboard] = await Promise.all([
+    getProducts(),
+    getTopLeaderboard(5),
+  ])
 
   return (
     <div className="flex flex-col gap-6">
@@ -12,17 +15,7 @@ export default async function ShopPage() {
         <p className="text-[15px] text-muted-foreground">Redeem your points for rewards.</p>
       </div>
 
-      <FilterPills />
-
-      {products.length > 0 ? (
-        <ProductFeed products={products} />
-      ) : (
-        <div className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-border p-8">
-          <p className="text-[13px] text-muted-foreground">
-            No products available right now. Check back soon.
-          </p>
-        </div>
-      )}
+      <ShopBrowse products={products} leaderboard={leaderboard} />
     </div>
   )
 }

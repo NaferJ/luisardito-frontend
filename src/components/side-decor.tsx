@@ -226,7 +226,7 @@ export function SideDecor({ side }: SideDecorProps) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-y-0 z-0 hidden w-[120px] overflow-hidden lg:block"
+      className="pointer-events-none fixed inset-y-0 z-[15] hidden w-[120px] overflow-hidden lg:block"
       style={{
         ...(side === "left" ? { left: 0 } : { right: 0 }),
         backgroundColor: colorBack,
