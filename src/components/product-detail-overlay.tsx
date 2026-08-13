@@ -266,6 +266,7 @@ export function ProductDetailOverlay({
               src={product.imagen || product.imagen_url || "/placeholder.svg"}
               alt={product.nombre}
               fill
+              sizes="672px"
               className="object-cover"
               priority
             />

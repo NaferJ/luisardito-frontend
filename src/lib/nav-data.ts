@@ -19,6 +19,10 @@ export const accountLinks = [
   { label: "Perfil", href: "/shop/perfil" },
 ] as const
 
+export const adminLinks = [
+  { label: "Products", href: "/shop/admin/products" },
+] as const
+
 export const categoryFilters = [
   "All",
   "Web",

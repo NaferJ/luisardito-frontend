@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { browseLinks, resourceLinks, accountLinks, avatarColors } from "@/lib/nav-data"
+import { browseLinks, resourceLinks, accountLinks, adminLinks, avatarColors } from "@/lib/nav-data"
 import { getKickOAuthUrl } from "@/lib/kick-auth"
 import { logout } from "@/app/shop/auth/actions"
 import { useUser } from "@/components/user-provider"
@@ -108,6 +108,14 @@ export function SiteSidebar() {
             <div className="flex flex-col gap-2.5">
               <span className="text-muted-foreground">Account</span>
               {accountLinks.map((link) => (
+                <NavLink key={link.href} href={link.href} label={link.label} active={pathname === link.href} />
+              ))}
+            </div>
+          )}
+          {user && user.rol_id >= 3 && (
+            <div className="flex flex-col gap-2.5">
+              <span className="text-muted-foreground">Admin</span>
+              {adminLinks.map((link) => (
                 <NavLink key={link.href} href={link.href} label={link.label} active={pathname === link.href} />
               ))}
             </div>

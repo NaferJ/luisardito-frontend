@@ -147,6 +147,10 @@ export interface Producto {
   estado: 'borrador' | 'publicado' | 'eliminado'
   created_at: string
   updated_at: string
+  /** Backend field name for createdAt (Spanish). */
+  creado?: string
+  /** Backend field name for updatedAt (Spanish). */
+  actualizado?: string
   canjes_count?: number
   slug?: string
   descuento?: DescuentoProducto
