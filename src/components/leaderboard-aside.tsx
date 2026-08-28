@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
 
 function entryName(entry: LeaderboardEntry): string {
-  return entry.kick_data?.username ?? entry.nickname ?? `User ${entry.usuario_id}`
+  return entry.kick_data?.username ?? entry.nickname ?? "Anonymous"
 }
 
 function entryAvatar(entry: LeaderboardEntry): string | undefined {

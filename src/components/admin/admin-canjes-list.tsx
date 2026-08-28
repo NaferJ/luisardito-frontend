@@ -862,7 +862,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: { canjes: Canje[] }) 
             {canjeCurrentPrice(returnTarget) !== undefined && (
               <p className="text-[12px] text-muted-foreground">
                 Price paid at redemption: {canjePrice(returnTarget).toLocaleString()} pts.
-                Current product price: {canjeCurrentPrice(returnTarget)!.toLocaleString()} pts.
+                Current product price: {(canjeCurrentPrice(returnTarget) ?? 0).toLocaleString()} pts.
               </p>
             )}
 

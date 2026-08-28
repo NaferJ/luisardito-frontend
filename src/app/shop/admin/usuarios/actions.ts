@@ -4,23 +4,22 @@ import { revalidatePath } from "next/cache"
 import { API_BASE_URL } from "@/lib/api"
 import { getAuthToken } from "@/lib/cookies"
 
-/** Update a user's points (add or set). */
+/** Update a user's points (add or set).
+ *  Backend expects { puntos, operation, motivo } where operation is
+ *  'add' or 'set' and motivo is required. */
 export async function updateUsuarioPuntos(
   id: string,
   puntos: number,
-  modo: "add" | "set",
-  motivo?: string,
+  operation: "add" | "set",
+  motivo: string,
 ): Promise<{ error?: string }> {
   const token = await getAuthToken()
   if (!token) return { error: "Not authenticated" }
 
-  const body: Record<string, unknown> = { puntos, modo }
-  if (motivo) body.motivo = motivo
-
   const response = await fetch(`${API_BASE_URL}/api/usuarios/${id}/puntos`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ puntos, operation, motivo }),
     cache: "no-store",
   })
 

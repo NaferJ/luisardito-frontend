@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/auth'
-import { getFullLeaderboard, getMyLeaderboardPosition } from '@/lib/leaderboard'
+import {
+  getLeaderboardPage,
+  getMyLeaderboardPosition,
+  getLeaderboardStats,
+} from '@/lib/leaderboard'
 import { LeaderboardView } from '@/components/shop/leaderboard-view'
 
 export const metadata: Metadata = {
@@ -8,9 +12,12 @@ export const metadata: Metadata = {
   description: 'Top users ranked by points earned.',
 }
 
+const INITIAL_PAGE_SIZE = 25
+
 export default async function LeaderboardPage() {
-  const [leaderboard, user] = await Promise.all([
-    getFullLeaderboard(),
+  const [{ entries, meta }, stats, user] = await Promise.all([
+    getLeaderboardPage(INITIAL_PAGE_SIZE, 0),
+    getLeaderboardStats(),
     getCurrentUser(),
   ])
 
@@ -22,14 +29,16 @@ export default async function LeaderboardPage() {
       <div className="flex flex-wrap items-baseline gap-2">
         <h1 className="text-[15px] font-medium text-foreground">Leaderboard</h1>
         <p className="text-[15px] text-muted-foreground">
-          {leaderboard.length > 0
-            ? `${leaderboard.length} ranked users`
+          {meta && meta.total > 0
+            ? `${meta.total} ranked users`
             : 'Real-time rankings by points.'}
         </p>
       </div>
 
       <LeaderboardView
-        entries={leaderboard}
+        initialEntries={entries}
+        meta={meta}
+        stats={stats}
         myPosition={myPosition}
         myUserId={user?.id}
       />

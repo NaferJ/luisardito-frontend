@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { API_BASE_URL } from "@/lib/api"
 import { getAuthToken } from "@/lib/cookies"
+import type { PromocionEstadisticas } from "@/types"
+
+type PromocionEstadisticasResult = PromocionEstadisticas
 
 export interface PromocionFormData {
   codigo?: string | null
@@ -85,4 +88,26 @@ export async function deletePromocion(id: string): Promise<{ error?: string }> {
 
   revalidatePath("/shop/admin/promociones")
   return {}
+}
+
+/** Fetch promotion usage statistics (admin only). Server action so the
+ *  auth token from next/headers is available — the client component
+ *  can't import cookies.ts directly. */
+export async function fetchPromocionEstadisticas(
+  id: string,
+): Promise<{ data?: PromocionEstadisticasResult; error?: string }> {
+  const token = await getAuthToken()
+  if (!token) return { error: "Not authenticated" }
+
+  const response = await fetch(`${API_BASE_URL}/api/promociones/${id}/estadisticas`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  })
+
+  if (!response.ok) {
+    return { error: `Failed (${response.status})` }
+  }
+
+  const data = (await response.json()) as PromocionEstadisticasResult
+  return { data }
 }

@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api'
-import type { Canje, Promocion, Usuario } from '@/types'
+import type { Canje, Promocion, PromocionEstadisticas, Usuario } from '@/types'
 import type { BotCommand } from '@/lib/comandos'
 
 // ─── Canjes (admin) ───
@@ -21,11 +21,25 @@ export interface AdminUsuario extends Usuario {
     username: string
     avatar_url: string
   } | null
+  /** Backend sends vip_status (not vip_info) for the users list endpoint. */
+  vip_status?: {
+    is_active: boolean
+    is_permanent: boolean
+    expires_soon?: boolean
+    expires_at?: string
+    granted_at?: string
+    granted_by_canje_id?: number
+  }
+  /** Alias for backward compatibility with components that use vip_info. */
   vip_info?: {
     is_active: boolean
     is_permanent: boolean
     expires_at?: string
     granted_at?: string
+  }
+  subscriber_status?: {
+    is_active: boolean
+    expires_soon: boolean
   }
   migration_status?: {
     can_migrate: boolean
@@ -33,6 +47,9 @@ export interface AdminUsuario extends Usuario {
     migrated_at?: string
     points_migrated?: number
   }
+  total_canjes?: number
+  canjes_pendientes?: number
+  user_type?: string
 }
 
 /** Fetch all users (admin only). */
@@ -45,10 +62,14 @@ export async function getAllUsuarios(): Promise<AdminUsuario[]> {
   }
 }
 
-/** Fetch a single user by ID (admin only). */
+/** Fetch a single user by ID (admin only).
+ *  The backend has no GET /api/usuarios/:id endpoint, so we fetch
+ *  the full list and find the user. This is acceptable because the
+ *  users list is already loaded on the admin page. */
 export async function getUsuarioById(id: string): Promise<AdminUsuario | null> {
   try {
-    return await apiFetch<AdminUsuario>(`/api/usuarios/${id}`)
+    const all = await getAllUsuarios()
+    return all.find((u) => String(u.id) === id) ?? null
   } catch {
     return null
   }
@@ -70,6 +91,17 @@ export async function getAllPromociones(): Promise<Promocion[]> {
 export async function getPromocionById(id: string): Promise<Promocion | null> {
   try {
     return await apiFetch<Promocion>(`/api/promociones/${id}`)
+  } catch {
+    return null
+  }
+}
+
+/** Fetch promotion usage statistics (admin only). */
+export async function getPromocionEstadisticas(
+  id: string,
+): Promise<PromocionEstadisticas | null> {
+  try {
+    return await apiFetch<PromocionEstadisticas>(`/api/promociones/${id}/estadisticas`)
   } catch {
     return null
   }
@@ -127,14 +159,21 @@ export interface BroadcasterStatus {
   }
 }
 
-/** Fetch Kick points configuration (public). */
+/** Fetch Kick points configuration (public).
+ *  The backend returns `{ config: [...], total, initialized }` (not a
+ *  `data`-wrapped array), so we unwrap the `config` field. We also keep the
+ *  plain-array and `data`-array fallbacks for robustness. */
 export async function getKickPointsConfig(): Promise<KickPointsConfigEntry[]> {
   try {
-    const response = await apiFetch<{ data: KickPointsConfigEntry[] } | KickPointsConfigEntry[]>(
-      '/api/kick/points-config',
-      { skipAuth: true },
-    )
-    return Array.isArray(response) ? response : (response.data ?? [])
+    const response = await apiFetch<
+      | { config: KickPointsConfigEntry[]; total: number; initialized: boolean }
+      | { data: KickPointsConfigEntry[] }
+      | KickPointsConfigEntry[]
+    >('/api/kick/points-config', { skipAuth: true })
+    if (Array.isArray(response)) return response
+    if ('config' in response && Array.isArray(response.config)) return response.config
+    if ('data' in response && Array.isArray(response.data)) return response.data
+    return []
   } catch {
     return []
   }

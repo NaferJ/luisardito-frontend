@@ -5,15 +5,16 @@ export interface BotCommand {
   command: string
   aliases: string[]
   response_message: string
-  description?: string
+  description?: string | null
   command_type: 'simple' | 'dynamic'
-  dynamic_handler?: string
+  dynamic_handler?: string | null
   enabled: boolean
   requires_permission: boolean
-  permission_level: 'viewer' | 'vip' | 'moderator' | 'broadcaster'
+  permission_level: 'viewer' | 'vip' | 'moderator' | 'broadcaster' | null
   cooldown_seconds: number
   usage_count: number
-  last_used_at?: string
+  last_used_at?: string | null
+  auto_send_interval_seconds: number
   created_at: string
   updated_at: string
 }

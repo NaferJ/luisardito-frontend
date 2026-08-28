@@ -13,13 +13,13 @@ export async function updateKickPointsConfig(
   const token = await getAuthToken()
   if (!token) return { error: "Not authenticated" }
 
-  const body: Record<string, unknown> = { config_value: configValue }
+  const body: Record<string, unknown> = { config_key: configKey, config_value: configValue }
   if (enabled !== undefined) body.enabled = enabled
 
   const response = await fetch(`${API_BASE_URL}/api/kick/points-config`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ [configKey]: configValue }),
+    body: JSON.stringify(body),
     cache: "no-store",
   })
 

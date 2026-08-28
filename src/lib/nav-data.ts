@@ -1,23 +1,13 @@
 export const browseLinks = [
   { label: "Shop", href: "/shop" },
-  { label: "Websites", href: "/websites" },
-  { label: "OG Images", href: "/og-images" },
-  { label: "App Screenshots", href: "/app-screenshots" },
-  { label: "App Icons", href: "/app-icons" },
-] as const
-
-export const resourceLinks = [
-  { label: "Tools", href: "/tools" },
-  { label: "Skills", href: "/skills" },
-  { label: "Jobs", href: "/jobs" },
 ] as const
 
 export const accountLinks = [
   { label: "Canjes", href: "/shop/canjes" },
-  { label: "Historial", href: "/shop/historial" },
-  { label: "Leaderboard", href: "/shop/leaderboard" },
   { label: "Promotions", href: "/shop/promociones" },
   { label: "Commands", href: "/shop/comandos" },
+  { label: "Leaderboard", href: "/shop/leaderboard" },
+  { label: "Historial", href: "/shop/historial" },
   { label: "Perfil", href: "/shop/perfil" },
 ] as const
 

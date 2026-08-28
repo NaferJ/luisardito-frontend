@@ -134,7 +134,7 @@ export function ComandosTable({ commands }: { commands: BotCommand[] }) {
                     {cmd.requires_permission && (
                       <span className="flex items-center gap-0.5 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-medium text-foreground">
                         <Shield className="size-2.5" aria-hidden="true" />
-                        {PERMISSION_LABELS[cmd.permission_level] ?? cmd.permission_level}
+                        {PERMISSION_LABELS[cmd.permission_level ?? "viewer"] ?? cmd.permission_level ?? "Viewer"}
                       </span>
                     )}
                   </div>

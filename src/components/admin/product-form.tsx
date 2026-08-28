@@ -73,8 +73,8 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       image: imageData?.imagen_url ?? "/placeholder.svg",
       alt: nombre || "Product preview",
       aspect: "aspect-[4/3]",
-      aspectStyle: hasRealDimensions
-        ? { aspectRatio: `${imageData!.imagen_width} / ${imageData!.imagen_height}` }
+      aspectStyle: hasRealDimensions && imageData
+        ? { aspectRatio: `${imageData.imagen_width} / ${imageData.imagen_height}` }
         : undefined,
       avatarColor: AVATAR_COLORS[0],
       badge: hasDiscount ? "star" : undefined,

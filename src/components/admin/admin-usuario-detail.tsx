@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Crown, Star, Plus, Minus } from "lucide-react"
+import { Crown, Star, Plus, Minus, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { DiscordLogo } from "@/components/brand-icons"
 import {
   updateUsuarioPuntos,
   grantVip,
@@ -45,17 +46,23 @@ export function AdminUsuarioDetail({
   const [vipDays, setVipDays] = useState(30)
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null)
 
-  const isVip = usuario.vip_info?.is_active ?? usuario.is_vip ?? false
+  const isVip = usuario.vip_status?.is_active ?? usuario.vip_info?.is_active ?? usuario.is_vip ?? false
   const isSub = usuario.subscriber_status?.is_active ?? false
   const isAdmin = [3, 4, 5].includes(usuario.rol_id)
   const avatar = userAvatar(usuario)
   const name = userName(usuario)
+  const discord = usuario.discord_info?.linked ?? usuario.discordLinked ?? false
+  const dName = usuario.discord_info?.display_name ?? usuario.discord_info?.username ?? usuario.discordUsername ?? usuario.discord_username ?? undefined
 
   const handleUpdatePuntos = () => {
     if (puntos === 0) return
+    if (!motivo.trim()) {
+      setFeedback({ ok: false, msg: "Reason is required" })
+      return
+    }
     setFeedback(null)
     startTransition(async () => {
-      const result = await updateUsuarioPuntos(String(usuario.id), puntos, puntosMode, motivo || undefined)
+      const result = await updateUsuarioPuntos(String(usuario.id), puntos, puntosMode, motivo.trim())
       if (result.error) {
         setFeedback({ ok: false, msg: result.error })
       } else {
@@ -103,7 +110,20 @@ export function AdminUsuarioDetail({
             {isAdmin && <Badge label="ADMIN" className="bg-gold text-gold-foreground" />}
           </div>
           <span className="truncate text-[13px] text-muted-foreground">{usuario.email}</span>
-          <span className="text-[12px] text-muted-foreground">ID: {usuario.id}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-muted-foreground">ID: {usuario.id}</span>
+            {discord ? (
+              <span className="flex items-center gap-1 text-[12px] text-foreground">
+                <DiscordLogo className="size-3" />
+                {dName}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-[12px] text-destructive/70">
+                <AlertTriangle className="size-3" />
+                No Discord
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-end">
@@ -168,7 +188,7 @@ export function AdminUsuarioDetail({
             type="text"
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
-            placeholder="Reason (optional)"
+            placeholder="Reason (required)"
             className="h-9 w-full rounded-sm border border-border bg-background px-3 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
           />
           {puntosMode === "add" && puntos !== 0 && (
@@ -194,12 +214,12 @@ export function AdminUsuarioDetail({
             <span className="text-[13px] text-foreground">
               {isVip ? "VIP active" : "No VIP"}
             </span>
-            {usuario.vip_info?.expires_at && (
+            {(usuario.vip_status ?? usuario.vip_info)?.expires_at && (
               <span className="ml-auto text-[12px] text-muted-foreground">
-                {new Date(usuario.vip_info.expires_at).toLocaleDateString()}
+                {new Date((usuario.vip_status ?? usuario.vip_info)?.expires_at ?? "").toLocaleDateString()}
               </span>
             )}
-            {usuario.vip_info?.is_permanent && (
+            {(usuario.vip_status ?? usuario.vip_info)?.is_permanent && (
               <span className="ml-auto text-[12px] text-gold-bright">Permanent</span>
             )}
           </div>

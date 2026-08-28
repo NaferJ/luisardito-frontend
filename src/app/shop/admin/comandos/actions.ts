@@ -10,10 +10,12 @@ export interface BotCommandFormData {
   response_message: string
   description?: string
   command_type: "simple" | "dynamic"
+  dynamic_handler?: string | null
   enabled: boolean
   requires_permission: boolean
   permission_level: "viewer" | "vip" | "moderator" | "broadcaster"
   cooldown_seconds: number
+  auto_send_interval_seconds: number
 }
 
 export async function createBotCommand(formData: BotCommandFormData): Promise<{ error?: string }> {
