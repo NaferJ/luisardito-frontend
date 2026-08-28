@@ -25,6 +25,9 @@ import {
   Square,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { downloadCSV } from "@/lib/admin-csv"
+import { PAGE_SIZE_OPTIONS, DATE_PRESETS, getDateRangeStart } from "@/lib/admin-utils"
+import type { DatePreset } from "@/lib/admin-utils"
 import { DiscordLogo } from "@/components/brand-icons"
 import { CANJES_STATUS_CHANGED } from "@/components/pending-canjes-badge"
 import { updateCanjeEstado, devolverCanje } from "@/app/shop/admin/canjes/actions"
@@ -35,7 +38,6 @@ import type { Canje, Usuario } from "@/types"
 type StatusFilter = "all" | "pendiente" | "entregado" | "cancelado" | "devuelto"
 type SortKey = "id" | "usuario" | "producto" | "fecha" | "precio"
 type SortDir = "asc" | "desc"
-type DatePreset = "all" | "today" | "7d" | "30d" | "90d"
 
 // ─── Constants ───
 
@@ -59,16 +61,6 @@ const COLUMNS: { key: SortKey; label: string; className: string }[] = [
   { key: "producto", label: "Product", className: "min-w-0 flex-1" },
   { key: "fecha", label: "Date", className: "w-32 shrink-0" },
   { key: "precio", label: "Points", className: "w-24 shrink-0 text-right" },
-]
-
-const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
-
-const DATE_PRESETS: { value: DatePreset; label: string }[] = [
-  { value: "all", label: "All time" },
-  { value: "today", label: "Today" },
-  { value: "7d", label: "7 days" },
-  { value: "30d", label: "30 days" },
-  { value: "90d", label: "90 days" },
 ]
 
 const POLL_INTERVAL = 30_000 // 30 seconds
@@ -152,20 +144,7 @@ function discordName(u?: Usuario): string | undefined {
 }
 
 function getDateRange(preset: DatePreset): { start: number | null } {
-  if (preset === "all") return { start: null }
-  const now = Date.now()
-  const ranges: Record<Exclude<DatePreset, "all">, number> = {
-    today: 0,
-    "7d": 7 * 86400000,
-    "30d": 30 * 86400000,
-    "90d": 90 * 86400000,
-  }
-  if (preset === "today") {
-    const d = new Date()
-    d.setHours(0, 0, 0, 0)
-    return { start: d.getTime() }
-  }
-  return { start: now - ranges[preset] }
+  return { start: getDateRangeStart(preset) }
 }
 
 /** Generate CSV from canjes array and trigger download. */
@@ -184,23 +163,7 @@ function exportCSV(canjes: Canje[]): void {
       new Date(c.fecha).toISOString(),
     ]
   })
-
-  const csv = [headers, ...rows]
-    .map((row) => row.map((cell) => {
-      const s = String(cell)
-      return s.includes(",") || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s
-    }).join(","))
-    .join("\n")
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = url
-  link.download = `redemptions-${new Date().toISOString().slice(0, 10)}.csv`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  downloadCSV("redemptions", headers, rows)
 }
 
 // ─── Component ───

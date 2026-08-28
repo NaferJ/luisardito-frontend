@@ -12,6 +12,7 @@ import {
   Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatDateTime } from "@/lib/admin-utils"
 import type { Canje } from "@/types"
 
 type SortMode = "date-desc" | "date-asc" | "price-desc" | "price-asc"
@@ -40,13 +41,7 @@ const STATUS_STYLES: Record<string, { icon: typeof Clock; className: string; lab
 }
 
 function formatDate(dateString: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(dateString))
+  return formatDateTime(dateString)
 }
 
 function canjePrice(c: Canje): number {

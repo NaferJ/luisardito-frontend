@@ -15,6 +15,7 @@ import {
   Clock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatDateTime } from "@/lib/admin-utils"
 import type { HistorialPunto } from "@/types"
 
 type SortMode = "date-desc" | "date-asc" | "points-desc" | "points-asc"
@@ -37,13 +38,7 @@ const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
 ]
 
 function formatDate(dateString: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(dateString))
+  return formatDateTime(dateString)
 }
 
 function getEventIcon(item: HistorialPunto): typeof MessageSquare {

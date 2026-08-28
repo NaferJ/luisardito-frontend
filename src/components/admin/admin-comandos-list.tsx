@@ -23,6 +23,8 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { downloadCSV } from "@/lib/admin-csv"
+import { PAGE_SIZE_OPTIONS, formatDate } from "@/lib/admin-utils"
 import {
   createBotCommand,
   updateBotCommand,
@@ -61,8 +63,6 @@ const COLUMNS: { key: SortKey; label: string; className: string }[] = [
   { key: "created", label: "Created", className: "hidden w-28 shrink-0 lg:block" },
 ]
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
-
 const PERMISSION_OPTIONS = [
   { value: "viewer", label: "Viewer" },
   { value: "vip", label: "VIP" },
@@ -71,14 +71,6 @@ const PERMISSION_OPTIONS = [
 ] as const
 
 // ─── Helpers ───
-
-function formatDate(d: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(d))
-}
 
 function formatDateLong(d: string): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -157,23 +149,7 @@ function exportCSV(commands: BotCommand[]): void {
     new Date(c.created_at).toISOString(),
     new Date(c.updated_at).toISOString(),
   ])
-
-  const csv = [headers, ...rows]
-    .map((row) => row.map((cell) => {
-      const s = String(cell)
-      return s.includes(",") || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s
-    }).join(","))
-    .join("\n")
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = url
-  link.download = `bot-commands-${new Date().toISOString().slice(0, 10)}.csv`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  downloadCSV("bot-commands", headers, rows)
 }
 
 // ─── Component ───

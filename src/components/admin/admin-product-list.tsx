@@ -20,6 +20,8 @@ import {
 } from "lucide-react"
 import { ArchiveProductButton } from "@/components/admin/archive-product-button"
 import { cn } from "@/lib/utils"
+import { downloadCSV } from "@/lib/admin-csv"
+import { PAGE_SIZE_OPTIONS } from "@/lib/admin-utils"
 import type { Producto } from "@/types"
 
 type SortKey = "nombre" | "precio" | "stock" | "canjes_count" | "actualizado"
@@ -33,8 +35,6 @@ const COLUMNS: { key: SortKey; label: string; className: string }[] = [
   { key: "canjes_count", label: "Redemptions", className: "w-28 shrink-0 text-right" },
   { key: "actualizado", label: "Updated", className: "w-24 shrink-0 text-right" },
 ]
-
-const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -71,23 +71,7 @@ function exportCSV(products: Producto[]): void {
     p.canjes_count ?? 0,
     new Date(p.actualizado ?? p.updated_at).toISOString(),
   ])
-
-  const csv = [headers, ...rows]
-    .map((row) => row.map((cell) => {
-      const s = String(cell)
-      return s.includes(",") || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s
-    }).join(","))
-    .join("\n")
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = url
-  link.download = `products-${new Date().toISOString().slice(0, 10)}.csv`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  downloadCSV("products", headers, rows)
 }
 
 export function AdminProductList({ products }: { products: Producto[] }) {

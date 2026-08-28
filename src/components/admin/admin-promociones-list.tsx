@@ -27,6 +27,9 @@ import {
   Gift,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { downloadCSV } from "@/lib/admin-csv"
+import { PAGE_SIZE_OPTIONS, DATE_PRESETS, formatDate, getDateRangeStart } from "@/lib/admin-utils"
+import type { DatePreset } from "@/lib/admin-utils"
 import { deletePromocion, fetchPromocionEstadisticas } from "@/app/shop/admin/promociones/actions"
 import type { Promocion, PromocionEstadisticas } from "@/types"
 
@@ -35,7 +38,6 @@ import type { Promocion, PromocionEstadisticas } from "@/types"
 type EstadoFilter = "all" | "activo" | "programado" | "expirado" | "inactivo" | "pausado"
 type SortKey = "nombre" | "descuento" | "inicio" | "fin" | "estado" | "usos"
 type SortDir = "asc" | "desc"
-type DatePreset = "all" | "today" | "7d" | "30d" | "90d"
 
 // ─── Constants ───
 
@@ -65,25 +67,7 @@ const COLUMNS: { key: SortKey; label: string; className: string }[] = [
   { key: "estado", label: "Status", className: "w-24 shrink-0" },
 ]
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
-
-const DATE_PRESETS: { value: DatePreset; label: string }[] = [
-  { value: "all", label: "All time" },
-  { value: "today", label: "Today" },
-  { value: "7d", label: "7 days" },
-  { value: "30d", label: "30 days" },
-  { value: "90d", label: "90 days" },
-]
-
 // ─── Helpers ───
-
-function formatDate(d: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(d))
-}
 
 function formatDateLong(d: string): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -126,20 +110,7 @@ function usagePercent(p: Promocion): number | null {
 }
 
 function getDateRange(preset: DatePreset): { start: number | null } {
-  if (preset === "all") return { start: null }
-  const now = Date.now()
-  const ranges: Record<Exclude<DatePreset, "all">, number> = {
-    today: 0,
-    "7d": 7 * 86400000,
-    "30d": 30 * 86400000,
-    "90d": 90 * 86400000,
-  }
-  if (preset === "today") {
-    const d = new Date()
-    d.setHours(0, 0, 0, 0)
-    return { start: d.getTime() }
-  }
-  return { start: now - ranges[preset] }
+  return { start: getDateRangeStart(preset) }
 }
 
 /** Generate CSV from promotions array and trigger download. */
@@ -164,23 +135,7 @@ function exportCSV(promociones: Promocion[]): void {
     p.requiere_codigo ? "yes" : "no",
     p.prioridad,
   ])
-
-  const csv = [headers, ...rows]
-    .map((row) => row.map((cell) => {
-      const s = String(cell)
-      return s.includes(",") || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s
-    }).join(","))
-    .join("\n")
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = url
-  link.download = `promotions-${new Date().toISOString().slice(0, 10)}.csv`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  downloadCSV("promotions", headers, rows)
 }
 
 // ─── Component ───

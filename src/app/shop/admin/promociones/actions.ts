@@ -2,11 +2,8 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { API_BASE_URL } from "@/lib/api"
-import { getAuthToken } from "@/lib/cookies"
+import { fetchWithAuth } from "@/lib/admin-fetch"
 import type { PromocionEstadisticas } from "@/types"
-
-type PromocionEstadisticasResult = PromocionEstadisticas
 
 export interface PromocionFormData {
   codigo?: string | null
@@ -28,64 +25,22 @@ export interface PromocionFormData {
 }
 
 export async function createPromocion(formData: PromocionFormData): Promise<void> {
-  const token = await getAuthToken()
-  if (!token) throw new Error("Not authenticated")
-
-  const response = await fetch(`${API_BASE_URL}/api/promociones`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(formData),
-    cache: "no-store",
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(
-      (data as { error?: string }).error ?? `Failed to create promotion (${response.status})`,
-    )
-  }
-
+  const result = await fetchWithAuth({ method: "POST", path: "/api/promociones", body: formData })
+  if (!result.ok) throw new Error(result.error)
   revalidatePath("/shop/admin/promociones")
   redirect("/shop/admin/promociones")
 }
 
 export async function updatePromocion(id: string, formData: PromocionFormData): Promise<void> {
-  const token = await getAuthToken()
-  if (!token) throw new Error("Not authenticated")
-
-  const response = await fetch(`${API_BASE_URL}/api/promociones/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(formData),
-    cache: "no-store",
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(
-      (data as { error?: string }).error ?? `Failed to update promotion (${response.status})`,
-    )
-  }
-
+  const result = await fetchWithAuth({ method: "PUT", path: `/api/promociones/${id}`, body: formData })
+  if (!result.ok) throw new Error(result.error)
   revalidatePath("/shop/admin/promociones")
   redirect("/shop/admin/promociones")
 }
 
 export async function deletePromocion(id: string): Promise<{ error?: string }> {
-  const token = await getAuthToken()
-  if (!token) return { error: "Not authenticated" }
-
-  const response = await fetch(`${API_BASE_URL}/api/promociones/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    return { error: (data as { error?: string }).error ?? `Failed (${response.status})` }
-  }
-
+  const result = await fetchWithAuth({ method: "DELETE", path: `/api/promociones/${id}` })
+  if (!result.ok) return { error: result.error }
   revalidatePath("/shop/admin/promociones")
   return {}
 }
@@ -95,19 +50,11 @@ export async function deletePromocion(id: string): Promise<{ error?: string }> {
  *  can't import cookies.ts directly. */
 export async function fetchPromocionEstadisticas(
   id: string,
-): Promise<{ data?: PromocionEstadisticasResult; error?: string }> {
-  const token = await getAuthToken()
-  if (!token) return { error: "Not authenticated" }
-
-  const response = await fetch(`${API_BASE_URL}/api/promociones/${id}/estadisticas`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
+): Promise<{ data?: PromocionEstadisticas; error?: string }> {
+  const result = await fetchWithAuth<PromocionEstadisticas>({
+    method: "GET",
+    path: `/api/promociones/${id}/estadisticas`,
   })
-
-  if (!response.ok) {
-    return { error: `Failed (${response.status})` }
-  }
-
-  const data = (await response.json()) as PromocionEstadisticasResult
-  return { data }
+  if (!result.ok) return { error: result.error }
+  return { data: result.data }
 }

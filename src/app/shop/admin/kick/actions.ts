@@ -1,8 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { API_BASE_URL } from "@/lib/api"
-import { getAuthToken } from "@/lib/cookies"
+import { fetchWithAuth } from "@/lib/admin-fetch"
 
 /** Update Kick points configuration (single key). */
 export async function updateKickPointsConfig(
@@ -10,24 +9,11 @@ export async function updateKickPointsConfig(
   configValue: number,
   enabled?: boolean,
 ): Promise<{ error?: string }> {
-  const token = await getAuthToken()
-  if (!token) return { error: "Not authenticated" }
-
   const body: Record<string, unknown> = { config_key: configKey, config_value: configValue }
   if (enabled !== undefined) body.enabled = enabled
 
-  const response = await fetch(`${API_BASE_URL}/api/kick/points-config`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    return { error: (data as { error?: string }).error ?? `Failed (${response.status})` }
-  }
-
+  const result = await fetchWithAuth({ method: "PUT", path: "/api/kick/points-config", body })
+  if (!result.ok) return { error: result.error }
   revalidatePath("/shop/admin/kick")
   return {}
 }
@@ -39,47 +25,29 @@ export async function updateVipConfig(
   vipFollowPoints: number,
   vipSubPoints: number,
 ): Promise<{ error?: string }> {
-  const token = await getAuthToken()
-  if (!token) return { error: "Not authenticated" }
-
-  const response = await fetch(`${API_BASE_URL}/api/kick-admin/vip-config`, {
+  const result = await fetchWithAuth({
     method: "PUT",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
+    path: "/api/kick-admin/vip-config",
+    body: {
       vip_points_enabled: vipPointsEnabled,
       vip_chat_points: vipChatPoints,
       vip_follow_points: vipFollowPoints,
       vip_sub_points: vipSubPoints,
-    }),
-    cache: "no-store",
+    },
   })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    return { error: (data as { error?: string }).error ?? `Failed (${response.status})` }
-  }
-
+  if (!result.ok) return { error: result.error }
   revalidatePath("/shop/admin/kick")
   return {}
 }
 
 /** Toggle Botrix migration. */
 export async function toggleMigration(enabled: boolean): Promise<{ error?: string }> {
-  const token = await getAuthToken()
-  if (!token) return { error: "Not authenticated" }
-
-  const response = await fetch(`${API_BASE_URL}/api/kick-admin/migration`, {
+  const result = await fetchWithAuth({
     method: "PUT",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ migration_enabled: enabled }),
-    cache: "no-store",
+    path: "/api/kick-admin/migration",
+    body: { migration_enabled: enabled },
   })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    return { error: (data as { error?: string }).error ?? `Failed (${response.status})` }
-  }
-
+  if (!result.ok) return { error: result.error }
   revalidatePath("/shop/admin/kick")
   return {}
 }

@@ -1,8 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { API_BASE_URL } from "@/lib/api"
-import { getAuthToken } from "@/lib/cookies"
+import { fetchWithAuth } from "@/lib/admin-fetch"
 
 /** Update a user's points (add or set).
  *  Backend expects { puntos, operation, motivo } where operation is
@@ -13,21 +12,12 @@ export async function updateUsuarioPuntos(
   operation: "add" | "set",
   motivo: string,
 ): Promise<{ error?: string }> {
-  const token = await getAuthToken()
-  if (!token) return { error: "Not authenticated" }
-
-  const response = await fetch(`${API_BASE_URL}/api/usuarios/${id}/puntos`, {
+  const result = await fetchWithAuth({
     method: "PUT",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ puntos, operation, motivo }),
-    cache: "no-store",
+    path: `/api/usuarios/${id}/puntos`,
+    body: { puntos, operation, motivo },
   })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    return { error: (data as { error?: string }).error ?? `Failed (${response.status})` }
-  }
-
+  if (!result.ok) return { error: result.error }
   revalidatePath("/shop/admin/usuarios")
   revalidatePath(`/shop/admin/usuarios/${id}`)
   return {}
@@ -38,24 +28,15 @@ export async function grantVip(
   usuarioId: string,
   durationDays?: number,
 ): Promise<{ error?: string }> {
-  const token = await getAuthToken()
-  if (!token) return { error: "Not authenticated" }
-
   const body: Record<string, unknown> = {}
   if (durationDays) body.duration_days = durationDays
 
-  const response = await fetch(`${API_BASE_URL}/api/kick-admin/usuario/${usuarioId}/vip`, {
+  const result = await fetchWithAuth({
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(body),
-    cache: "no-store",
+    path: `/api/kick-admin/usuario/${usuarioId}/vip`,
+    body,
   })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    return { error: (data as { error?: string }).error ?? `Failed (${response.status})` }
-  }
-
+  if (!result.ok) return { error: result.error }
   revalidatePath("/shop/admin/usuarios")
   revalidatePath(`/shop/admin/usuarios/${usuarioId}`)
   return {}
@@ -63,20 +44,11 @@ export async function grantVip(
 
 /** Remove VIP from a user. */
 export async function removeVip(usuarioId: string): Promise<{ error?: string }> {
-  const token = await getAuthToken()
-  if (!token) return { error: "Not authenticated" }
-
-  const response = await fetch(`${API_BASE_URL}/api/kick-admin/usuario/${usuarioId}/vip`, {
+  const result = await fetchWithAuth({
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
+    path: `/api/kick-admin/usuario/${usuarioId}/vip`,
   })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    return { error: (data as { error?: string }).error ?? `Failed (${response.status})` }
-  }
-
+  if (!result.ok) return { error: result.error }
   revalidatePath("/shop/admin/usuarios")
   revalidatePath(`/shop/admin/usuarios/${usuarioId}`)
   return {}
