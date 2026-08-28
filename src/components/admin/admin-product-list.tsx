@@ -72,7 +72,7 @@ function exportCSV(products: Producto[]): void {
   downloadCSV("products", headers, rows)
 }
 
-export function AdminProductList({ products }: { products: Producto[] }) {
+export function AdminProductList({ products }: Readonly<{ products: Producto[] }>) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
@@ -277,7 +277,7 @@ export function AdminProductList({ products }: { products: Producto[] }) {
                 </span>
 
                 {/* Actions (stopPropagation so row click doesn't fire) */}
-                <div className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <div role="button" tabIndex={0} className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-[11px] font-medium",

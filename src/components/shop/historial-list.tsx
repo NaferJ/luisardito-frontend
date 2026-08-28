@@ -65,15 +65,14 @@ function getEventTitle(item: HistorialPunto): string {
 }
 
 function getCambio(item: HistorialPunto): number {
-  return item.cambio !== null ? item.cambio : item.puntos ?? 0
+  return item.cambio ?? item.puntos ?? 0
 }
 
 export function HistorialList({
   historial,
-}: {
+}: Readonly<{
   historial: HistorialPunto[]
-  currentPoints: number
-}) {
+}>) {
   const [search, setSearch] = useState("")
   const [filterType, setFilterType] = useState<FilterType>("all")
   const [sortMode, setSortMode] = useState<SortMode>("date-desc")
@@ -266,14 +265,14 @@ export function HistorialList({
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {filtered.map((item, i) => {
+          {filtered.map((item) => {
             const cambio = getCambio(item)
             const isPositive = cambio > 0
             const EventIcon = getEventIcon(item)
             const title = getEventTitle(item)
             return (
               <div
-                key={i}
+                key={item.id}
                 className="flex gap-3 rounded-sm border border-border bg-secondary p-3 transition-colors hover:border-gold/50"
               >
                 {/* Icon */}
@@ -323,22 +322,21 @@ function StatChip({
   label,
   accent,
   outline,
-}: {
+}: Readonly<{
   label: string
   accent?: "positive" | "negative"
   outline?: boolean
-}) {
+}>) {
+  let chipClass = "bg-secondary text-muted-foreground"
+  if (outline) chipClass = "border border-border text-foreground"
+  else if (accent === "positive") chipClass = "bg-foreground/10 text-foreground"
+  else if (accent === "negative") chipClass = "bg-destructive/10 text-destructive"
+
   return (
     <span
       className={cn(
         "inline-flex h-7 items-center rounded-full px-3 text-[12px] font-medium",
-        outline
-          ? "border border-border text-foreground"
-          : accent === "positive"
-            ? "bg-foreground/10 text-foreground"
-            : accent === "negative"
-              ? "bg-destructive/10 text-destructive"
-              : "bg-secondary text-muted-foreground",
+        chipClass,
       )}
     >
       {label}

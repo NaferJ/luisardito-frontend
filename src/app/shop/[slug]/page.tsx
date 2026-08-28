@@ -5,7 +5,7 @@ import { getProducts, getProductBySlug } from "@/lib/products"
 import { getTopLeaderboard } from "@/lib/leaderboard"
 
 interface SlugPageProps {
-  params: Promise<{ slug: string }>
+  readonly params: Promise<{ slug: string }>
 }
 
 /**

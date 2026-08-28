@@ -37,7 +37,7 @@ function Logo() {
   )
 }
 
-function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+function NavLink({ href, label, active }: Readonly<{ href: string; label: string; active: boolean }>) {
   return (
     <Link
       href={href}
@@ -199,6 +199,9 @@ export function SiteSidebar() {
           <span>© 2026</span>
           <Link href="/info" className="hover:text-foreground">
             Info
+          </Link>
+          <Link href="/changelog" className="hover:text-foreground">
+            Changelog
           </Link>
         </div>
       </div>

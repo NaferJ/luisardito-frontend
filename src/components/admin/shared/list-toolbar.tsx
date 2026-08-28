@@ -4,12 +4,12 @@ import { Search, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SearchInputProps {
-  value: string
-  onChange: (value: string) => void
-  placeholder: string
-  ariaLabel: string
+  readonly value: string
+  readonly onChange: (value: string) => void
+  readonly placeholder: string
+  readonly ariaLabel: string
   /** Width classes for the input (e.g. "w-52 focus:w-64"). */
-  widthClassName?: string
+  readonly widthClassName?: string
 }
 
 /** Shared search input with icon used by all admin list headers. */
@@ -39,7 +39,7 @@ export function SearchInput({
 }
 
 interface CsvButtonProps {
-  onClick: () => void
+  readonly onClick: () => void
 }
 
 /** Shared CSV export button used by all admin list headers. */

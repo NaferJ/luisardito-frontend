@@ -52,8 +52,8 @@ function sortProducts(products: Producto[], mode: SortMode): Producto[] {
       return sorted
         .filter((p) => p.descuento?.tieneDescuento)
         .sort((a, b) => {
-          const aPct = parseFloat(a.descuento?.porcentajeDescuento ?? "0")
-          const bPct = parseFloat(b.descuento?.porcentajeDescuento ?? "0")
+          const aPct = Number.parseFloat(a.descuento?.porcentajeDescuento ?? "0")
+          const bPct = Number.parseFloat(b.descuento?.porcentajeDescuento ?? "0")
           return bPct - aPct
         })
   }
@@ -66,7 +66,7 @@ function sortProducts(products: Producto[], mode: SortMode): Producto[] {
  */
 function slugFromPathname(pathname: string): string | null {
   if (pathname === "/shop") return null
-  const match = pathname.match(/^\/shop\/(.+)$/)
+  const match = /^\/shop\/(.+)$/.exec(pathname)
   return match ? decodeURIComponent(match[1]) : null
 }
 
@@ -74,12 +74,12 @@ export function ShopBrowse({
   products,
   leaderboard = [],
   initialOpenSlug = null,
-}: {
+}: Readonly<{
   products: Producto[]
   leaderboard?: LeaderboardEntry[]
   /** Slug of the product to open on initial load (direct link from [slug] page). */
   initialOpenSlug?: string | null
-}) {
+}>) {
   const [openSlug, setOpenSlug] = useState<string | null>(initialOpenSlug)
   const [sortMode, setSortMode] = useState<SortMode>("price_desc")
   const [search, setSearch] = useState("")

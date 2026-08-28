@@ -10,29 +10,29 @@ import type { Producto } from "@/types"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
 
 type ProductFeedProps = {
-  products: Producto[]
+  readonly products: Producto[]
   /** Top earners to display as a sidebar widget in the feed. */
-  leaderboard?: LeaderboardEntry[]
+  readonly leaderboard?: LeaderboardEntry[]
   /** When provided, the overlay starts open at this index (used by slug pages). */
-  initialOpenIndex?: number | null
+  readonly initialOpenIndex?: number | null
   /**
    * Called when a feed card is clicked. Receives the product's slug (or ID).
    * If provided, the caller is responsible for URL navigation; the feed still
    * opens the overlay internally.
    */
-  onCardOpen?: (slug: string) => void
+  readonly onCardOpen?: (slug: string) => void
   /**
    * Called when the overlay closes. If provided, the caller is responsible for
    * navigation (e.g. pushing back to /shop). If omitted, the feed clears its
    * own state.
    */
-  onOverlayClose?: () => void
+  readonly onOverlayClose?: () => void
   /**
    * Called when the overlay navigates to a different product. Receives the new
    * index. If provided, the caller can update the URL; the feed still updates
    * its own state internally.
    */
-  onOverlayNavigate?: (nextIndex: number) => void
+  readonly onOverlayNavigate?: (nextIndex: number) => void
 }
 
 /** URL-safe identifier for a product: slug if available, otherwise ID. */
@@ -129,7 +129,7 @@ export function ProductFeed({
         {/* 2 columns on mobile */}
         <div className="flex items-start gap-3 sm:hidden">
           {cols2.map((col, i) => (
-            <div key={i} className="min-w-0 flex-1">
+            <div key={`col2-${i}`} className="min-w-0 flex-1">
               {col}
             </div>
           ))}
@@ -137,7 +137,7 @@ export function ProductFeed({
         {/* 3 columns on sm-md */}
         <div className="hidden flex items-start gap-3 sm:flex lg:hidden">
           {cols3.map((col, i) => (
-            <div key={i} className="min-w-0 flex-1">
+            <div key={`col3-${i}`} className="min-w-0 flex-1">
               {col}
             </div>
           ))}
@@ -145,7 +145,7 @@ export function ProductFeed({
         {/* 4 columns on lg+ */}
         <div className="hidden flex items-start gap-3 lg:flex">
           {cols4.map((col, i) => (
-            <div key={i} className="min-w-0 flex-1">
+            <div key={`col4-${i}`} className="min-w-0 flex-1">
               {col}
             </div>
           ))}

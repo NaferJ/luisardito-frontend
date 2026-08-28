@@ -34,11 +34,11 @@ export function AdminUsuarioDetail({
   usuario,
   canjes,
   historial,
-}: {
+}: Readonly<{
   usuario: AdminUsuario
   canjes: Canje[]
   historial: HistorialPunto[]
-}) {
+}>) {
   const [pending, startTransition] = useTransition()
   const [puntos, setPuntos] = useState(0)
   const [puntosMode, setPuntosMode] = useState<"add" | "set">("add")
@@ -286,10 +286,10 @@ export function AdminUsuarioDetail({
             Points history ({historial.length})
           </span>
           <div className="flex flex-col gap-1.5">
-            {historial.slice(0, 10).map((h, i) => {
+            {historial.slice(0, 10).map((h) => {
               const cambio = h.cambio ?? h.puntos ?? 0
               return (
-                <div key={i} className="flex items-center justify-between gap-3 text-[13px]">
+                <div key={h.id} className="flex items-center justify-between gap-3 text-[13px]">
                   <span className="truncate text-foreground">{h.concepto ?? h.motivo}</span>
                   <span className="shrink-0 text-muted-foreground">{formatDate(h.fecha)}</span>
                   <span className={cn("shrink-0 tabular-nums font-medium", cambio > 0 ? "text-foreground" : "text-destructive")}>
@@ -309,11 +309,11 @@ function Badge({
   icon,
   label,
   className,
-}: {
+}: Readonly<{
   icon?: React.ReactNode
   label: string
   className: string
-}) {
+}>) {
   return (
     <span className={cn("flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold", className)}>
       {icon}

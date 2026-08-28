@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils"
 import type { Producto } from "@/types"
 
 interface ProductFormProps {
-  mode: "create" | "edit"
-  initialData?: Producto
+  readonly mode: "create" | "edit"
+  readonly initialData?: Producto
 }
 
 /** Generate a URL-safe slug from a name (matches backend logic). */
@@ -146,6 +146,10 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
     "h-10 w-full rounded-lg border border-border bg-card px-3 text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold"
   const labelClass = "text-[13px] text-muted-foreground"
 
+  let saveLabel = "Save changes"
+  if (isPending) saveLabel = "Saving..."
+  else if (mode === "create") saveLabel = "Create product"
+
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
       {/* Left: form */}
@@ -236,7 +240,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                 }}
                 className="size-3.5 accent-gold"
               />
-              Auto-generate from name
+              {"Auto-generate from name"}
             </label>
           </div>
         </section>
@@ -299,41 +303,43 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-[13px] font-medium text-foreground">Status</label>
-              <div className="flex h-10 gap-1">
-                <button
-                  type="button"
-                  onClick={() => setEstado("borrador")}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-1.5 rounded-lg border text-[13px] font-medium transition-colors",
-                    estado === "borrador"
-                      ? "border-border bg-secondary text-foreground"
-                      : "border-border bg-transparent text-muted-foreground hover:bg-secondary/50",
-                  )}
-                >
-                  <span className={cn(
-                    "size-1.5 rounded-full",
-                    estado === "borrador" ? "bg-muted-foreground" : "bg-muted-foreground/40",
-                  )} />
-                  Draft
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEstado("publicado")}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-1.5 rounded-lg border text-[13px] font-medium transition-colors",
-                    estado === "publicado"
-                      ? "border-gold/40 bg-gold/10 text-gold-bright"
-                      : "border-border bg-transparent text-muted-foreground hover:bg-secondary/50",
-                  )}
-                >
-                  <span className={cn(
-                    "size-1.5 rounded-full",
-                    estado === "publicado" ? "bg-gold-bright" : "bg-muted-foreground/40",
-                  )} />
-                  Live
-                </button>
-              </div>
+              <label className="flex flex-col gap-1 text-[13px] font-medium text-foreground">
+                Status
+                <div className="flex h-10 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setEstado("borrador")}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-1.5 rounded-lg border text-[13px] font-medium transition-colors",
+                      estado === "borrador"
+                        ? "border-border bg-secondary text-foreground"
+                        : "border-border bg-transparent text-muted-foreground hover:bg-secondary/50",
+                    )}
+                  >
+                    <span className={cn(
+                      "size-1.5 rounded-full",
+                      estado === "borrador" ? "bg-muted-foreground" : "bg-muted-foreground/40",
+                    )} />
+                    {"Draft"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEstado("publicado")}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-1.5 rounded-lg border text-[13px] font-medium transition-colors",
+                      estado === "publicado"
+                        ? "border-gold/40 bg-gold/10 text-gold-bright"
+                        : "border-border bg-transparent text-muted-foreground hover:bg-secondary/50",
+                    )}
+                  >
+                    <span className={cn(
+                      "size-1.5 rounded-full",
+                      estado === "publicado" ? "bg-gold-bright" : "bg-muted-foreground/40",
+                    )} />
+                    {"Live"}
+                  </button>
+                </div>
+              </label>
             </div>
           </section>
 
@@ -384,7 +390,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             disabled={isPending}
             className="h-10 rounded-full bg-foreground px-6 text-[14px] font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
           >
-            {isPending ? "Saving..." : mode === "create" ? "Create product" : "Save changes"}
+            {saveLabel}
           </button>
           <button
             type="button"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, X, Gift } from "lucide-react"
 import type { Producto } from "@/types"
@@ -9,24 +9,128 @@ import { cn } from "@/lib/utils"
 import { extractDominantColors } from "@/lib/extract-color"
 import { setOverlayColors } from "@/lib/overlay-color-store"
 
-export function ProductDetailOverlay({
-  products,
-  index,
-  onClose,
-  onNavigate,
-}: {
-  products: Producto[]
-  index: number
-  onClose: () => void
-  onNavigate: (nextIndex: number) => void
-}) {
-  const user = useUser()
-  const updateUser = useUpdateUser()
+interface RedemptionResult {
+  success: boolean
+  message: string
+}
+
+/** Resolve the effective price for a product, applying any active discount. */
+function getEffectivePrice(product: Producto): number {
+  const hasDiscount = product.descuento?.tieneDescuento
+  return hasDiscount ? product.descuento!.precioFinal : product.precio
+}
+
+/** Resolve the original (pre-discount) price, or null when there is no discount. */
+function getOriginalPrice(product: Producto): number | null {
+  const hasDiscount = product.descuento?.tieneDescuento
+  return hasDiscount ? product.descuento!.precioOriginal : null
+}
+
+/** Whether the current user may redeem the given product. */
+function canRedeemProduct(
+  user: ReturnType<typeof useUser>,
+  product: Producto,
+  price: number,
+): boolean {
+  const inStock = product.stock > 0
+  return user !== null && inStock && user.puntos >= price
+}
+
+/** Build the metadata stat rows shown in the sidebar. */
+function buildStatRows(
+  product: Producto,
+  hasDiscount: boolean,
+  price: number,
+  originalPrice: number | null,
+): { label: string; value: string }[] {
+  return [
+    { label: "Price", value: `${price.toLocaleString()} pts` },
+    ...(originalPrice ? [{ label: "Original", value: `${originalPrice.toLocaleString()} pts` }] : []),
+    { label: "Stock", value: product.stock > 0 ? String(product.stock) : "Out of stock" },
+    { label: "Status", value: product.estado },
+    ...(hasDiscount ? [{ label: "Discount", value: product.descuento!.porcentajeDescuento }] : []),
+  ]
+}
+
+/** Render the redeem button's inner content based on current state. */
+function renderRedeemButtonContent(redeeming: boolean, cooldown: number): ReactNode {
+  if (redeeming) {
+    return (
+      <span className="size-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+    )
+  }
+  if (cooldown > 0) {
+    return (
+      <>
+        <Gift className="size-4 opacity-50" aria-hidden="true" />
+        Canjear ({cooldown}s)
+      </>
+    )
+  }
+  return (
+    <>
+      <Gift className="size-4" aria-hidden="true" />
+      Canjear
+    </>
+  )
+}
+
+/** Keyboard navigation + body-scroll lock while the overlay is open. */
+function useKeyboardNavigation(
+  index: number,
+  productsLength: number,
+  onClose: () => void,
+  onNavigate: (nextIndex: number) => void,
+) {
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose()
+      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
+      if (e.key === "ArrowRight" && index < productsLength - 1) onNavigate(index + 1)
+    }
+    document.addEventListener("keydown", handleKey)
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.removeEventListener("keydown", handleKey)
+      document.body.style.overflow = ""
+    }
+  }, [index, productsLength, onClose, onNavigate])
+}
+
+// Drive the side shader's color from the dominant colors of the currently
+// open product image. Skips the local placeholder (no useful color to
+// sample). Stale results from rapid arrow navigation are ignored via the
+// cancelled flag; the store is cleared once when the overlay unmounts.
+// SideDecor picks the candidate with the best contrast against the current
+// background, so a dark image won't produce an invisible dark shader color.
+function useOverlayColors(product: Producto | undefined) {
+  const imageSrc = product?.imagen || product?.imagen_url || null
+  useEffect(() => {
+    if (!imageSrc) return
+    let cancelled = false
+    extractDominantColors(imageSrc).then((colors) => {
+      if (!cancelled) setOverlayColors(colors.length > 0 ? colors : null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [imageSrc])
+
+  useEffect(() => {
+    return () => setOverlayColors(null)
+  }, [])
+}
+
+/** Encapsulates redemption state, the cooldown timer, and the redeem action. */
+function useRedeemProduct(
+  product: Producto | undefined,
+  user: ReturnType<typeof useUser>,
+  updateUser: ReturnType<typeof useUpdateUser>,
+) {
   const [redeeming, setRedeeming] = useState(false)
   const [cooldown, setCooldown] = useState(0)
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [result, setResult] = useState<RedemptionResult | null>(null)
   const [resultProductId, setResultProductId] = useState<number | undefined>(undefined)
-  const product = products[index]
 
   // Clear result when navigating to a different product.
   // Uses a ref-like comparison so the clear only happens on product change,
@@ -43,60 +147,10 @@ export function ProductDetailOverlay({
     return () => clearTimeout(timer)
   }, [cooldown])
 
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < products.length - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, products.length, onClose, onNavigate])
-
-  // Drive the side shader's color from the dominant colors of the currently
-  // open product image. Skips the local placeholder (no useful color to
-  // sample). Stale results from rapid arrow navigation are ignored via the
-  // cancelled flag; the store is cleared once when the overlay unmounts.
-  // SideDecor picks the candidate with the best contrast against the current
-  // background, so a dark image won't produce an invisible dark shader color.
-  const imageSrc = product?.imagen || product?.imagen_url || null
-  useEffect(() => {
-    if (!imageSrc) return
-    let cancelled = false
-    extractDominantColors(imageSrc).then((colors) => {
-      if (!cancelled) setOverlayColors(colors.length > 0 ? colors : null)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [imageSrc])
-
-  useEffect(() => {
-    return () => setOverlayColors(null)
-  }, [])
-
-  if (!product) return null
-
-  const hasDiscount = product.descuento?.tieneDescuento
-  const price = hasDiscount ? product.descuento!.precioFinal : product.precio
-  const originalPrice = hasDiscount ? product.descuento!.precioOriginal : null
-  const inStock = product.stock > 0
-  const canRedeem = user !== null && inStock && user.puntos >= price
-
-  const statRows = [
-    { label: "Price", value: `${price.toLocaleString()} pts` },
-    ...(originalPrice ? [{ label: "Original", value: `${originalPrice.toLocaleString()} pts` }] : []),
-    { label: "Stock", value: product.stock > 0 ? String(product.stock) : "Out of stock" },
-    { label: "Status", value: product.estado },
-    ...(hasDiscount ? [{ label: "Discount", value: product.descuento!.porcentajeDescuento }] : []),
-  ]
-
   async function handleRedeem() {
-    if (!product || !canRedeem) return
+    if (!product) return
+    const price = getEffectivePrice(product)
+    if (!canRedeemProduct(user, product, price)) return
     setRedeeming(true)
     setResult(null)
     try {
@@ -132,6 +186,43 @@ export function ProductDetailOverlay({
       setRedeeming(false)
     }
   }
+
+  return { redeeming, cooldown, result, handleRedeem }
+}
+
+export function ProductDetailOverlay({
+  products,
+  index,
+  onClose,
+  onNavigate,
+}: Readonly<{
+  products: Producto[]
+  index: number
+  onClose: () => void
+  onNavigate: (nextIndex: number) => void
+}>) {
+  const user = useUser()
+  const updateUser = useUpdateUser()
+  const product = products[index]
+
+  useKeyboardNavigation(index, products.length, onClose, onNavigate)
+  useOverlayColors(product)
+
+  const { redeeming, cooldown, result, handleRedeem } = useRedeemProduct(
+    product,
+    user,
+    updateUser,
+  )
+
+  if (!product) return null
+
+  const hasDiscount = product.descuento?.tieneDescuento
+  const price = getEffectivePrice(product)
+  const originalPrice = getOriginalPrice(product)
+  const inStock = product.stock > 0
+  const canRedeem = canRedeemProduct(user, product, price)
+  const statRows = buildStatRows(product, Boolean(hasDiscount), price, originalPrice)
+  const redeemButtonContent = renderRedeemButtonContent(redeeming, cooldown)
 
   return (
     <>
@@ -213,98 +304,126 @@ export function ProductDetailOverlay({
               ))}
             </div>
 
-            {user ? (
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={handleRedeem}
-                  disabled={!canRedeem || redeeming || cooldown > 0}
-                  className={cn(
-                    "flex h-10 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-medium transition-opacity",
-                    canRedeem && !redeeming && cooldown === 0
-                      ? "bg-foreground text-background hover:opacity-85"
-                      : "bg-secondary text-muted-foreground cursor-not-allowed",
-                  )}
-                >
-                  {redeeming ? (
-                    <span className="size-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                  ) : cooldown > 0 ? (
-                    <>
-                      <Gift className="size-4 opacity-50" aria-hidden="true" />
-                      Canjear ({cooldown}s)
-                    </>
-                  ) : (
-                    <>
-                      <Gift className="size-4" aria-hidden="true" />
-                      Canjear
-                    </>
-                  )}
-                </button>
-                {!inStock && (
-                  <span className="text-center text-[12px] text-muted-foreground">Out of stock</span>
-                )}
-                {inStock && user.puntos < price && (
-                  <span className="text-center text-[12px] text-muted-foreground">
-                    You need {(price - user.puntos).toLocaleString()} more points
-                  </span>
-                )}
-                {result && (
-                  <span
-                    className={cn(
-                      "text-center text-[12px]",
-                      result.success ? "text-gold-bright" : "text-muted-foreground",
-                    )}
-                  >
-                    {result.message}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <p className="text-[13px] text-muted-foreground">Log in to redeem this product.</p>
-            )}
+            <RedeemSection
+              user={user}
+              inStock={inStock}
+              price={price}
+              canRedeem={canRedeem}
+              redeeming={redeeming}
+              cooldown={cooldown}
+              result={result}
+              buttonContent={redeemButtonContent}
+              onRedeem={handleRedeem}
+            />
           </div>
         </div>
       </aside>
 
-      {/* Lightbox: covers the overlay area but the blur + media are offset
-          right by a 292px spacer so they never paint behind the sidebar.
-          The container is pointer-events-none so only the media card
-          captures interactions. */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={product.nombre}
-        className="fixed inset-y-0 left-0 right-0 z-50 hidden flex-row overflow-hidden pointer-events-none lg:flex lg:left-[max(252px,calc(50vw-588px))] lg:right-[120px]"
-      >
-        {/* Spacer — reserves the sidebar area so blur/media don't paint there */}
-        <div className="hidden lg:block lg:w-[292px] lg:shrink-0" />
+      <ProductLightbox product={product} />
+    </>
+  )
+}
 
-        {/* Media + blur area. Blur lives on its own static layer so it always
-            paints correctly; only the image content fades + scales in on top. */}
-        <div className="relative flex min-w-0 flex-1 items-center justify-center">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-background/70 backdrop-blur-[8px]"
+// ─── Sub-components ───
+
+function RedeemSection({
+  user,
+  inStock,
+  price,
+  canRedeem,
+  redeeming,
+  cooldown,
+  result,
+  buttonContent,
+  onRedeem,
+}: Readonly<{
+  user: ReturnType<typeof useUser>
+  inStock: boolean
+  price: number
+  canRedeem: boolean
+  redeeming: boolean
+  cooldown: number
+  result: RedemptionResult | null
+  buttonContent: ReactNode
+  onRedeem: () => void
+}>) {
+  if (!user) {
+    return <p className="text-[13px] text-muted-foreground">Log in to redeem this product.</p>
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={onRedeem}
+        disabled={!canRedeem || redeeming || cooldown > 0}
+        className={cn(
+          "flex h-10 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-medium transition-opacity",
+          canRedeem && !redeeming && cooldown === 0
+            ? "bg-foreground text-background hover:opacity-85"
+            : "bg-secondary text-muted-foreground cursor-not-allowed",
+        )}
+      >
+        {buttonContent}
+      </button>
+      {!inStock && (
+        <span className="text-center text-[12px] text-muted-foreground">Out of stock</span>
+      )}
+      {inStock && user.puntos < price && (
+        <span className="text-center text-[12px] text-muted-foreground">
+          You need {(price - user.puntos).toLocaleString()} more points
+        </span>
+      )}
+      {result && (
+        <span
+          className={cn(
+            "text-center text-[12px]",
+            result.success ? "text-gold-bright" : "text-muted-foreground",
+          )}
+        >
+          {result.message}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function ProductLightbox({ product }: Readonly<{ product: Producto }>) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={product.nombre}
+      className="fixed inset-y-0 left-0 right-0 z-50 hidden flex-row overflow-hidden pointer-events-none lg:flex lg:left-[max(252px,calc(50vw-588px))] lg:right-[120px]"
+    >
+      {/* Spacer — reserves the sidebar area so blur/media don't paint there */}
+      <div className="hidden lg:block lg:w-[292px] lg:shrink-0" />
+
+      {/* Media + blur area. Blur lives on its own static layer so it always
+          paints correctly; only the image content fades + scales in on top. */}
+      <div className="relative flex min-w-0 flex-1 items-center justify-center">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-background/70 backdrop-blur-[8px]"
+        />
+        <div
+          className="overlay-media relative w-full max-w-2xl overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border"
+          style={
+            product.imagen_width && product.imagen_height
+              ? { aspectRatio: `${product.imagen_width} / ${product.imagen_height}` }
+              : { aspectRatio: "4 / 3" }
+          }
+        >
+          <Image
+            src={product.imagen || product.imagen_url || "/placeholder.svg"}
+            alt={product.nombre}
+            fill
+            sizes="672px"
+            className="object-cover"
+            priority
           />
-          <div
-            className="overlay-media relative w-full max-w-2xl overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border"
-            style={
-              product.imagen_width && product.imagen_height
-                ? { aspectRatio: `${product.imagen_width} / ${product.imagen_height}` }
-                : { aspectRatio: "4 / 3" }
-            }
-          >
-            <Image
-              src={product.imagen || product.imagen_url || "/placeholder.svg"}
-              alt={product.nombre}
-              fill
-              sizes="672px"
-              className="object-cover"
-              priority
-            />
-          </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

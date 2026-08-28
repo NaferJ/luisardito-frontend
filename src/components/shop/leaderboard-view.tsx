@@ -50,7 +50,7 @@ function entryAvatar(e: LeaderboardEntry): string | undefined {
   return e.kick_data?.avatar_url ?? undefined
 }
 
-function ChangeIndicator({ entry }: { entry: LeaderboardEntry }) {
+function ChangeIndicator({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
   switch (entry.change_indicator) {
     case "up":
       return (
@@ -82,11 +82,11 @@ function StatPill({
   icon: Icon,
   label,
   value,
-}: {
+}: Readonly<{
   icon: typeof Users
   label: string
   value: string
-}) {
+}>) {
   return (
     <div className="flex items-center gap-2">
       <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -102,11 +102,11 @@ function LeaderboardRow({
   entry,
   isMe,
   index,
-}: {
+}: Readonly<{
   entry: LeaderboardEntry
   isMe: boolean
   index: number
-}) {
+}>) {
   const isTop3 = entry.position <= 3
   const avatar = entryAvatar(entry)
   const name = entryName(entry)
@@ -192,13 +192,13 @@ export function LeaderboardView({
   stats,
   myPosition,
   myUserId,
-}: {
+}: Readonly<{
   initialEntries: LeaderboardEntry[]
   meta: LeaderboardMeta | null
   stats: LeaderboardStats | null
   myPosition: LeaderboardEntry | null
   myUserId?: number
-}) {
+}>) {
   const [search, setSearch] = useState("")
   const [sortMode, setSortMode] = useState<SortMode>("position")
   const [extraEntries, setExtraEntries] = useState<LeaderboardEntry[]>([])

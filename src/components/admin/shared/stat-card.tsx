@@ -4,10 +4,10 @@ import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 interface StatCardProps {
-  icon: ReactNode
-  label: string
-  value: number
-  valueClass?: string
+  readonly icon: ReactNode
+  readonly label: string
+  readonly value: number
+  readonly valueClass?: string
 }
 
 /** Shared stat card used by all admin list components. */

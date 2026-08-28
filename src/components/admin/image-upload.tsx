@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils"
 
 interface ImageUploadProps {
   /** Initial image URL (edit mode). */
-  value?: string | null
+  readonly value?: string | null
   /** Called when upload completes with URL + real dimensions from Cloudinary. */
-  onChange: (result: { imagen_url: string; imagen_width: number; imagen_height: number } | null) => void
-  folder?: string
-  maxSizeMB?: number
+  readonly onChange: (result: { imagen_url: string; imagen_width: number; imagen_height: number } | null) => void
+  readonly folder?: string
+  readonly maxSizeMB?: number
 }
 
 interface CloudinaryUploadResult {

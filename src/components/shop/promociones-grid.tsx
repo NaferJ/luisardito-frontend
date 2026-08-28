@@ -31,7 +31,7 @@ function daysLeft(fechaFin: string): number {
   return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-export function PromocionesGrid({ promociones }: { promociones: Promocion[] }) {
+export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promocion[] }>) {
   if (promociones.length === 0) {
     return (
       <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-border p-8">
@@ -54,6 +54,11 @@ export function PromocionesGrid({ promociones }: { promociones: Promocion[] }) {
             ? promo.cantidad_usos_maximos - promo.cantidad_usos_actuales
             : null
         const usageExhausted = usageLeft !== null && usageLeft <= 0
+        let usageLabel = "Uses exhausted"
+        if (!usageExhausted) {
+          const unit = usageLeft === 1 ? "use" : "uses"
+          usageLabel = `${usageLeft} ${unit} left`
+        }
 
         return (
           <div
@@ -115,9 +120,7 @@ export function PromocionesGrid({ promociones }: { promociones: Promocion[] }) {
                 )}
                 {usageLeft !== null && (
                   <span className="text-muted-foreground">
-                    {usageExhausted
-                      ? "Uses exhausted"
-                      : `${usageLeft} ${usageLeft === 1 ? "use" : "uses"} left`}
+                    {usageLabel}
                   </span>
                 )}
                 {promo.requiere_codigo && (

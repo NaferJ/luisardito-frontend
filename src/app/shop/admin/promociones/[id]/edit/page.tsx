@@ -7,7 +7,7 @@ import { PromocionForm } from "@/components/admin/promocion-form"
 export const dynamic = "force-dynamic"
 
 interface EditPageProps {
-  params: Promise<{ id: string }>
+  readonly params: Promise<{ id: string }>
 }
 
 export default async function EditPromocionPage({ params }: EditPageProps) {
