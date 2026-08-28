@@ -121,6 +121,10 @@ When working on an issue, the AI must:
 
 Always tell the user when moving a card between statuses.
 
+### Assignment rule
+
+**Every issue must be assigned to NaferJ.** When creating an issue, always pass `--add-assignee NaferJ`. The board is a solo project — there are no unassigned cards.
+
 ### Status updates
 
 Status updates are high-level project health reports (not task-level updates). Add one via the project board UI (side panel -> Add update).
