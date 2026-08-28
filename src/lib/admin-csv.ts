@@ -1,14 +1,15 @@
-/** Generate a CSV file from headers and rows, then trigger a browser download. */
+/** Generate a CSV file from headers and rows, then trigger a browser download.
+ *  Null/undefined cells are rendered as empty strings. */
 export function downloadCSV(
   filename: string,
   headers: (string | number)[],
-  rows: (string | number)[][],
+  rows: (string | number | null | undefined)[][],
 ): void {
   const csv = [headers, ...rows]
     .map((row) =>
       row
         .map((cell) => {
-          const s = String(cell)
+          const s = String(cell ?? "")
           return s.includes(",") || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s
         })
         .join(","),

@@ -4,24 +4,22 @@ import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import {
-  Search,
   Plus,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Download,
   Package,
   CheckCircle2,
   FileEdit,
   PackageX,
   ShoppingBag,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react"
 import { ArchiveProductButton } from "@/components/admin/archive-product-button"
 import { cn } from "@/lib/utils"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS } from "@/lib/admin-utils"
+import { StatCard } from "@/components/admin/shared/stat-card"
+import { FilterPills } from "@/components/admin/shared/filter-pills"
+import { SortHeader } from "@/components/admin/shared/sort-header"
+import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
+import { Pagination } from "@/components/admin/shared/pagination"
 import type { Producto } from "@/types"
 
 type SortKey = "nombre" | "precio" | "stock" | "canjes_count" | "actualizado"
@@ -146,11 +144,6 @@ export function AdminProductList({ products }: { products: Producto[] }) {
   const safePage = Math.min(currentPage, totalPages)
   const paginated = visibleProducts.slice((safePage - 1) * pageSize, safePage * pageSize)
 
-  const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column) return <ArrowUpDown className="size-3 opacity-30" />
-    return sortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
-  }
-
   const onSearchChange = (v: string) => { setSearch(v); setCurrentPage(1) }
   const onStatusChange = (v: StatusFilter) => { setStatusFilter(v); setCurrentPage(1) }
   const onPageSizeChange = (s: (typeof PAGE_SIZE_OPTIONS)[number]) => { setPageSize(s); setCurrentPage(1) }
@@ -168,29 +161,15 @@ export function AdminProductList({ products }: { products: Producto[] }) {
 
         <div className="flex items-center gap-3">
           {/* Search */}
-          <div className="relative flex h-8 items-center">
-            <Search className="pointer-events-none absolute left-3 size-3.5 text-muted-foreground" />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search name, slug..."
-              aria-label="Search products"
-              className="h-8 w-52 rounded-full border border-border bg-secondary pl-8 pr-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:w-64 focus:border-gold focus:outline-none transition-all"
-            />
-          </div>
+          <SearchInput
+            value={search}
+            onChange={onSearchChange}
+            placeholder="Search name, slug..."
+            ariaLabel="Search products"
+          />
 
           {/* CSV export */}
-          <button
-            type="button"
-            onClick={() => exportCSV(visibleProducts)}
-            className="flex h-8 items-center gap-1.5 rounded-full border border-border px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-secondary"
-            aria-label="Export CSV"
-            title="Export filtered results as CSV"
-          >
-            <Download className="size-3.5" />
-            <span className="hidden sm:inline">CSV</span>
-          </button>
+          <CsvButton onClick={() => exportCSV(visibleProducts)} />
 
           {/* New product */}
           <button
@@ -214,52 +193,25 @@ export function AdminProductList({ products }: { products: Producto[] }) {
       </div>
 
       {/* Filters row: status pills */}
-      <div className="flex flex-wrap items-center gap-2">
-        {STATUS_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onStatusChange(opt.value)}
-            aria-pressed={statusFilter === opt.value}
-            className={cn(
-              "h-7 rounded-full px-3 text-[12px] font-medium transition-colors",
-              statusFilter === opt.value
-                ? "bg-gold text-gold-foreground"
-                : "bg-secondary text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
+      <FilterPills
+        options={STATUS_OPTIONS}
+        value={statusFilter}
+        onChange={onStatusChange}
+      />
 
       {/* Table */}
       {paginated.length > 0 ? (
         <div className="overflow-hidden rounded-lg border border-border">
           {/* Column headers */}
-          <div className="flex items-center gap-4 border-b border-border bg-secondary/50 px-4 py-2.5">
-            <span className="w-10 shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Img
-            </span>
-            {COLUMNS.map((col) => (
-              <button
-                key={col.key}
-                type="button"
-                onClick={() => toggleSort(col.key)}
-                className={cn(
-                  "flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground",
-                  col.className,
-                  (col.key === "precio" || col.key === "stock" || col.key === "canjes_count" || col.key === "actualizado") && "justify-end",
-                )}
-              >
-                {col.label}
-                <SortIcon column={col.key} />
-              </button>
-            ))}
-            <span className="w-24 shrink-0 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Actions
-            </span>
-          </div>
+          <SortHeader
+            columns={COLUMNS.map((c) => ({ ...c, alignRight: c.key === "precio" || c.key === "stock" || c.key === "canjes_count" || c.key === "actualizado" }))}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={toggleSort}
+            leadingLabel="Img"
+            leadingClassName="w-10 shrink-0"
+            trailingLabel="Actions"
+          />
 
           {/* Rows */}
           <div className="flex flex-col">
@@ -343,48 +295,14 @@ export function AdminProductList({ products }: { products: Producto[] }) {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
-              <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-                <span>
-                  {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, visibleProducts.length)} of {visibleProducts.length}
-                </span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => onPageSizeChange(Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number])}
-                  className="h-7 rounded-sm border border-border bg-background px-2 text-[12px] text-foreground focus:border-gold focus:outline-none"
-                  aria-label="Page size"
-                >
-                  {PAGE_SIZE_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s}/page</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage(Math.max(1, safePage - 1))}
-                  disabled={safePage === 1}
-                  className="flex size-7 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft className="size-3.5" />
-                </button>
-                <span className="px-2 text-[12px] tabular-nums text-foreground">
-                  {safePage} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage(Math.min(totalPages, safePage + 1))}
-                  disabled={safePage === totalPages}
-                  className="flex size-7 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
-                  aria-label="Next page"
-                >
-                  <ChevronRight className="size-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={visibleProducts.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={onPageSizeChange}
+          />
         </div>
       ) : (
         <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
@@ -405,30 +323,6 @@ export function AdminProductList({ products }: { products: Producto[] }) {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  valueClass,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: number
-  valueClass?: string
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 rounded-sm border border-border bg-secondary p-3">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        {icon}
-        <span className="text-[11px] font-medium uppercase tracking-wide">{label}</span>
-      </div>
-      <span className={cn("text-[20px] font-bold tabular-nums", valueClass ?? "text-foreground")}>
-        {value}
-      </span>
     </div>
   )
 }

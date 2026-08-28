@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Search, X, Terminal, Zap, Shield } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { FilterPills } from "@/components/admin/shared/filter-pills"
 import type { BotCommand } from "@/lib/comandos"
 
 type FilterType = "all" | "simple" | "dynamic"
@@ -82,22 +82,12 @@ export function ComandosTable({ commands }: { commands: BotCommand[] }) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {FILTER_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setFilterType(opt.value)}
-              aria-pressed={filterType === opt.value}
-              className={cn(
-                "h-7 rounded-full px-3 text-[12px] font-medium transition-colors",
-                filterType === opt.value
-                  ? "bg-gold text-gold-foreground"
-                  : "bg-background text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
+          <FilterPills
+            options={FILTER_OPTIONS}
+            value={filterType}
+            onChange={setFilterType}
+            variant="shop"
+          />
         </div>
 
         <span className="shrink-0 text-[12px] text-muted-foreground sm:ml-auto">

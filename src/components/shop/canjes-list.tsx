@@ -12,7 +12,7 @@ import {
   Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatDateTime } from "@/lib/admin-utils"
+import { formatDateTime as formatDate } from "@/lib/admin-utils"
 import type { Canje } from "@/types"
 
 type SortMode = "date-desc" | "date-asc" | "price-desc" | "price-asc"
@@ -38,10 +38,6 @@ const STATUS_STYLES: Record<string, { icon: typeof Clock; className: string; lab
   entregado: { icon: CheckCircle2, className: "text-foreground", label: "Delivered" },
   cancelado: { icon: XCircle, className: "text-destructive", label: "Cancelled" },
   devuelto: { icon: RotateCcw, className: "text-muted-foreground", label: "Returned" },
-}
-
-function formatDate(dateString: string): string {
-  return formatDateTime(dateString)
 }
 
 function canjePrice(c: Canje): number {
