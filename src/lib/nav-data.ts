@@ -1,15 +1,23 @@
 export const browseLinks = [
-  { label: "Design", href: "/design" },
-  { label: "Websites", href: "/websites" },
-  { label: "OG Images", href: "/og-images" },
-  { label: "App Screenshots", href: "/app-screenshots" },
-  { label: "App Icons", href: "/app-icons" },
+  { label: "Shop", href: "/shop" },
 ] as const
 
-export const resourceLinks = [
-  { label: "Tools", href: "/tools" },
-  { label: "Skills", href: "/skills" },
-  { label: "Jobs", href: "/jobs" },
+export const accountLinks = [
+  { label: "Canjes", href: "/shop/canjes" },
+  { label: "Promotions", href: "/shop/promociones" },
+  { label: "Commands", href: "/shop/comandos" },
+  { label: "Leaderboard", href: "/shop/leaderboard" },
+  { label: "Historial", href: "/shop/historial" },
+  { label: "Perfil", href: "/shop/perfil" },
+] as const
+
+export const adminLinks = [
+  { label: "Products", href: "/shop/admin/products" },
+  { label: "Redemptions", href: "/shop/admin/canjes" },
+  { label: "Promotions", href: "/shop/admin/promociones" },
+  { label: "Users", href: "/shop/admin/usuarios" },
+  { label: "Commands", href: "/shop/admin/comandos" },
+  { label: "Kick Config", href: "/shop/admin/kick" },
 ] as const
 
 export const categoryFilters = [

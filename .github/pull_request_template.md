@@ -1,21 +1,28 @@
+## Issue
+
+<!-- Link the issue this PR closes. This auto-closes the issue on merge
+     and moves the project board card to Done. -->
+Closes #
+
 ## What
 
 <!-- What does this PR change? Be concrete. For refactors, state it is behavior-preserving. -->
 
 ## Why
 
-<!-- The problem/motivation. Link the ticket or related PR if relevant. -->
+<!-- The problem/motivation. Link the related issue, ticket, or context if relevant. -->
 
 ## Scope / Non-goals
 
-<!-- What this PR deliberately does NOT touch: routes, layouts, global styles,
-     fonts, env vars. State the behavior-preserving guarantee here if it's a
+<!-- What this PR deliberately does NOT touch: pages, components, API contracts,
+     env vars, routing. State the behavior-preserving guarantee here if it's a
      refactor or chore. -->
 
 ## Release impact
 
-<!-- Consumer-visible change? Then: version bump + changelog entry.
-     Pure tooling/internal/docs? Then: NO bump, NO changelog. State which and why. -->
+<!-- Consumer-visible change? Then: version bump + changelog entry in
+     src/content/changelog/. Pure tooling/internal/docs? Then: NO bump, NO
+     changelog. State which and why. -->
 
 ## Verification (local gates — all must be green)
 
@@ -26,7 +33,6 @@
 ## Merge checks (must pass before merge)
 
 - CI
-- GitGuardian
 - Vercel preview
 
 ## Rollback
