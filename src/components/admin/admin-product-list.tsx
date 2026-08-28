@@ -72,7 +72,7 @@ function exportCSV(products: Producto[]): void {
   downloadCSV("products", headers, rows)
 }
 
-export function AdminProductList({ products }: { products: Producto[] }) {
+export function AdminProductList({ products }: Readonly<{ products: Producto[] }>) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")

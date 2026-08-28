@@ -169,7 +169,16 @@ function exportCSV(canjes: Canje[]): void {
 
 // ─── Component ───
 
-export function AdminCanjesList({ canjes: initialCanjes }: { canjes: Canje[] }) {
+function SortIcon({
+  column,
+  sortKey,
+  sortDir,
+}: Readonly<{ column: SortKey; sortKey: SortKey; sortDir: SortDir }>) {
+  if (sortKey !== column) return <ArrowUpDown className="size-3 opacity-30" />
+  return sortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+}
+
+export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Canje[] }>) {
   const router = useRouter()
   const [canjes, setCanjes] = useState<Canje[]>(initialCanjes)
   const [search, setSearch] = useState("")
@@ -282,11 +291,6 @@ export function AdminCanjesList({ canjes: initialCanjes }: { canjes: Canje[] }) 
       setSortKey(key)
       setSortDir("desc")
     }
-  }
-
-  const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column) return <ArrowUpDown className="size-3 opacity-30" />
-    return sortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
   }
 
   // ─── Optimistic update helper ───
@@ -513,7 +517,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: { canjes: Canje[] }) 
                 )}
               >
                 {col.label}
-                <SortIcon column={col.key} />
+                <SortIcon column={col.key} sortKey={sortKey} sortDir={sortDir} />
               </button>
             ))}
             <span className="w-24 shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -813,12 +817,12 @@ function DetailDrawer({
   index,
   onClose,
   onNavigate,
-}: {
+}: Readonly<{
   canjes: Canje[]
   index: number
   onClose: () => void
   onNavigate: (nextIndex: number) => void
-}) {
+}>) {
   const canje = canjes[index]
   const user = canje.Usuario ?? canje.usuario
   const avatar = canjeUserAvatar(canje)
@@ -1011,13 +1015,13 @@ function ActionBtn({
   disabled,
   primary,
   danger,
-}: {
+}: Readonly<{
   label: string
   onClick: () => void
   disabled?: boolean
   primary?: boolean
   danger?: boolean
-}) {
+}>) {
   return (
     <button
       type="button"

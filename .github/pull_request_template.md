@@ -33,7 +33,6 @@ Closes #
 ## Merge checks (must pass before merge)
 
 - CI
-- Vercel preview
 
 ## Rollback
 

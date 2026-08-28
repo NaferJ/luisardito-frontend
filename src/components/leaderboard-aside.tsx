@@ -18,7 +18,7 @@ const AVATAR_COLORS = [
   "bg-gold-core",
 ]
 
-export function LeaderboardAside({ entries }: { entries: LeaderboardEntry[] }) {
+export function LeaderboardAside({ entries }: Readonly<{ entries: LeaderboardEntry[] }>) {
   if (entries.length === 0) return null
 
   return (

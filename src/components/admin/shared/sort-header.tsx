@@ -4,24 +4,24 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Column<T extends string> {
-  key: T
-  label: string
-  className: string
+  readonly key: T
+  readonly label: string
+  readonly className: string
   /** Whether this column is right-aligned (affects sort button layout). */
-  alignRight?: boolean
+  readonly alignRight?: boolean
 }
 
 interface SortHeaderProps<T extends string> {
-  columns: Column<T>[]
-  sortKey: T
-  sortDir: "asc" | "desc"
-  onSort: (key: T) => void
+  readonly columns: Column<T>[]
+  readonly sortKey: T
+  readonly sortDir: "asc" | "desc"
+  readonly onSort: (key: T) => void
   /** Optional leading column (e.g. "ID" or checkbox) shown before sortable columns. */
-  leadingLabel?: string
-  leadingClassName?: string
+  readonly leadingLabel?: string
+  readonly leadingClassName?: string
   /** Optional trailing column label (e.g. "Actions") shown after sortable columns. */
-  trailingLabel?: string
-  trailingClassName?: string
+  readonly trailingLabel?: string
+  readonly trailingClassName?: string
 }
 
 /** Sortable column header row used by all admin list tables. */

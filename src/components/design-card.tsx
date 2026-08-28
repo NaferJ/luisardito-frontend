@@ -1,42 +1,74 @@
+import type { ReactNode } from "react"
 import Image from "next/image"
 import { ArrowUpRight, Bookmark, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export type DesignCardData = {
-  id: string
-  image: string
-  alt: string
+  readonly id: string
+  readonly image: string
+  readonly alt: string
   /** Tailwind aspect-ratio class (fallback when no real dimensions). */
-  aspect: string
+  readonly aspect: string
   /** Inline aspect-ratio style from real image dimensions. Takes precedence over `aspect`. */
-  aspectStyle?: { aspectRatio: string }
-  avatarColor: string
-  badge?: "star" | number
-  tag: string
-  title: string
-  author: string
-  description: string
-  timeAgo: string
-  impressions: string
-  outbound: number
-  source: string
-  category: string
-  style: string
-  color: string
-  interaction: string[]
+  readonly aspectStyle?: { aspectRatio: string }
+  readonly avatarColor: string
+  readonly badge?: "star" | number
+  readonly tag: string
+  readonly title: string
+  readonly author: string
+  readonly description: string
+  readonly timeAgo: string
+  readonly impressions: string
+  readonly outbound: number
+  readonly source: string
+  readonly category: string
+  readonly style: string
+  readonly color: string
+  readonly interaction: string[]
   /** Last person who redeemed this product (shop cards only). */
-  lastRedeemer?: { name: string; avatar?: string } | null
+  readonly lastRedeemer?: { name: string; avatar?: string } | null
   /** Author avatar image URL (landing cards, when available). */
-  avatar?: string
+  readonly avatar?: string
 }
 
 export function DesignCard({
   card,
   onOpen,
-}: {
+}: Readonly<{
   card: DesignCardData
   onOpen: () => void
-}) {
+}>) {
+  let avatarElement: ReactNode
+  if (card.lastRedeemer?.avatar) {
+    avatarElement = (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={card.lastRedeemer.avatar}
+        alt={card.lastRedeemer.name}
+        className="size-7 rounded-full object-cover ring-1 ring-background/80"
+      />
+    )
+  } else if (card.avatar) {
+    avatarElement = (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={card.avatar}
+        alt={card.author}
+        className="size-7 rounded-full object-cover ring-1 ring-background/80"
+      />
+    )
+  } else {
+    avatarElement = (
+      <span
+        aria-hidden="true"
+        className={cn(
+          "block size-7 rounded-full ring-1 ring-background/80",
+          card.avatarColor,
+        )}
+      />
+    )
+  }
+
   return (
     <article className="mb-3 break-inside-avoid">
       <div
@@ -91,29 +123,7 @@ export function DesignCard({
         {/* Avatar — bottom-left, always visible.
             Shows last redeemer (shop) or author (landing) avatar. */}
         <div className="absolute bottom-2.5 left-2.5 z-10">
-          {card.lastRedeemer?.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={card.lastRedeemer.avatar}
-              alt={card.lastRedeemer.name}
-              className="size-7 rounded-full object-cover ring-1 ring-background/80"
-            />
-          ) : card.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={card.avatar}
-              alt={card.author}
-              className="size-7 rounded-full object-cover ring-1 ring-background/80"
-            />
-          ) : (
-            <span
-              aria-hidden="true"
-              className={cn(
-                "block size-7 rounded-full ring-1 ring-background/80",
-                card.avatarColor,
-              )}
-            />
-          )}
+          {avatarElement}
         </div>
 
         {/* Open arrow — bottom-right, always visible */}

@@ -4,12 +4,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { PAGE_SIZE_OPTIONS, type PageSize } from "@/lib/admin-utils"
 
 interface PaginationProps {
-  currentPage: number
-  totalPages: number
-  pageSize: PageSize
-  totalItems: number
-  onPageChange: (page: number) => void
-  onPageSizeChange: (size: PageSize) => void
+  readonly currentPage: number
+  readonly totalPages: number
+  readonly pageSize: PageSize
+  readonly totalItems: number
+  readonly onPageChange: (page: number) => void
+  readonly onPageSizeChange: (size: PageSize) => void
 }
 
 /** Shared pagination control used by all admin list components. */

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo } from 'react'
 import type { Usuario } from '@/types'
 
 const UserContext = createContext<{
@@ -11,18 +11,20 @@ const UserContext = createContext<{
 export function UserProvider({
   user: initialUser,
   children,
-}: {
+}: Readonly<{
   user: Usuario | null
   children: React.ReactNode
-}) {
+}>) {
   const [user, setUser] = useState<Usuario | null>(initialUser)
 
   const updateUser = useCallback((updates: Partial<Usuario>) => {
     setUser((prev) => (prev ? { ...prev, ...updates } : prev))
   }, [])
 
+  const value = useMemo(() => ({ user, updateUser }), [user, updateUser])
+
   return (
-    <UserContext.Provider value={{ user, updateUser }}>
+    <UserContext.Provider value={value}>
       {children}
     </UserContext.Provider>
   )

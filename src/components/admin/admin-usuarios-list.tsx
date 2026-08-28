@@ -127,10 +127,10 @@ function exportCSV(usuarios: AdminUsuario[]): void {
 export function AdminUsuariosList({
   usuarios,
   canjesByUser,
-}: {
+}: Readonly<{
   usuarios: AdminUsuario[]
   canjesByUser?: Record<number, Canje[]>
-}) {
+}>) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
@@ -397,14 +397,14 @@ function UserDetailDrawer({
   onNavigate,
   canjesByUser,
   onManage,
-}: {
+}: Readonly<{
   usuarios: AdminUsuario[]
   index: number
   onClose: () => void
   onNavigate: (nextIndex: number) => void
   canjesByUser?: Record<number, Canje[]>
   onManage: (id: number) => void
-}) {
+}>) {
   const u = usuarios[index]
   const avatar = userAvatar(u)
   const vip = isVip(u)

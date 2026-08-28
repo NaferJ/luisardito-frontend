@@ -8,8 +8,8 @@ const tagStyles: Record<
   ChangelogRelease["changes"][number]["type"],
   string
 > = {
-  added: "bg-gold/15 text-gold-bright",
-  improved: "bg-foreground/10 text-foreground",
+  added: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  improved: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
   fixed: "bg-destructive/15 text-destructive",
 }
 
@@ -23,7 +23,7 @@ const tagLabels: Record<
 }
 
 function formatDate(iso: string): string {
-  const date = new Date(iso)
+  const date = new Date(iso + "T00:00:00")
   if (Number.isNaN(date.getTime())) {
     return iso
   }
@@ -37,10 +37,10 @@ function formatDate(iso: string): string {
 export function ChangelogReleaseCard({
   release,
   defaultExpanded,
-}: {
+}: Readonly<{
   release: ChangelogRelease
   defaultExpanded: boolean
-}) {
+}>) {
   const [expanded, setExpanded] = useState(defaultExpanded)
 
   return (
@@ -81,7 +81,7 @@ export function ChangelogReleaseCard({
           <ul className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
             {release.changes.map((change, index) => (
               <li
-                key={index}
+                key={`${change.type}-${index}`}
                 className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-3"
               >
                 <span

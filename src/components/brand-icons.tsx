@@ -1,7 +1,7 @@
 /** Brand logo icons for platforms that lucide-react doesn't include.
  *  Inline SVGs since lucide-react doesn't include brand logos. */
 
-export function KickLogo({ className }: { className?: string }) {
+export function KickLogo({ className }: Readonly<{ className?: string }>) {
   return (
     <svg
       className={className}
@@ -14,7 +14,7 @@ export function KickLogo({ className }: { className?: string }) {
   )
 }
 
-export function DiscordLogo({ className }: { className?: string }) {
+export function DiscordLogo({ className }: Readonly<{ className?: string }>) {
   return (
     <svg
       className={className}
@@ -27,7 +27,7 @@ export function DiscordLogo({ className }: { className?: string }) {
   )
 }
 
-export function XLogo({ className }: { className?: string }) {
+export function XLogo({ className }: Readonly<{ className?: string }>) {
   return (
     <svg
       className={className}
@@ -40,7 +40,7 @@ export function XLogo({ className }: { className?: string }) {
   )
 }
 
-export function GitHubLogo({ className }: { className?: string }) {
+export function GitHubLogo({ className }: Readonly<{ className?: string }>) {
   return (
     <svg
       className={className}
@@ -53,7 +53,7 @@ export function GitHubLogo({ className }: { className?: string }) {
   )
 }
 
-export function InstagramLogo({ className }: { className?: string }) {
+export function InstagramLogo({ className }: Readonly<{ className?: string }>) {
   return (
     <svg
       className={className}
@@ -77,7 +77,7 @@ export function InstagramLogo({ className }: { className?: string }) {
   )
 }
 
-export function RedditLogo({ className }: { className?: string }) {
+export function RedditLogo({ className }: Readonly<{ className?: string }>) {
   return (
     <svg
       className={className}
@@ -90,7 +90,7 @@ export function RedditLogo({ className }: { className?: string }) {
   )
 }
 
-export function KofiLogo({ className }: { className?: string }) {
+export function KofiLogo({ className }: Readonly<{ className?: string }>) {
   return (
     <svg
       className={className}

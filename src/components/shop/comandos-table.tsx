@@ -20,7 +20,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   broadcaster: "Broadcaster",
 }
 
-export function ComandosTable({ commands }: { commands: BotCommand[] }) {
+export function ComandosTable({ commands }: Readonly<{ commands: BotCommand[] }>) {
   const [search, setSearch] = useState("")
   const [filterType, setFilterType] = useState<FilterType>("all")
 

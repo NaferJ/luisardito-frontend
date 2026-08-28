@@ -34,7 +34,7 @@ function usePrefersReducedMotion(): boolean {
   )
 }
 
-function SocialIcon({ label }: { label: string }) {
+function SocialIcon({ label }: Readonly<{ label: string }>) {
   const className = "size-4"
   switch (label) {
     case "YouTube":
@@ -78,7 +78,7 @@ function SocialIcon({ label }: { label: string }) {
   }
 }
 
-function SocialLinks({ socials }: { socials: SocialLink[] }) {
+function SocialLinks({ socials }: Readonly<{ socials: SocialLink[] }>) {
   return (
     <div className="flex items-center gap-3">
       {socials.map((social) => (
@@ -107,7 +107,7 @@ function ShowcaseControls({
   onSlideChange,
   onTogglePlay,
   onToggleMute,
-}: {
+}: Readonly<{
   slides: ShowcaseSlide[]
   currentSlide: number
   slideDurations: number[]
@@ -116,7 +116,7 @@ function ShowcaseControls({
   onSlideChange: (index: number) => void
   onTogglePlay: () => void
   onToggleMute: () => void
-}) {
+}>) {
   return (
     <div className="flex items-center gap-3" aria-label="Showcase controls">
       {/* Progress dots — one thin bar per slide, fills left to right */}
@@ -195,12 +195,12 @@ function HorizontalSlide({
   phase,
   videoRef,
   controls,
-}: {
+}: Readonly<{
   slide: ShowcaseSlide
   phase: "image" | "expanded"
   videoRef: React.RefObject<HTMLVideoElement | null>
   controls: React.ReactNode
-}) {
+}>) {
   const expanded = phase === "expanded"
 
   return (
@@ -278,12 +278,12 @@ function VerticalSlide({
   activeVideoIndex,
   videoRefs,
   controls,
-}: {
+}: Readonly<{
   slide: ShowcaseSlide
   activeVideoIndex: number
   videoRefs: React.RefObject<(HTMLVideoElement | null)[]>
   controls: React.ReactNode
-}) {
+}>) {
   const videos = slide.verticalVideos ?? []
 
   return (

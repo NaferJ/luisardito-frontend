@@ -52,7 +52,7 @@ function canjeImage(c: Canje): string | null {
   return c.Producto?.imagen_url ?? c.Producto?.imagen ?? c.producto?.imagen_url ?? c.producto?.imagen ?? null
 }
 
-export function CanjesList({ canjes }: { canjes: Canje[]; userPoints: number }) {
+export function CanjesList({ canjes }: Readonly<{ canjes: Canje[] }>) {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [sortMode, setSortMode] = useState<SortMode>("date-desc")
@@ -264,20 +264,20 @@ function StatChip({
   label,
   accent,
   outline,
-}: {
+}: Readonly<{
   label: string
   accent?: "gold"
   outline?: boolean
-}) {
+}>) {
+  let chipClass = "bg-secondary text-muted-foreground"
+  if (outline) chipClass = "border border-border text-foreground"
+  else if (accent === "gold") chipClass = "bg-gold/20 text-gold-bright"
+
   return (
     <span
       className={cn(
         "inline-flex h-7 items-center rounded-full px-3 text-[12px] font-medium",
-        outline
-          ? "border border-border text-foreground"
-          : accent === "gold"
-            ? "bg-gold/20 text-gold-bright"
-            : "bg-secondary text-muted-foreground",
+        chipClass,
       )}
     >
       {label}

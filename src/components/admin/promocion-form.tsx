@@ -74,10 +74,10 @@ function fromPromocion(p: Promocion): PromocionFormData {
 export function PromocionForm({
   mode,
   initialData,
-}: {
+}: Readonly<{
   mode: "create" | "edit"
   initialData?: Promocion
-}) {
+}>) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -104,6 +104,10 @@ export function PromocionForm({
       }
     })
   }
+
+  let saveLabel = "Save changes"
+  if (pending) saveLabel = "Saving..."
+  else if (mode === "create") saveLabel = "Create promotion"
 
   return (
     <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-5">
@@ -293,7 +297,7 @@ export function PromocionForm({
           disabled={pending}
           className="flex h-9 items-center gap-2 rounded-full bg-foreground px-5 text-[13px] font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
         >
-          {pending ? "Saving..." : mode === "create" ? "Create promotion" : "Save changes"}
+          {saveLabel}
         </button>
         <button
           type="button"
@@ -310,7 +314,7 @@ export function PromocionForm({
 const inputClass =
   "h-9 w-full rounded-sm border border-border bg-background px-3 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: Readonly<{ label: string; children: React.ReactNode }>) {
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-[12px] font-medium text-muted-foreground">{label}</span>
@@ -323,11 +327,11 @@ function Toggle({
   label,
   checked,
   onChange,
-}: {
+}: Readonly<{
   label: string
   checked: boolean
   onChange: (v: boolean) => void
-}) {
+}>) {
   return (
     <button
       type="button"

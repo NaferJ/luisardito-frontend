@@ -8,7 +8,7 @@ import type { Producto } from "@/types"
 export const dynamic = "force-dynamic"
 
 interface EditPageProps {
-  params: Promise<{ id: string }>
+  readonly params: Promise<{ id: string }>
 }
 
 export default async function EditProductPage({ params }: EditPageProps) {

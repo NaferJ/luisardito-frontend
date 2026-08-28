@@ -23,12 +23,12 @@ export function DesignDetailOverlay({
   index,
   onClose,
   onNavigate,
-}: {
+}: Readonly<{
   cards: DesignCardData[]
   index: number
   onClose: () => void
   onNavigate: (nextIndex: number) => void
-}) {
+}>) {
   const [saved, setSaved] = useState(false)
   const [savedCardId, setSavedCardId] = useState<string | undefined>(undefined)
   const card = cards[index]

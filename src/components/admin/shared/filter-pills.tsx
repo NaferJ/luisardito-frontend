@@ -6,17 +6,17 @@ import { DATE_PRESETS } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
 
 interface FilterPillsProps<T extends string> {
-  options: { value: T; label: string }[]
-  value: T
-  onChange: (value: T) => void
+  readonly options: { value: T; label: string }[]
+  readonly value: T
+  readonly onChange: (value: T) => void
   /** Optional date range selector shown on the right side. */
-  datePreset?: DatePreset
-  onDateChange?: (value: DatePreset) => void
+  readonly datePreset?: DatePreset
+  readonly onDateChange?: (value: DatePreset) => void
   /** ARIA label for the date selector. */
-  dateAriaLabel?: string
+  readonly dateAriaLabel?: string
   /** Visual variant: "admin" (default) uses bg-secondary for inactive pills,
    *  "shop" uses bg-background (for use inside bg-secondary containers). */
-  variant?: "admin" | "shop"
+  readonly variant?: "admin" | "shop"
 }
 
 /** Shared filter pill row used by admin and shop list components. */

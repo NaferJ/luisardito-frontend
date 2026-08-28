@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { archiveProduct } from "@/app/shop/admin/products/actions"
 import { cn } from "@/lib/utils"
 
-export function ArchiveProductButton({ id, name }: { id: string; name: string }) {
+export function ArchiveProductButton({ id, name }: Readonly<{ id: string; name: string }>) {
   const [isPending, startTransition] = useTransition()
   const [confirming, setConfirming] = useState(false)
 

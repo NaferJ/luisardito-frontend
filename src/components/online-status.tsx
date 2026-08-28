@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 
-export function OnlineStatus({ base = 28 }: { base?: number }) {
+export function OnlineStatus({ base = 28 }: Readonly<{ base?: number }>) {
   const pathname = usePathname()
   const isLanding = pathname === "/"
   // Green on the landing page, gold everywhere else — matches the side-decor palette.

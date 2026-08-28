@@ -19,7 +19,7 @@ const listeners = new Set<() => void>()
 export function setOverlayColors(colors: string[] | null): void {
   // Compare by reference + length to avoid spurious notifications.
   if (colors === currentColors) return
-  if (colors && currentColors && colors.length === currentColors.length) {
+  if (colors?.length === currentColors?.length) {
     let same = true
     for (let i = 0; i < colors.length; i++) {
       if (colors[i] !== currentColors[i]) {

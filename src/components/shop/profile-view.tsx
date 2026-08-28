@@ -33,10 +33,10 @@ function formatVipExpiry(expiresAt?: string): string {
 export function ProfileView({
   user,
   onLogout,
-}: {
+}: Readonly<{
   user: Usuario
   onLogout: () => Promise<void>
-}) {
+}>) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const name = displayName(user)
   const avatar = avatarUrl(user)
@@ -164,7 +164,7 @@ export function ProfileView({
           </div>
           <span className="flex items-center gap-1.5 text-[12px] font-medium text-foreground">
             <span className="size-2 rounded-full bg-foreground" aria-hidden="true" />
-            Connected
+            {"Connected"}
           </span>
         </div>
 
@@ -189,7 +189,7 @@ export function ProfileView({
           {discordLinked ? (
             <span className="flex items-center gap-1.5 text-[12px] font-medium text-foreground">
               <span className="size-2 rounded-full bg-foreground" aria-hidden="true" />
-              Connected
+              {"Connected"}
             </span>
           ) : (
             <a

@@ -6,7 +6,7 @@ import { Dithering } from "@paper-design/shaders-react"
 import { useOverlayColors } from "@/lib/overlay-color-store"
 
 type SideDecorProps = {
-  side: "left" | "right"
+  readonly side: "left" | "right"
 }
 
 /** Parse a #RRGGBB hex string into [r, g, b]. */

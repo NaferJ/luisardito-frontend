@@ -154,7 +154,7 @@ function exportCSV(commands: BotCommand[]): void {
 
 // ─── Component ───
 
-export function AdminComandosList({ commands: initialCommands }: { commands: BotCommand[] }) {
+export function AdminComandosList({ commands: initialCommands }: Readonly<{ commands: BotCommand[] }>) {
   const router = useRouter()
   const [commands, setCommands] = useState<BotCommand[]>(initialCommands)
   const [search, setSearch] = useState("")
@@ -328,6 +328,10 @@ export function AdminComandosList({ commands: initialCommands }: { commands: Bot
   const onTypeChange = (v: TypeFilter) => { setTypeFilter(v); setCurrentPage(1) }
   const onStatusChange = (v: StatusFilter) => { setStatusFilter(v); setCurrentPage(1) }
   const onPageSizeChange = (s: (typeof PAGE_SIZE_OPTIONS)[number]) => { setPageSize(s); setCurrentPage(1) }
+
+  let saveLabel = "Save"
+  if (pending) saveLabel = "Saving..."
+  else if (creating) saveLabel = "Create"
 
   return (
     <>
@@ -544,7 +548,7 @@ export function AdminComandosList({ commands: initialCommands }: { commands: Bot
                 className="flex h-9 items-center gap-2 rounded-full bg-foreground px-5 text-[13px] font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
               >
                 <Save className="size-3.5" />
-                {pending ? "Saving..." : creating ? "Create" : "Save"}
+                {saveLabel}
               </button>
               <button
                 type="button"
@@ -751,7 +755,7 @@ function DetailDrawer({
   onDelete,
   onToggle,
   pending,
-}: {
+}: Readonly<{
   commands: BotCommand[]
   index: number
   onClose: () => void
@@ -760,7 +764,7 @@ function DetailDrawer({
   onDelete: (cmd: BotCommand) => void
   onToggle: (id: number) => void
   pending: boolean
-}) {
+}>) {
   const cmd = commands[index]
   const isDynamic = cmd.command_type === "dynamic"
 

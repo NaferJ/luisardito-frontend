@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { SiteSidebar } from "@/components/site-sidebar"
 import { OnlineStatus } from "@/components/online-status"
 
-export function SiteShell({ children }: { children: ReactNode }) {
+export function SiteShell({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1680px] flex-col gap-8 p-4 lg:flex-row lg:gap-8">
       <SiteSidebar />

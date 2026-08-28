@@ -139,7 +139,7 @@ function exportCSV(promociones: Promocion[]): void {
 
 // ─── Component ───
 
-export function AdminPromocionesList({ promociones }: { promociones: Promocion[] }) {
+export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Promocion[] }>) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [estadoFilter, setEstadoFilter] = useState<EstadoFilter>("all")
@@ -301,6 +301,9 @@ export function AdminPromocionesList({ promociones }: { promociones: Promocion[]
                 const usage = usagePercent(p)
                 const active = isCurrentlyActive(p)
                 const upcoming = isUpcoming(p)
+                let usageBarColor = "bg-foreground"
+                if (usage >= 90) usageBarColor = "bg-destructive"
+                else if (usage >= 70) usageBarColor = "bg-gold-bright"
 
                 return (
                   <div
@@ -368,7 +371,7 @@ export function AdminPromocionesList({ promociones }: { promociones: Promocion[]
                           <div
                             className={cn(
                               "h-full rounded-full",
-                              usage >= 90 ? "bg-destructive" : usage >= 70 ? "bg-gold-bright" : "bg-foreground",
+                              usageBarColor,
                             )}
                             style={{ width: `${usage}%` }}
                           />
@@ -461,13 +464,13 @@ function DetailDrawer({
   onClose,
   onNavigate,
   onEdit,
-}: {
+}: Readonly<{
   promociones: Promocion[]
   index: number
   onClose: () => void
   onNavigate: (nextIndex: number) => void
   onEdit: (id: number) => void
-}) {
+}>) {
   const promocion = promociones[index]
   const [estadisticas, setEstadisticas] = useState<PromocionEstadisticas | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)
@@ -487,6 +490,10 @@ function DetailDrawer({
   const EstadoIcon = estado.icon
   const usage = usagePercent(promocion)
   const active = isCurrentlyActive(promocion)
+  const usageValue = usage ?? 0
+  let usageBarColor = "bg-foreground"
+  if (usageValue >= 90) usageBarColor = "bg-destructive"
+  else if (usageValue >= 70) usageBarColor = "bg-gold-bright"
 
   // Fetch statistics when promotion changes
   useEffect(() => {
@@ -526,6 +533,9 @@ function DetailDrawer({
     }
   }, [index, promociones.length, onClose, onNavigate])
 
+  const maxUsesSuffix = promocion.cantidad_usos_maximos
+    ? ` / ${promocion.cantidad_usos_maximos.toLocaleString()}`
+    : ""
   const statRows = [
     { label: "Status", value: estado.label },
     { label: "Discount", value: discountLabel(promocion) },
@@ -533,7 +543,7 @@ function DetailDrawer({
     { label: "Discount type", value: promocion.tipo_descuento },
     { label: "Start", value: formatDateLong(promocion.fecha_inicio) },
     { label: "End", value: formatDateLong(promocion.fecha_fin) },
-    { label: "Uses", value: `${promocion.cantidad_usos_actuales.toLocaleString()}${promocion.cantidad_usos_maximos ? ` / ${promocion.cantidad_usos_maximos.toLocaleString()}` : ""}` },
+    { label: "Uses", value: `${promocion.cantidad_usos_actuales.toLocaleString()}${maxUsesSuffix}` },
     { label: "Uses per user", value: String(promocion.usos_por_usuario) },
     { label: "Min points", value: `${promocion.minimo_puntos.toLocaleString()} pts` },
     { label: "Priority", value: String(promocion.prioridad) },
@@ -627,7 +637,7 @@ function DetailDrawer({
                 <div
                   className={cn(
                     "h-full rounded-full transition-all",
-                    (usage ?? 0) >= 90 ? "bg-destructive" : (usage ?? 0) >= 70 ? "bg-gold-bright" : "bg-foreground",
+                    usageBarColor,
                   )}
                   style={{ width: `${usage ?? 0}%` }}
                 />
@@ -758,11 +768,11 @@ function StatMini({
   icon,
   label,
   value,
-}: {
+}: Readonly<{
   icon: React.ReactNode
   label: string
   value: number
-}) {
+}>) {
   return (
     <div className="flex flex-col gap-1 rounded-sm border border-border bg-secondary p-2.5">
       <div className="flex items-center gap-1 text-muted-foreground">

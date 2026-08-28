@@ -1,4 +1,4 @@
-export function ComingSoon({ title, description }: { title: string; description: string }) {
+export function ComingSoon({ title, description }: Readonly<{ title: string; description: string }>) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-baseline gap-2">

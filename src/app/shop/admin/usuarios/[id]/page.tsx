@@ -8,7 +8,7 @@ import { AdminUsuarioDetail } from "@/components/admin/admin-usuario-detail"
 export const dynamic = "force-dynamic"
 
 interface DetailPageProps {
-  params: Promise<{ id: string }>
+  readonly params: Promise<{ id: string }>
 }
 
 export default async function AdminUsuarioDetailPage({ params }: DetailPageProps) {
