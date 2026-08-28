@@ -658,11 +658,14 @@ export function AdminComandosList({ commands: initialCommands }: { commands: Bot
                 return (
                   <div
                     key={cmd.id}
+                    role="button"
+                    tabIndex={0}
                     className={cn(
                       "flex cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30",
                       !cmd.enabled && "opacity-50",
                     )}
                     onClick={() => setDrawerIndex(filtered.indexOf(cmd))}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrawerIndex(filtered.indexOf(cmd)) } }}
                   >
                     {/* ID */}
                     <span className="w-8 shrink-0 text-[13px] tabular-nums text-muted-foreground">
@@ -733,7 +736,7 @@ export function AdminComandosList({ commands: initialCommands }: { commands: Bot
                     </div>
 
                     {/* Actions */}
-                    <div className="flex w-28 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex w-28 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => handleToggle(cmd.id)}

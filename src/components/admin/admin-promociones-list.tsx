@@ -407,8 +407,11 @@ export function AdminPromocionesList({ promociones }: { promociones: Promocion[]
                 return (
                   <div
                     key={p.id}
+                    role="button"
+                    tabIndex={0}
                     className="flex cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
                     onClick={() => setDrawerIndex(filtered.indexOf(p))}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrawerIndex(filtered.indexOf(p)) } }}
                   >
                     {/* ID */}
                     <span className="w-8 shrink-0 text-[13px] tabular-nums text-muted-foreground">
@@ -482,7 +485,7 @@ export function AdminPromocionesList({ promociones }: { promociones: Promocion[]
                     </div>
 
                     {/* Actions */}
-                    <div className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => router.push(`/shop/admin/promociones/${p.id}/edit`)}

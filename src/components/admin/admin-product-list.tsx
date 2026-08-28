@@ -341,7 +341,7 @@ export function AdminProductList({ products }: { products: Producto[] }) {
                 </span>
 
                 {/* Actions (stopPropagation so row click doesn't fire) */}
-                <div className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-[11px] font-medium",

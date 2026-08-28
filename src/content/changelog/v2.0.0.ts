@@ -2,84 +2,60 @@ import type { ChangelogRelease } from "./types"
 
 const release: ChangelogRelease = {
   version: "v2.0.0",
-  date: "2025-01-01",
-  title: "Admin rebuild, leaderboard redesign, and platform-wide polish.",
+  date: "2026-08-28",
+  title: "Welcome to v2.0 — a complete rebuild with a full shop, admin panel, and live leaderboard.",
   changes: [
     {
       type: "added",
-      text: "Admin redemptions page with detail drawer, bulk actions, real-time polling, CSV export, date range filter, sortable columns, and pagination.",
+      text: "Full shop experience — browse products, redeem with points, and track your redemptions.",
     },
     {
       type: "added",
-      text: "Admin users page with stats cards, role filters, detail drawer, and CSV export.",
+      text: "Leaderboard with live rankings, stats, reset countdown, and your pinned position.",
     },
     {
       type: "added",
-      text: "Admin promotions page with stats cards, filters, sortable columns, pagination, CSV export, and detail drawer with live statistics.",
+      text: "Profile page showing your points, VIP status, subscriber badge, and account info.",
     },
     {
       type: "added",
-      text: "Admin commands page with stats cards, filters, sortable columns, pagination, CSV export, and detail drawer.",
+      text: "Points history page to track every points change with reasons.",
     },
     {
       type: "added",
-      text: "Admin Kick configuration page with categorized points config, per-entry enabled toggles, VIP configuration, and migration controls.",
+      text: "Bot commands page showing all available chat commands and their status.",
     },
     {
       type: "added",
-      text: "Leaderboard redesigned with clean list design, stats header, reset countdown, pinned position, and load-more pagination.",
+      text: "Promotions page showing active deals and discount codes.",
     },
     {
       type: "added",
-      text: "Changelog page with collapsible releases.",
+      text: "Admin panel for staff — manage redemptions, users, products, promotions, commands, and Kick config.",
     },
     {
       type: "added",
-      text: "Public API client for client-safe fetches without server-only dependencies.",
-    },
-    {
-      type: "added",
-      text: "GitHub Actions CI workflow for lint and build verification.",
-    },
-    {
-      type: "added",
-      text: "Deploy checklist and expanded environment variable documentation.",
+      text: "Changelog page so you can see what's new in each update.",
     },
     {
       type: "improved",
-      text: "Sidebar navigation reorganized with proper section titles and active state matching for sub-routes.",
+      text: "Navigation reorganized with clear sections and proper active highlighting.",
     },
     {
       type: "improved",
-      text: "Kick logo replaced with official brand logo across all pages.",
-    },
-    {
-      type: "improved",
-      text: "Admin pages unified with consistent drawer, stats, CSV, and filters pattern.",
-    },
-    {
-      type: "improved",
-      text: "Package version bumped to 2.0.0.",
+      text: "Kick logo updated to the official brand logo across the site.",
     },
     {
       type: "fixed",
-      text: "Sequelize capitalization mismatch (Usuario/Producto) in redemptions backend contract.",
+      text: "Redemptions page now loads correctly without errors.",
     },
     {
       type: "fixed",
-      text: "Backend users contract bugs (vip_status not vip_info, operation not modo, motivo required).",
+      text: "User profiles and points updates now work reliably.",
     },
     {
       type: "fixed",
-      text: "User-facing redemptions page capitalization bug.",
-    },
-    {
-      type: "fixed",
-      text: "Kick points config server action sending wrong JSON shape.",
-    },
-    {
-      type: "fixed",
-      text: "Bot commands admin missing auto_send_interval_seconds and dynamic_handler fields.",
+      text: "Bot commands page now shows all fields correctly.",
     },
   ],
 }
