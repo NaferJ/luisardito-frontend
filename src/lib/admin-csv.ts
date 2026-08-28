@@ -23,6 +23,6 @@ export function downloadCSV(
   link.download = `${filename}-${new Date().toISOString().slice(0, 10)}.csv`
   document.body.appendChild(link)
   link.click()
-  document.body.removeChild(link)
+  link.remove()
   URL.revokeObjectURL(url)
 }
