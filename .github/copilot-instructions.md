@@ -10,8 +10,9 @@ and `.windsurf/rules.md` — they encode the same house rules for different tool
 **Next.js 16 (App Router)** frontend for the Luisardito site. **React 19**,
 **Tailwind CSS v4**, strict TypeScript, ESLint 9, deployed on Vercel.
 This is a frontend-only app — there are no API routes, no database, no CMS
-in this repo. Styling is Tailwind utility classes only (no CSS-in-JS, no
-styled-components). Geist fonts via `next/font/google`.
+in this repo. It consumes a separate backend (`luisardito-shop-backend`, read-only).
+Styling is Tailwind utility classes only (no CSS-in-JS, no styled-components).
+Geist fonts via `next/font/google`.
 
 ## Code conventions
 
@@ -50,10 +51,22 @@ styled-components). Geist fonts via `next/font/google`.
 - Do not add CSS Modules unless Tailwind utilities are genuinely insufficient.
 - Do not install UI libraries (shadcn, MUI, Chakra, etc.) unless explicitly asked.
 
+## Color palette and theme
+
+The project uses a custom **grayscale + gold** palette (no default Tailwind
+colors in data files). All theme tokens are defined as CSS variables in
+`src/app/globals.css` under `:root`, `.dark`, and `@media (prefers-color-scheme: dark)`.
+
+- **Grayscale:** `#D9D9D9` (lightest) → `#BFBFBF` (light) → `#8C8C8C` (medium) → `#262626` (dark) → `#0D0D0D` (darkest)
+- **Gold:** `#FFE87A` (highlight) → `#F3C044` (bright) → `#D49A22` (core) → `#8F5E0A` (deep) → `#3A2300` (shadow)
+- Theme tokens: `--gold`, `--gold-foreground`, `--gold-highlight`, `--gold-bright`, `--gold-core`, `--gold-deep`, `--gold-shadow`, `--gray-lightest` through `--gray-darkest`
+- Tailwind classes: `bg-gold`, `text-gold-foreground`, `bg-gold-core`, `bg-gray-dark`, etc.
+- **Never use hardcoded Tailwind preset colors** (`bg-blue-600`, `bg-sky-300`, etc.) — always use the palette tokens.
+
 ## Environment
 
-- No `.env.example` exists yet. If env vars are introduced, create `.env.example`
-  with safe placeholders and keep it as the single source of truth.
+- `.env.example` is the single source of truth for env var documentation.
+  All vars are `NEXT_PUBLIC_` because they are inlined into the client bundle at build time.
 - Keep `.gitignore` excluding `node_modules`, `.env*` (except the example),
   `.next`, build output. Never commit real secrets.
 
