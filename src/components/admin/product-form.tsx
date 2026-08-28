@@ -305,7 +305,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             <div className="flex flex-col gap-1">
               <span className="flex flex-col gap-1 text-[13px] font-medium text-foreground">
                 Status
-                <div className="flex h-10 gap-1" role="group" aria-label="Status">
+                <fieldset className="flex h-10 gap-1" aria-label="Status">
                   <button
                     type="button"
                     onClick={() => setEstado("borrador")}
@@ -338,7 +338,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                     )} />
                     {"Live"}
                   </button>
-                </div>
+                </fieldset>
               </span>
             </div>
           </section>
