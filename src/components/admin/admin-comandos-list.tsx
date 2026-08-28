@@ -659,7 +659,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                     </div>
 
                     {/* Actions */}
-                    <div role="button" tabIndex={0} className="flex w-28 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <div className="flex w-28 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => handleToggle(cmd.id)}

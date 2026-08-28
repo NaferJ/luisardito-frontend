@@ -386,7 +386,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                     </div>
 
                     {/* Actions */}
-                    <div role="button" tabIndex={0} className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <div className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => router.push(`/shop/admin/promociones/${p.id}/edit`)}

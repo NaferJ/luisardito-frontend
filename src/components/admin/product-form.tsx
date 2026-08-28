@@ -303,9 +303,9 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="flex flex-col gap-1 text-[13px] font-medium text-foreground">
+              <span className="flex flex-col gap-1 text-[13px] font-medium text-foreground">
                 Status
-                <div className="flex h-10 gap-1">
+                <div className="flex h-10 gap-1" role="group" aria-label="Status">
                   <button
                     type="button"
                     onClick={() => setEstado("borrador")}
@@ -339,7 +339,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                     {"Live"}
                   </button>
                 </div>
-              </label>
+              </span>
             </div>
           </section>
 

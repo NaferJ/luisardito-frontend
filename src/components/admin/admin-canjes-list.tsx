@@ -663,7 +663,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                   </div>
 
                   {/* Actions */}
-                  <div role="button" tabIndex={0} className="flex w-36 shrink-0 items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                  <div className="flex w-36 shrink-0 items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                     {canje.estado === "pendiente" && (
                       <>
                         <ActionBtn
@@ -728,10 +728,8 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
 
       {/* ─── Return modal (also outside the shifting div) ─── */}
       {returnTarget && (
-        <div role="button" tabIndex={0} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={closeReturnModal} onKeyDown={(e) => { if (e.key === "Escape") closeReturnModal() }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={closeReturnModal} onKeyDown={(e) => { if (e.key === "Escape") closeReturnModal() }}>
           <div
-            role="button"
-            tabIndex={0}
             className="flex w-full max-w-md flex-col gap-4 rounded-lg border border-border bg-background p-5"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
