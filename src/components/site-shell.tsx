@@ -17,7 +17,7 @@ export function SiteShell({ children }: Readonly<{ children: ReactNode }>) {
         {/* Mobile page footer — the desktop sidebar already shows this
             content, so on mobile we render a compact version at the end of
             the page instead of hiding it behind the hamburger menu. */}
-        <footer className="mt-auto border-t border-border pt-4 pb-[max(env(safe-area-inset-bottom)+1.5rem,1.5rem)] text-[13px] text-muted-foreground lg:hidden">
+        <footer className="mt-auto border-t border-border pt-4 pb-[max(env(safe-area-inset-bottom)+2.5rem,2.5rem)] text-[13px] text-muted-foreground lg:hidden">
           <p className="mb-3 leading-relaxed font-medium text-foreground">
             The community hub for Luisardito, Luisardium and Luisarvoid.
           </p>

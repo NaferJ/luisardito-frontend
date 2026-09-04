@@ -590,9 +590,14 @@ function ProductTitleBar({
 }
 
 /** Mobile product image header. The whole header shrinks as the user scrolls
- * so the image and its container move together. The product image is shown
- * full (`object-contain`) and centered, with a subtle background behind it so
- * transparent PNGs still look like the example screenshots. */
+ * so the image and its container move together. Matches the desktop lightbox
+ * approach: the container uses the image's real aspect ratio (so a square
+ * image gets a square box, a wide image gets a wide box), and `object-cover`
+ * fills it exactly with no cropping. The width is computed with `min()` so
+ * the container fits within both the max width (24rem) and the available
+ * header height (40vh minus padding) — landscape images hit the width cap,
+ * portrait images hit the height cap. Every image keeps its own proportions
+ * but none overflow the header. */
 function MobileImageHeader({
   product,
   headerRef,
@@ -614,31 +619,26 @@ function MobileImageHeader({
       ? rawSrc.replace("/image/upload/", "/image/upload/e_trim/")
       : rawSrc
 
+  // Width = the smaller of (max width) and (the width that would make the
+  // height equal the available header height at this aspect ratio). This
+  // fits the container within both constraints while keeping the real ratio.
+  const width = `min(24rem, calc((40vh - 2rem) * ${imgW} / ${imgH}))`
+
   return (
     <div
       ref={headerRef}
       className="relative z-0 flex h-[40vh] min-h-[240px] max-h-[340px] items-center justify-center overflow-hidden px-6 py-4"
     >
-      {/* Native browser image scaling: the <img> has width/height attributes
-         (intrinsic aspect ratio) and max-width/max-height CSS. The browser
-         scales it to fit within both maxes while preserving the ratio —
-         this is built-in behavior, no CSS tricks. The wrapper is
-         inline-block so it shrink-wraps to the image's rendered size, and
-         the border/ring wraps tightly around the visible image. Works for
-         landscape, portrait, and square without per-case logic. */}
-      <div className="overlay-media inline-block overflow-hidden rounded-2xl bg-transparent shadow-2xl ring-1 ring-border/50">
+      <div
+        className="overlay-media relative overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-border/50"
+        style={{ aspectRatio: `${imgW} / ${imgH}`, width }}
+      >
         <Image
           src={imageSrc}
           alt={product.nombre}
-          width={imgW}
-          height={imgH}
+          fill
           sizes="(max-width: 640px) 90vw, 384px"
-          style={{
-            width: "auto",
-            height: "auto",
-            maxWidth: "26rem",
-            maxHeight: "calc(40vh - 2rem)",
-          }}
+          className="object-cover"
           priority
         />
       </div>

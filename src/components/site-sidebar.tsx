@@ -159,10 +159,12 @@ function SidebarFooter({
   user,
   isRedirecting,
   onLogin,
+  mobile = false,
 }: Readonly<{
   user: ReturnType<typeof useUser>
   isRedirecting: boolean
   onLogin: () => void
+  mobile?: boolean
 }>) {
   return (
     <div className="flex flex-col gap-3">
@@ -214,7 +216,14 @@ function SidebarFooter({
         </p>
       )}
 
-      <div className="mt-2 flex items-center gap-4 border-t border-border pt-3 text-[13px] text-muted-foreground">
+      <div
+        className={cn(
+          "mt-2 flex items-center gap-4 border-t border-border pt-3 text-[13px] text-muted-foreground",
+          // On mobile, leave room for the phone's bottom buttons/gesture bar,
+          // matching the page footer and the redeem CTA treatment.
+          mobile && "pb-[max(env(safe-area-inset-bottom)+2.5rem,2.5rem)]",
+        )}
+      >
         <span>© 2026</span>
         <Link href="/info" className="hover:text-foreground">
           Info
@@ -236,18 +245,29 @@ function MobileDrawer({
   onClose,
   children,
 }: Readonly<{ open: boolean; onClose: () => void; children: ReactNode }>) {
+  const [visible, setVisible] = useState(false)
+
   useEffect(() => {
     if (!open) return
     document.body.style.overflow = "hidden"
+    // Start hidden, then fade in on the next frame so the transition runs.
+    const raf = requestAnimationFrame(() => setVisible(true))
     return () => {
+      cancelAnimationFrame(raf)
       document.body.style.overflow = ""
+      setVisible(false)
     }
   }, [open])
 
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-background p-4 lg:hidden">
+    <div
+      className={cn(
+        "fixed inset-0 z-40 flex flex-col overflow-hidden bg-background p-4 transition-[opacity,transform] duration-200 ease-out lg:hidden",
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
+      )}
+    >
       <div className="flex items-center justify-between pb-6">
         <Logo />
         <button
@@ -327,7 +347,7 @@ export function SiteSidebar() {
           <div className="flex-1 overflow-y-auto">
             <NavSections user={user} activeHref={activeHref} />
           </div>
-          <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} />
+          <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} mobile />
         </div>
       </MobileDrawer>
 
