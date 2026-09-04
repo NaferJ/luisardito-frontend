@@ -301,8 +301,31 @@
   animation: overlay-media-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Product detail content (mobile + desktop) — fades/slides in when the
+   product changes, giving prev/next navigation a smooth page-like feel. */
+@keyframes overlay-content-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.overlay-content {
+  animation: overlay-content-fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Entire overlay fade when it first mounts (opening a product from the feed or a slug URL). */
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.overlay-enter {
+  animation: overlay-fade-in 0.25s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .overlay-media {
+  .overlay-media,
+  .overlay-content,
+  .overlay-enter {
     animation: none;
   }
 }

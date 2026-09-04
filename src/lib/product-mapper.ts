@@ -1,5 +1,6 @@
 import type { DesignCardData } from "@/components/design-card"
 import type { Producto } from "@/types"
+import { formatCompactNumber } from "@/lib/utils"
 
 const AVATAR_COLORS = [
   "bg-gold-highlight",
@@ -55,16 +56,16 @@ export function productToCard(product: Producto, index: number): DesignCardData 
     badge: hasDiscount ? "star" : undefined,
     tag: hasDiscount ? "Sale" : "Product",
     title: product.nombre,
-    author: `${price.toLocaleString()} pts`,
+    author: `${formatCompactNumber(price)} pts`,
     description: product.descripcion,
     timeAgo: product.stock > 0 ? `${product.stock} in stock` : "Out of stock",
-    impressions: price.toLocaleString(),
+    impressions: formatCompactNumber(price),
     outbound: product.stock,
     source: "Shop",
     category: hasDiscount ? "On Sale" : "Product",
     style: product.estado,
     color: hasDiscount ? `${product.descuento!.porcentajeDescuento} off` : "—",
-    interaction: [`${price.toLocaleString()} points`],
+    interaction: [`${formatCompactNumber(price)} points`],
     lastRedeemer,
   }
 }

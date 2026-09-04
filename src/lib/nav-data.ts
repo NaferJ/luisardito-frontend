@@ -20,20 +20,5 @@ export const adminLinks = [
   { label: "Kick Config", href: "/shop/admin/kick" },
 ] as const
 
-export const categoryFilters = [
-  "All",
-  "Web",
-  "Interface",
-  "Branding",
-  "Product",
-  "Typography",
-  "Motion",
-  "Illustration",
-  "3D",
-  "Editorial",
-  "Print",
-  "Packaging",
-] as const
-
 export const avatarColors = ["bg-gold-highlight", "bg-gold-bright", "bg-gold-deep", "bg-gray-medium"]
 

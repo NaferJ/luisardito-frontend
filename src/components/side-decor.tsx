@@ -226,7 +226,11 @@ export function SideDecor({ side }: SideDecorProps) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-y-0 z-[15] hidden w-[120px] overflow-hidden lg:block"
+      // Widths below `lg` are capped at the page's own edge padding (`p-4`
+      // = 16px in `site-shell.tsx`) so the decoration never creeps into
+      // actual page content on mobile/tablet — it only fills the margin
+      // that's already there, just like the full 120px strip does at `lg`.
+      className="pointer-events-none fixed inset-y-0 z-[15] block w-1.5 overflow-hidden sm:w-2 md:w-4 lg:w-[120px]"
       style={{
         ...(side === "left" ? { left: 0 } : { right: 0 }),
         backgroundColor: colorBack,
