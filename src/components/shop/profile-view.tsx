@@ -8,8 +8,9 @@ import {
   Star,
   ExternalLink,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
 import { KickLogo, DiscordLogo } from "@/components/brand-icons"
+import { VipBadge } from "@/components/vip-badge"
 import type { Usuario } from "@/types"
 
 function displayName(user: Usuario): string {
@@ -41,7 +42,7 @@ export function ProfileView({
   const name = displayName(user)
   const avatar = avatarUrl(user)
   const isAdmin = [3, 4, 5].includes(user.rol_id)
-  const isVip = user.vip_info?.is_active ?? user.is_vip ?? false
+  const isVip = Boolean(user.vip_info?.is_active ?? user.is_vip ?? false)
   const isSubscriber = user.subscriber_status?.is_active ?? false
   const discordLinked = user.discord_info?.linked ?? user.discordLinked ?? false
 
@@ -103,7 +104,7 @@ export function ProfileView({
           <div className="flex flex-col items-end">
             <span className="text-[11px] text-muted-foreground">Points</span>
             <span className="text-[16px] font-semibold text-gold-bright">
-              {user.puntos.toLocaleString()}
+              {formatCompactNumber(user.puntos)}
             </span>
           </div>
           {user.creado && (
@@ -119,7 +120,7 @@ export function ProfileView({
           )}
           {isVip && user.vip_info?.is_active && (
             <div className="flex flex-col items-end">
-              <span className="text-[11px] text-muted-foreground">VIP</span>
+              <VipBadge size={16} />
               <span className="text-[14px] font-semibold text-gold-bright">
                 {formatVipExpiry(user.vip_info.expires_at)}
               </span>

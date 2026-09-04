@@ -12,7 +12,7 @@ import {
   ShoppingBag,
 } from "lucide-react"
 import { ArchiveProductButton } from "@/components/admin/archive-product-button"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS } from "@/lib/admin-utils"
 import { StatCard } from "@/components/admin/shared/stat-card"
@@ -253,7 +253,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
 
                 {/* Price */}
                 <span className="w-24 shrink-0 text-right text-[13px] tabular-nums text-foreground">
-                  {p.precio.toLocaleString()} pts
+                  {formatCompactNumber(p.precio)} pts
                 </span>
 
                 {/* Stock */}

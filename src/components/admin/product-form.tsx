@@ -6,7 +6,7 @@ import { ImageUpload } from "@/components/admin/image-upload"
 import { DesignCard } from "@/components/design-card"
 import type { DesignCardData } from "@/components/design-card"
 import { createProduct, updateProduct, type ProductFormData } from "@/app/shop/admin/products/actions"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
 import type { Producto } from "@/types"
 
 interface ProductFormProps {
@@ -80,16 +80,16 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       badge: hasDiscount ? "star" : undefined,
       tag: hasDiscount ? "Sale" : "Product",
       title: nombre || "Product name",
-      author: `${(precio || 0).toLocaleString()} pts`,
+      author: `${formatCompactNumber(precio || 0)} pts`,
       description: descripcion || "Product description",
       timeAgo: stock > 0 ? `${stock} in stock` : "Out of stock",
-      impressions: (precio || 0).toLocaleString(),
+      impressions: formatCompactNumber(precio || 0),
       outbound: stock,
       source: "Shop",
       category: hasDiscount ? "On Sale" : "Product",
       style: estado,
       color: hasDiscount ? `${initialData?.descuento?.porcentajeDescuento ?? "0"} off` : "—",
-      interaction: [`${(precio || 0).toLocaleString()} points`],
+      interaction: [`${formatCompactNumber(precio || 0)} points`],
       lastRedeemer: null,
     }
   }, [nombre, descripcion, precio, stock, estado, imageData, initialData])

@@ -15,7 +15,8 @@ import {
   X,
   ShoppingBag,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
+import { VipBadge } from "@/components/vip-badge"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
@@ -81,7 +82,7 @@ function userAvatar(u: AdminUsuario): string | undefined {
 }
 
 function isVip(u: AdminUsuario): boolean {
-  return u.vip_status?.is_active ?? u.vip_info?.is_active ?? u.is_vip ?? false
+  return Boolean(u.vip_status?.is_active ?? u.vip_info?.is_active ?? u.is_vip ?? false)
 }
 
 function isSub(u: AdminUsuario): boolean {
@@ -329,7 +330,7 @@ export function AdminUsuariosList({
 
                     {/* Points */}
                     <span className="w-28 shrink-0 text-right text-[13px] tabular-nums text-gold-bright">
-                      {u.puntos.toLocaleString()}
+                      {formatCompactNumber(u.puntos)}
                     </span>
 
                     {/* Joined */}
@@ -431,7 +432,7 @@ function UserDetailDrawer({
   }, [index, usuarios.length, onClose, onNavigate])
 
   const statRows = [
-    { label: "Points", value: `${u.puntos.toLocaleString()} pts` },
+    { label: "Points", value: `${formatCompactNumber(u.puntos)} pts` },
     { label: "Total canjes", value: String(u.total_canjes ?? 0) },
     { label: "Pending canjes", value: String(u.canjes_pendientes ?? 0) },
     { label: "Discord", value: discord ? (dName ?? "Linked") : "Not linked" },
@@ -498,7 +499,7 @@ function UserDetailDrawer({
           <div className="flex flex-wrap items-center gap-1.5">
             {vip && (
               <span className="flex items-center gap-1 rounded-full bg-gold/20 px-2 py-0.5 text-[11px] font-bold text-gold-bright">
-                <Crown className="size-3" />
+                <VipBadge size={12} />
                 VIP
               </span>
             )}

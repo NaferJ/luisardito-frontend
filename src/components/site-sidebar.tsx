@@ -172,7 +172,7 @@ function SidebarFooter({
       {user ? (
         <div className="flex items-center gap-2">
           <div className="flex h-8 items-center gap-1.5 rounded-full bg-secondary px-3 text-[13px] font-medium text-foreground">
-            <span className="text-gold-bright">{user.puntos.toLocaleString()}</span>
+            <span className="text-gold-bright">{formatCompactNumber(user.puntos)}</span>
             <span className="text-muted-foreground">pts</span>
           </div>
           <form action={logout}>

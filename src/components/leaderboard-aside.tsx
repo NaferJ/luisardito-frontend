@@ -1,6 +1,7 @@
 import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
+import { VipBadge } from "@/components/vip-badge"
 
 function entryName(entry: LeaderboardEntry): string {
   return entry.kick_data?.username ?? entry.nickname ?? "Anonymous"
@@ -54,20 +55,20 @@ export function LeaderboardAside({ entries }: Readonly<{ entries: LeaderboardEnt
                   {name.charAt(0).toUpperCase()}
                 </span>
               )}
-              <div className="flex min-w-0 flex-col">
+              <div className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-[13px] font-medium text-foreground">
                   {name}
                 </span>
-                <span className="truncate text-[13px] text-muted-foreground">
+                <span className="flex items-center gap-1 text-[13px] text-muted-foreground">
                   <span className="text-gold-bright">
-                    {entry.puntos.toLocaleString()}
-                  </span>{" "}
-                  pts
-                  {entry.is_vip && (
-                    <span className="ml-1 text-gold-core">VIP</span>
-                  )}
+                    {formatCompactNumber(entry.puntos)}
+                  </span>
+                  <span>pts</span>
                 </span>
               </div>
+              {Boolean(entry.is_vip) && (
+                <VipBadge size={25} className="shrink-0" />
+              )}
             </Link>
           )
         })}

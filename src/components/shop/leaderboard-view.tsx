@@ -15,7 +15,8 @@ import {
   Star,
   Loader2,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
+import { VipBadge } from "@/components/vip-badge"
 import type {
   LeaderboardEntry,
   LeaderboardMeta,
@@ -156,10 +157,8 @@ function LeaderboardRow({
             YOU
           </span>
         )}
-        {entry.is_vip && (
-          <span className="shrink-0 rounded-full bg-gold/20 px-1.5 py-0.5 text-[10px] font-bold text-gold-bright">
-            VIP
-          </span>
+        {Boolean(entry.is_vip) && (
+          <VipBadge size={14} className="shrink-0" />
         )}
         {entry.is_subscriber && (
           <span className="shrink-0 rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium text-foreground">
@@ -176,7 +175,7 @@ function LeaderboardRow({
       {/* Points + change */}
       <div className="flex shrink-0 items-center gap-2.5">
         <span className="text-[14px] font-semibold tabular-nums text-gold-bright">
-          {entry.puntos.toLocaleString()}
+          {formatCompactNumber(entry.puntos)}
         </span>
         <div className="w-10 text-right">
           <ChangeIndicator entry={entry} />
@@ -273,12 +272,12 @@ export function LeaderboardView({
           <StatPill
             icon={Users}
             label="Ranked users"
-            value={stats.total_users.toLocaleString()}
+            value={formatCompactNumber(stats.total_users)}
           />
           <StatPill
             icon={Star}
             label="Total points"
-            value={stats.total_points.toLocaleString()}
+            value={formatCompactNumber(stats.total_points)}
           />
           <StatPill
             icon={Trophy}
@@ -288,7 +287,7 @@ export function LeaderboardView({
           <StatPill
             icon={Crown}
             label="VIP users"
-            value={stats.vip_users.toLocaleString()}
+            value={formatCompactNumber(stats.vip_users)}
           />
         </div>
       )}

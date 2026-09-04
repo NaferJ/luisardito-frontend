@@ -16,7 +16,7 @@ import {
   Gift,
   Zap,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
 import { KickLogo } from "@/components/brand-icons"
 import {
   updateKickPointsConfig,
@@ -394,12 +394,12 @@ function StatsGrid({ stats }: Readonly<{ stats: Stats }>) {
       <StatCard
         icon={<Users className="size-3.5" />}
         label="Migrated users"
-        value={stats.migratedUsers.toLocaleString()}
+        value={formatCompactNumber(stats.migratedUsers)}
       />
       <StatCard
         icon={<ArrowRightLeft className="size-3.5" />}
         label="Points migrated"
-        value={stats.totalPointsMigrated.toLocaleString()}
+        value={formatCompactNumber(stats.totalPointsMigrated)}
       />
     </div>
   )
@@ -755,10 +755,10 @@ function MigrationSection({
             Migration status
           </span>
           <span className="text-[12px] text-muted-foreground">
-            {adminConfig.migration.stats.migrated_users.toLocaleString()} users
+            {formatCompactNumber(adminConfig.migration.stats.migrated_users)} users
             migrated
             {" - "}
-            {adminConfig.migration.stats.total_points_migrated.toLocaleString()}{" "}
+            {formatCompactNumber(adminConfig.migration.stats.total_points_migrated)}{" "}
             points transferred
           </span>
         </div>
