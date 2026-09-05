@@ -18,7 +18,7 @@ export function VipBadge({
   const reactId = useId()
   // useId returns something like ":r1:" which is invalid in a URL/SVG id,
   // so we sanitize it.
-  const uid = reactId.replace(/[:]/g, "")
+  const uid = reactId.replace(/:/g, "")
   const idA = `vip-badge-gold-${uid}`
   const idB = `vip-badge-red-${uid}`
 
