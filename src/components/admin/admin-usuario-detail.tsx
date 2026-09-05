@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react"
 import { Crown, Star, Plus, Minus, AlertTriangle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
+import { VipBadge } from "@/components/vip-badge"
+import { SubscriberBadge } from "@/components/subscriber-badge"
 import { DiscordLogo } from "@/components/brand-icons"
 import {
   updateUsuarioPuntos,
@@ -46,8 +48,9 @@ export function AdminUsuarioDetail({
   const [vipDays, setVipDays] = useState(30)
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null)
 
-  const isVip = usuario.vip_status?.is_active ?? usuario.vip_info?.is_active ?? usuario.is_vip ?? false
+  const isVip = Boolean(usuario.vip_status?.is_active ?? usuario.vip_info?.is_active ?? usuario.is_vip ?? false)
   const isSub = usuario.subscriber_status?.is_active ?? false
+  const subDuration = usuario.subscriber_status?.subscription_duration_months
   const isAdmin = [3, 4, 5].includes(usuario.rol_id)
   const avatar = userAvatar(usuario)
   const name = userName(usuario)
@@ -105,8 +108,14 @@ export function AdminUsuarioDetail({
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="truncate text-[18px] font-semibold text-foreground">{name}</span>
-            {isVip && <Badge icon={<Crown className="size-3" />} label="VIP" className="bg-gold/20 text-gold-bright" />}
-            {isSub && <Badge icon={<Star className="size-3" />} label="SUB" className="bg-foreground/10 text-foreground" />}
+            {isVip && <Badge icon={<VipBadge size={12} />} label="VIP" className="bg-gold/20 text-gold-bright" />}
+            {isSub && (
+              subDuration != null ? (
+                <SubscriberBadge durationMonths={subDuration} size={14} />
+              ) : (
+                <Badge icon={<Star className="size-3" />} label="SUB" className="bg-foreground/10 text-foreground" />
+              )
+            )}
             {isAdmin && <Badge label="ADMIN" className="bg-gold text-gold-foreground" />}
           </div>
           <span className="truncate text-[13px] text-muted-foreground">{usuario.email}</span>
@@ -128,7 +137,7 @@ export function AdminUsuarioDetail({
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-end">
             <span className="text-[11px] text-muted-foreground">Points</span>
-            <span className="text-[16px] font-semibold text-gold-bright">{usuario.puntos.toLocaleString()}</span>
+            <span className="text-[16px] font-semibold text-gold-bright">{formatCompactNumber(usuario.puntos)}</span>
           </div>
           <div className="flex flex-col items-end">
             <span className="text-[11px] text-muted-foreground">Joined</span>
@@ -193,7 +202,7 @@ export function AdminUsuarioDetail({
           />
           {puntosMode === "add" && puntos !== 0 && (
             <p className="text-[12px] text-muted-foreground">
-              Result: {(usuario.puntos + puntos).toLocaleString()} pts ({puntos > 0 ? "+" : ""}{puntos.toLocaleString()})
+              Result: {formatCompactNumber(usuario.puntos + puntos)} pts ({puntos > 0 ? "+" : ""}{formatCompactNumber(puntos)})
             </p>
           )}
           <button
@@ -293,7 +302,7 @@ export function AdminUsuarioDetail({
                   <span className="truncate text-foreground">{h.concepto ?? h.motivo}</span>
                   <span className="shrink-0 text-muted-foreground">{formatDate(h.fecha)}</span>
                   <span className={cn("shrink-0 tabular-nums font-medium", cambio > 0 ? "text-foreground" : "text-destructive")}>
-                    {cambio > 0 ? "+" : ""}{cambio.toLocaleString()}
+                    {cambio > 0 ? "+" : ""}{formatCompactNumber(cambio)}
                   </span>
                 </div>
               )

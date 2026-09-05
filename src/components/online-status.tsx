@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
+import { formatCompactNumber } from "@/lib/utils"
 
 export function OnlineStatus({ base = 28 }: Readonly<{ base?: number }>) {
   const pathname = usePathname()
@@ -24,7 +25,7 @@ export function OnlineStatus({ base = 28 }: Readonly<{ base?: number }>) {
         <span aria-hidden="true" className="absolute inset-0 animate-ping rounded-full opacity-60" style={{ backgroundColor: dotColor }} />
         <span aria-hidden="true" className="relative size-1.5 rounded-full" style={{ backgroundColor: dotColor }} />
       </span>
-      <span className="text-foreground">{count}</span> online
+      <span className="text-foreground">{formatCompactNumber(count)}</span> online
     </div>
   )
 }

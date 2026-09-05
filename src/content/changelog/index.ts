@@ -1,8 +1,9 @@
 import type { ChangelogRelease } from "./types"
 import v2_0_0 from "./v2.0.0"
 import v2_0_1 from "./v2.0.1"
+import v2_1_0 from "./v2.1.0"
 
-const releases: ChangelogRelease[] = [v2_0_0, v2_0_1]
+const releases: ChangelogRelease[] = [v2_0_0, v2_0_1, v2_1_0]
 
 // Sort by version, newest first. Versions are expected to be semver-like
 // (e.g. "v2.0.0"). Strip the leading "v" and compare numeric segments.

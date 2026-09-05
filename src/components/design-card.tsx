@@ -34,9 +34,11 @@ export type DesignCardData = {
 export function DesignCard({
   card,
   onOpen,
+  hideBookmark = false,
 }: Readonly<{
   card: DesignCardData
   onOpen: () => void
+  hideBookmark?: boolean
 }>) {
   let avatarElement: ReactNode
   if (card.lastRedeemer?.avatar) {
@@ -111,14 +113,16 @@ export function DesignCard({
         )}
 
         {/* Bookmark button — top-right, hover/focus only */}
-        <button
-          type="button"
-          aria-label="Save"
-          onClick={(e) => e.stopPropagation()}
-          className="absolute top-2.5 right-2.5 z-30 flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
-        >
-          <Bookmark className="size-3.5" aria-hidden="true" />
-        </button>
+        {!hideBookmark && (
+          <button
+            type="button"
+            aria-label="Save"
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-2.5 right-2.5 z-30 flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition-[opacity,transform] duration-200 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold active:scale-90"
+          >
+            <Bookmark className="size-3.5" aria-hidden="true" />
+          </button>
+        )}
 
         {/* Avatar — bottom-left, always visible.
             Shows last redeemer (shop) or author (landing) avatar. */}

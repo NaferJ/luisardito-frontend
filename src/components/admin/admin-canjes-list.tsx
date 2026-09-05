@@ -21,7 +21,8 @@ import {
   CheckSquare,
   Square,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
+import { VipBadge } from "@/components/vip-badge"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS, getDateRangeStart } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
@@ -125,7 +126,7 @@ function canjeCurrentPrice(c: Canje): number | undefined {
 }
 
 function isVip(u?: Usuario): boolean {
-  return u?.vip_info?.is_active ?? u?.is_vip ?? false
+  return Boolean(u?.vip_status?.is_active ?? u?.vip_info?.is_active ?? u?.is_vip ?? false)
 }
 
 function isSub(u?: Usuario): boolean {
@@ -646,12 +647,12 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                   {/* Price */}
                   <div className="flex w-24 shrink-0 flex-col items-end">
                     <span className="text-[13px] tabular-nums font-medium text-gold-bright">
-                      {canjePrice(canje).toLocaleString()}
+                      {formatCompactNumber(canjePrice(canje))}
                     </span>
                     {currentPrice !== undefined && (
-                      <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground" title={`Current price: ${currentPrice.toLocaleString()} pts`}>
+                      <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground" title={`Current price: ${formatCompactNumber(currentPrice)} pts`}>
                         <AlertTriangle className="size-2.5" />
-                        now {currentPrice.toLocaleString()}
+                        now {formatCompactNumber(currentPrice)}
                       </span>
                     )}
                   </div>
@@ -756,14 +757,14 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                 <p className="truncate text-[12px] text-muted-foreground">{canjeUser(returnTarget)}</p>
               </div>
               <span className="shrink-0 text-[14px] font-semibold text-gold-bright">
-                {canjePrice(returnTarget).toLocaleString()} pts
+                {formatCompactNumber(canjePrice(returnTarget))} pts
               </span>
             </div>
 
             {canjeCurrentPrice(returnTarget) !== undefined && (
               <p className="text-[12px] text-muted-foreground">
-                Price paid at redemption: {canjePrice(returnTarget).toLocaleString()} pts.
-                Current product price: {(canjeCurrentPrice(returnTarget) ?? 0).toLocaleString()} pts.
+                Price paid at redemption: {formatCompactNumber(canjePrice(returnTarget))} pts.
+                Current product price: {formatCompactNumber(canjeCurrentPrice(returnTarget) ?? 0)} pts.
               </p>
             )}
 
@@ -848,11 +849,11 @@ function DetailDrawer({
 
   const statRows = [
     { label: "Status", value: status.label },
-    { label: "Price paid", value: `${canjePrice(canje).toLocaleString()} pts` },
-    ...(currentPrice !== undefined ? [{ label: "Current price", value: `${currentPrice.toLocaleString()} pts` }] : []),
+    { label: "Price paid", value: `${formatCompactNumber(canjePrice(canje))} pts` },
+    ...(currentPrice !== undefined ? [{ label: "Current price", value: `${formatCompactNumber(currentPrice)} pts` }] : []),
     { label: "Discord", value: hasDiscord(user) ? (discordName(user) ?? "Linked") : "Not linked" },
     { label: "Date", value: formatDateLong(canje.fecha) },
-    ...(user ? [{ label: "User points", value: `${user.puntos.toLocaleString()} pts` }] : []),
+    ...(user ? [{ label: "User points", value: `${formatCompactNumber(user.puntos)} pts` }] : []),
   ]
 
   return (
@@ -929,7 +930,7 @@ function DetailDrawer({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <span className="truncate text-[14px] font-medium text-foreground">{canjeUser(canje)}</span>
-                      {isVip(user) && <Crown className="size-3 shrink-0 text-gold-bright" aria-hidden="true" />}
+                      {isVip(user) && <VipBadge size={12} className="shrink-0" />}
                       {isSub(user) && <Star className="size-3 shrink-0 text-foreground" aria-hidden="true" />}
                       {isAdmin(user) && (
                         <span className="shrink-0 rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-gold-foreground">ADM</span>

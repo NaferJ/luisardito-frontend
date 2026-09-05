@@ -1,18 +1,20 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Search, X } from "lucide-react"
+import { ChevronDown, Search, X } from "lucide-react"
 import { ProductFeed } from "@/components/product-feed"
 import { cn } from "@/lib/utils"
 import type { Producto } from "@/types"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
 
 /**
- * Sort/filter modes for the shop feed. The first five are sort orders
- * (mutually exclusive); "On Sale" is a filter that shows only discounted
- * products, sorted by discount percentage descending.
+ * Sort orders for the shop feed — mutually exclusive, shown as a single
+ * compact dropdown rather than a row of pills. "On Sale" used to be mixed
+ * into this list as a pill of equal visual weight, even though it behaves
+ * completely differently (a filter, not a sort) — that's what read as
+ * "confusing categories". It's now a separate toggle, see `onSaleOnly`.
  */
-type SortMode = "price_desc" | "price_asc" | "stock_desc" | "canjes_desc" | "newest" | "sale"
+type SortMode = "price_desc" | "price_asc" | "stock_desc" | "canjes_desc" | "newest"
 
 const SORT_OPTIONS: { mode: SortMode; label: string }[] = [
   { mode: "price_desc", label: "Highest price" },
@@ -20,7 +22,6 @@ const SORT_OPTIONS: { mode: SortMode; label: string }[] = [
   { mode: "stock_desc", label: "Most stock" },
   { mode: "canjes_desc", label: "Most redeemed" },
   { mode: "newest", label: "Newest" },
-  { mode: "sale", label: "On Sale" },
 ]
 
 /** URL-safe identifier for a product: slug if available, otherwise ID. */
@@ -46,16 +47,6 @@ function sortProducts(products: Producto[], mode: SortMode): Producto[] {
     case "newest":
       sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       break
-    case "sale":
-      // Filter to discounted products, then sort by discount percentage descending.
-      // The percentage is stored as a string in porcentajeDescuento, so parse it.
-      return sorted
-        .filter((p) => p.descuento?.tieneDescuento)
-        .sort((a, b) => {
-          const aPct = Number.parseFloat(a.descuento?.porcentajeDescuento ?? "0")
-          const bPct = Number.parseFloat(b.descuento?.porcentajeDescuento ?? "0")
-          return bPct - aPct
-        })
   }
   return sorted
 }
@@ -82,6 +73,7 @@ export function ShopBrowse({
 }>) {
   const [openSlug, setOpenSlug] = useState<string | null>(initialOpenSlug)
   const [sortMode, setSortMode] = useState<SortMode>("price_desc")
+  const [onSaleOnly, setOnSaleOnly] = useState(false)
   const [search, setSearch] = useState("")
 
   // Sync openSlug with browser back/forward. pushState updates the URL without
@@ -97,7 +89,8 @@ export function ShopBrowse({
   }, [])
 
   const visibleProducts = useMemo(() => {
-    const sorted = sortProducts(products, sortMode)
+    const filtered = onSaleOnly ? products.filter((p) => p.descuento?.tieneDescuento) : products
+    const sorted = sortProducts(filtered, sortMode)
     if (!search.trim()) return sorted
     const term = search.trim().toLowerCase()
     return sorted.filter(
@@ -105,7 +98,7 @@ export function ShopBrowse({
         p.nombre.toLowerCase().includes(term) ||
         p.descripcion.toLowerCase().includes(term),
     )
-  }, [products, sortMode, search])
+  }, [products, sortMode, onSaleOnly, search])
 
   // Derive the open index from the slug, not a fixed position, so the overlay
   // stays on the right product even when sort/search reorders the list. If the
@@ -118,36 +111,78 @@ export function ShopBrowse({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Sort pills + search */}
+      {/* Sort dropdown + On Sale toggle + search. Sort and "On Sale" used to
+          be six pills of equal visual weight, mixing a single-select sort
+          order with an unrelated filter — confusing to scan. Now it's one
+          compact sort dropdown plus one clearly separate filter toggle. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {SORT_OPTIONS.map((option) => (
-            <button
-              key={option.mode}
-              type="button"
-              onClick={() => setSortMode(option.mode)}
-              aria-pressed={sortMode === option.mode}
-              className={cn(
-                "h-8 rounded-full px-3.5 text-[13px] font-medium transition-colors",
-                sortMode === option.mode
-                  ? "bg-gold text-gold-foreground"
-                  : "bg-secondary text-muted-foreground hover:text-foreground",
-              )}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Mobile: compact sort dropdown so a row of 5 long pills doesn't
+              wrap and fight for space next to the On Sale toggle. */}
+          <div className="relative lg:hidden">
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as SortMode)}
+              aria-label="Sort products"
+              className="h-8 appearance-none rounded-full border border-border bg-secondary pl-3.5 pr-8 text-[13px] font-medium text-foreground focus:border-gold focus:outline-none"
             >
-              {option.label}
-            </button>
-          ))}
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.mode} value={option.mode}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+          </div>
+
+          {/* Desktop: all sort orders visible as pills for direct scanning. */}
+          <div className="hidden items-center gap-2 lg:flex">
+            {SORT_OPTIONS.map((option) => (
+              <button
+                key={option.mode}
+                type="button"
+                onClick={() => setSortMode(option.mode)}
+                aria-pressed={sortMode === option.mode}
+                className={cn(
+                  "h-8 rounded-full px-3.5 text-[13px] font-medium transition-[colors,transform] duration-150 active:scale-95",
+                  sortMode === option.mode
+                    ? "bg-foreground text-background"
+                    : "bg-secondary text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOnSaleOnly((v) => !v)}
+            aria-pressed={onSaleOnly}
+            className={cn(
+              "h-8 rounded-full px-3.5 text-[13px] font-medium transition-[colors,transform] duration-150 active:scale-95",
+              onSaleOnly
+                ? "bg-gold text-gold-foreground"
+                : "bg-secondary text-muted-foreground hover:text-foreground",
+            )}
+          >
+            On Sale
+          </button>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
           {/* Result count */}
           <span className="shrink-0 text-[13px] text-muted-foreground">
             {visibleProducts.length}{" "}
             {visibleProducts.length === 1 ? "product" : "products"}
           </span>
 
-          {/* Search input */}
-          <div className="relative flex h-8 items-center">
+          {/* Search input — wide enough by default to show the full
+              placeholder without relying on the focus-only expansion. */}
+          <div className="relative flex h-8 w-full max-w-sm items-center sm:flex-initial sm:w-56">
             <Search className="pointer-events-none absolute left-3 size-3.5 text-muted-foreground" aria-hidden="true" />
             <input
               type="search"
@@ -155,14 +190,14 @@ export function ShopBrowse({
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search products..."
               aria-label="Search products"
-              className="h-8 w-40 rounded-full border border-border bg-secondary pl-8 pr-7 text-[13px] text-foreground placeholder:text-muted-foreground focus:w-56 focus:border-gold focus:outline-none transition-all"
+              className="h-8 w-full rounded-full border border-border bg-secondary pl-8 pr-7 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
                 aria-label="Clear search"
-                className="absolute right-2 flex size-4 items-center justify-center text-muted-foreground hover:text-foreground"
+                className="absolute right-2 flex size-4 items-center justify-center text-muted-foreground transition-transform active:scale-90 hover:text-foreground"
               >
                 <X className="size-3" aria-hidden="true" />
               </button>

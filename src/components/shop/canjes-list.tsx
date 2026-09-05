@@ -11,7 +11,7 @@ import {
   ShoppingBag,
   Calendar,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
 import { formatDateTime as formatDate } from "@/lib/admin-utils"
 import type { Canje } from "@/types"
 
@@ -117,7 +117,7 @@ export function CanjesList({ canjes }: Readonly<{ canjes: Canje[] }>) {
         {stats.cancelados > 0 && (
           <StatChip label={`${stats.cancelados} cancelled`} />
         )}
-        <StatChip label={`${stats.totalPuntos.toLocaleString()} pts spent`} outline />
+        <StatChip label={`${formatCompactNumber(stats.totalPuntos)} pts spent`} outline />
       </div>
 
       {/* Filter bar */}
@@ -237,7 +237,7 @@ export function CanjesList({ canjes }: Readonly<{ canjes: Canje[] }>) {
                 {/* Price + status */}
                 <div className="flex shrink-0 flex-col items-end justify-center gap-1">
                   <span className="text-[16px] font-semibold text-gold-bright">
-                    {canjePrice(canje).toLocaleString()}
+                    {formatCompactNumber(canjePrice(canje))}
                   </span>
                   <span className="text-[11px] text-muted-foreground">pts</span>
                   <div className={cn("flex items-center gap-1 text-[12px] font-medium", status.className)}>

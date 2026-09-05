@@ -20,7 +20,7 @@ import {
   Percent,
   Gift,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS, formatDate, getDateRangeStart } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
@@ -545,7 +545,7 @@ function DetailDrawer({
     { label: "End", value: formatDateLong(promocion.fecha_fin) },
     { label: "Uses", value: `${promocion.cantidad_usos_actuales.toLocaleString()}${maxUsesSuffix}` },
     { label: "Uses per user", value: String(promocion.usos_por_usuario) },
-    { label: "Min points", value: `${promocion.minimo_puntos.toLocaleString()} pts` },
+    { label: "Min points", value: `${formatCompactNumber(promocion.minimo_puntos)} pts` },
     { label: "Priority", value: String(promocion.prioridad) },
     { label: "Requires code", value: promocion.requiere_codigo ? "Yes" : "No" },
     { label: "Accumulation", value: promocion.aplica_acumulacion ? "Allowed" : "Not allowed" },
@@ -727,7 +727,7 @@ function DetailDrawer({
                     )}
                   </div>
                   <span className="truncate text-foreground">{prod.nombre}</span>
-                  <span className="ml-auto shrink-0 text-muted-foreground">{prod.precio.toLocaleString()} pts</span>
+                  <span className="ml-auto shrink-0 text-muted-foreground">{formatCompactNumber(prod.precio)} pts</span>
                 </div>
               ))}
               {promocion.productos.length > 10 && (

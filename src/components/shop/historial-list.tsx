@@ -14,7 +14,7 @@ import {
   Calendar,
   Clock,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCompactNumber } from "@/lib/utils"
 import { formatDateTime as formatDate } from "@/lib/admin-utils"
 import type { HistorialPunto } from "@/types"
 
@@ -175,11 +175,11 @@ export function HistorialList({
       {/* Stats row */}
       <div className="flex flex-wrap gap-2">
         <StatChip label={`${stats.total} ${stats.total === 1 ? "entry" : "entries"}`} />
-        <StatChip label={`+${stats.ganados.toLocaleString()} earned`} accent="positive" />
+        <StatChip label={`+${formatCompactNumber(stats.ganados)} earned`} accent="positive" />
         {stats.gastados > 0 && (
-          <StatChip label={`-${stats.gastados.toLocaleString()} spent`} accent="negative" />
+          <StatChip label={`-${formatCompactNumber(stats.gastados)} spent`} accent="negative" />
         )}
-        <StatChip label={`Balance: ${stats.balance.toLocaleString()}`} outline />
+        <StatChip label={`Balance: ${formatCompactNumber(stats.balance)}`} outline />
         {stats.avg > 0 && <StatChip label={`Avg: ${stats.avg} pts`} />}
       </div>
 
@@ -303,10 +303,10 @@ export function HistorialList({
                       <TrendingDown className="size-3.5" aria-hidden="true" />
                     )}
                     {isPositive ? "+" : ""}
-                    {cambio.toLocaleString()}
+                    {formatCompactNumber(cambio)}
                   </div>
                   <span className="text-[11px] text-muted-foreground">
-                    Bal: {item.saldo_actual.toLocaleString()}
+                    Bal: {formatCompactNumber(item.saldo_actual)}
                   </span>
                 </div>
               </div>
