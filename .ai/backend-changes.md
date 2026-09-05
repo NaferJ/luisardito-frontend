@@ -182,11 +182,11 @@ The frontend has a scalable subscriber badge system (`src/lib/subscriber-tiers.t
 tiered badge images. The leaderboard endpoint already exposes the field (backend #74,
 shipped). The following gaps remain:
 
-### Gap 1 — `subscription_duration_months` on user endpoints (backend #78, in progress)
+### Gap 1 — `subscription_duration_months` on user endpoints (backend #78, resolved)
 
 `GET /api/usuarios/me`, `GET /api/usuarios`, and `GET /api/kick-admin/users` now
-include `subscription_duration_months` on `subscriber_status` (backend PR pending
-review). Frontend types and rendering are ready.
+include `subscription_duration_months` on `subscriber_status`. Backend PR #79
+merged; frontend types and rendering are ready.
 
 **CONFIRMED:** `subscription_duration_months` is simply how many months the
 user has been subscribed (accumulated, from Kick's `duration` field). The
@@ -212,3 +212,37 @@ then fall back to `vip_info` and `is_vip`.
 The redemption history endpoint still builds `subscriber_status` with the old
 2-field shape. If the frontend needs the badge on redemption history views,
 that's a separate issue.
+
+---
+
+## My redemptions pagination (backend #80, resolved; backend PR #81 merged)
+
+The Canjes redesign uses the new paginated `GET /api/canjes/mios` response:
+
+```ts
+{
+  data: Canje[]
+  pagination: { total: number; limit: number; offset: number; has_more: boolean }
+  summary: {
+    total: number
+    total_points: number
+    by_status: {
+      pendiente: number
+      entregado: number
+      cancelado: number
+      devuelto: number
+    }
+  }
+}
+```
+
+Supported query parameters are `limit` (1–100), `offset`, `estado`, and
+`sort` (`date-desc` / `date-asc`). The frontend uses 10 items per page and
+stores status, sort, and page in the URL so navigation is reload-safe and
+shareable. The summary is intentionally read from the backend because it
+represents the complete history, not just the current page.
+
+Backend issue #80 is assigned to NaferJ and currently In Progress on the
+backend board. The backend branch is `feat/canjes-server-pagination`; its old
+`feat/subscription-duration-on-user-endpoints` branch is safe to delete after
+explicit confirmation.

@@ -34,17 +34,6 @@
 
 -
 
-## Acceptance criteria
-
-<!-- Checkboxes that must all be ticked before the issue is closed. -->
-
-- [ ] Page / component implemented
-- [ ] Works with real backend data (if applicable)
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
-- [ ] Changelog entry added (if consumer-visible)
-- [ ] Linked PR merged
-
 ## Verification (local gates — all must be green)
 
 - `npm ci`

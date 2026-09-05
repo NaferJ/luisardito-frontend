@@ -1,10 +1,10 @@
 # Shop UX/UI Redesign — Notes
 
-Working notes for the ongoing shop UX/UI redesign (tracked in
-[issue #13](https://github.com/NaferJ/luisardito-frontend/issues/13),
-branch `feat/shop-ux-redesign`). Keep this updated as the source of truth
-so nothing discussed gets lost between sessions — update it, don't replace
-the reasoning with a stale summary.
+Working notes for the completed shop UX/UI redesign (tracked in
+[issue #13](https://github.com/NaferJ/luisardito-frontend/issues/13)). The work
+was merged through PR #14, accepted by the owner, assigned to milestone v2.1.0,
+and moved to Done. Keep this as the source of truth for the decisions and review
+history; any new page redesign should be tracked in its own focused issue.
 
 ## Source inspiration
 
@@ -49,6 +49,13 @@ dropped rather than copied 1:1.
   empty/edge states.
 
 ## Related follow-up issues (found during the work, not yet filed or already filed)
+
+- **My Redemptions / Canjes redesign:** tracked separately in
+  [issue #15](https://github.com/NaferJ/luisardito-frontend/issues/15). Apply
+  the same principles—clear hierarchy, consistent spacing, responsive controls,
+  restrained iconography, real edge-state review, and owner visual approval—
+  without copying the product-overlay layout or turning the page into a generic
+  dashboard. Issue #15 is the source of truth for its exact scope.
 
 - **Mobile navigation was not usable (fixed).** `site-sidebar.tsx` had no
   hamburger/collapsed state — on mobile it rendered the *entire* sidebar
@@ -407,9 +414,12 @@ Root-caused both:
   across portrait/landscape/square images and any screen size.
 - **Build/lint verified** after the changes.
 
-## Still open / not yet addressed
+## Deferred follow-up considerations
 
-- **Total price in CTA (point 13).** Not implemented yet — the button still
+Issue #13 was accepted and closed without requiring the items below. Treat them
+as optional future refinements, not unfinished acceptance criteria.
+
+- **Total price in CTA (point 13).** Not implemented — the button still
   says "Canjear". We could show the points cost inside the button (e.g.
   "Canjear — 1,250 pts"), but the owner should confirm whether this reads
   as helpful or repetitive before shipping.
