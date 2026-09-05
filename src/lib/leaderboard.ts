@@ -12,6 +12,7 @@ export interface LeaderboardEntry {
   previous_points: number | null
   is_vip: boolean
   is_subscriber: boolean
+  subscription_duration_months?: number | null
   watchtime_minutes?: number
   max_puntos?: number
   message_count?: number

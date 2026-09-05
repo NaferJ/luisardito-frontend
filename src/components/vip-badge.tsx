@@ -29,9 +29,10 @@ export function VipBadge({
       viewBox="0 0 20 20"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
-      className={cn("inline-block shrink-0 align-middle", className)}
+      className={cn("inline-block shrink-0 cursor-pointer align-middle", className)}
       aria-label="VIP"
       role="img"
+      title="VIP"
     >
       <path
         fill={`url(#${idA})`}

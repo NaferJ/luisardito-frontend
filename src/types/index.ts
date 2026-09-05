@@ -55,6 +55,7 @@ export interface Usuario {
   subscriber_status?: {
     is_active: boolean
     expires_soon?: boolean
+    subscription_duration_months?: number | null
   }
 
   migration_status?: {

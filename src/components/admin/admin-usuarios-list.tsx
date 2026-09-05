@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { VipBadge } from "@/components/vip-badge"
+import { SubscriberBadge } from "@/components/subscriber-badge"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
@@ -410,6 +411,7 @@ function UserDetailDrawer({
   const avatar = userAvatar(u)
   const vip = isVip(u)
   const sub = isSub(u)
+  const subDuration = u.subscriber_status?.subscription_duration_months
   const admin = isAdmin(u)
   const discord = hasDiscord(u)
   const dName = discordName(u)
@@ -504,10 +506,14 @@ function UserDetailDrawer({
               </span>
             )}
             {sub && (
-              <span className="flex items-center gap-1 rounded-full bg-foreground/10 px-2 py-0.5 text-[11px] font-bold text-foreground">
-                <Star className="size-3" />
-                SUB
-              </span>
+              subDuration != null ? (
+                <SubscriberBadge durationMonths={subDuration} size={14} />
+              ) : (
+                <span className="flex items-center gap-1 rounded-full bg-foreground/10 px-2 py-0.5 text-[11px] font-bold text-foreground">
+                  <Star className="size-3" />
+                  SUB
+                </span>
+              )
             )}
             {admin && (
               <span className="flex items-center gap-1 rounded-full bg-gold px-2 py-0.5 text-[11px] font-bold text-gold-foreground">

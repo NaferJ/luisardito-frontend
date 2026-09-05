@@ -2,6 +2,7 @@ import Link from "next/link"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
 import { VipBadge } from "@/components/vip-badge"
+import { SubscriberBadge } from "@/components/subscriber-badge"
 
 function entryName(entry: LeaderboardEntry): string {
   return entry.kick_data?.username ?? entry.nickname ?? "Anonymous"
@@ -59,13 +60,17 @@ export function LeaderboardAside({ entries }: Readonly<{ entries: LeaderboardEnt
                 <span className="truncate text-[13px] font-medium text-foreground">
                   {name}
                 </span>
-                <span className="flex items-center gap-1 text-[13px] text-muted-foreground">
-                  <span className="text-gold-bright">
-                    {formatCompactNumber(entry.puntos)}
-                  </span>
-                  <span>pts</span>
+                <span className="text-[13px] text-gold-bright">
+                  {formatCompactNumber(entry.puntos)}
                 </span>
               </div>
+              {entry.is_subscriber && (
+                <SubscriberBadge
+                  durationMonths={entry.subscription_duration_months}
+                  size={25}
+                  className="shrink-0"
+                />
+              )}
               {Boolean(entry.is_vip) && (
                 <VipBadge size={25} className="shrink-0" />
               )}

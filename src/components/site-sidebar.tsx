@@ -11,6 +11,8 @@ import { logout } from "@/app/shop/auth/actions"
 import { useUser } from "@/components/user-provider"
 import { PendingCanjesBadge } from "@/components/pending-canjes-badge"
 import { OnlineStatus } from "@/components/online-status"
+import { SubscriberBadge } from "@/components/subscriber-badge"
+import { VipBadge } from "@/components/vip-badge"
 import { cn, formatCompactNumber } from "@/lib/utils"
 
 /**
@@ -33,7 +35,7 @@ function getActiveHref(pathname: string, hrefs: readonly string[]): string {
 
 function Logo() {
   return (
-    <Link href="/" aria-label="Luisardito" className="inline-block text-foreground">
+    <Link href="/" aria-label="Luisardito" className="inline-block shrink-0 text-foreground">
       <Image src="/icon.svg" alt="Luisardito" width={26} height={26} className="text-foreground" />
     </Link>
   )
@@ -91,24 +93,28 @@ function AccountPill({
   const displayName =
     user.nickname ?? user.kick_username ?? user.display_name ?? user.nombre ?? user.email ?? "User"
   const avatarSrc = user.kick_data?.avatar_url ?? user.avatar_url ?? user.kick_avatar ?? undefined
+  const subDuration = user.subscriber_status?.subscription_duration_months
+  const isVip = Boolean(user.vip_status?.is_active ?? user.vip_info?.is_active ?? user.is_vip ?? false)
 
   return (
     <Link
       href="/shop/perfil"
-      className="flex items-center gap-2 rounded-full bg-secondary px-2.5 py-1 text-[13px] font-medium text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-95"
+      className="flex min-w-0 items-center gap-2 rounded-full bg-secondary px-2.5 py-1 text-[13px] font-medium text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-95"
     >
+      <SubscriberBadge durationMonths={subDuration} size={20} className="shrink-0" />
+      {isVip && <VipBadge size={20} className="shrink-0" />}
       {showPoints && (
-        <span className="text-gold-bright">{formatCompactNumber(user.puntos)}</span>
+        <span className="shrink-0 text-gold-bright">{formatCompactNumber(user.puntos)}</span>
       )}
       {avatarSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={avatarSrc} alt={displayName} className="size-5 rounded-full object-cover" />
+        <img src={avatarSrc} alt={displayName} className="size-5 shrink-0 rounded-full object-cover" />
       ) : (
-        <span className="flex size-5 items-center justify-center rounded-full bg-gold-core text-[10px] font-medium text-background">
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-gold-core text-[10px] font-medium text-background">
           {displayName.charAt(0).toUpperCase()}
         </span>
       )}
-      <span className="max-w-[80px] truncate">{displayName}</span>
+      <span className="min-w-0 max-w-[60px] truncate">{displayName}</span>
     </Link>
   )
 }
@@ -329,7 +335,7 @@ export function SiteSidebar() {
           <Logo />
           <OnlineStatus />
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex items-center gap-2">
           <AccountPill user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} showPoints />
           <button
             type="button"

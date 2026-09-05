@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { VipBadge } from "@/components/vip-badge"
+import { SubscriberBadge } from "@/components/subscriber-badge"
 import type {
   LeaderboardEntry,
   LeaderboardMeta,
@@ -157,13 +158,15 @@ function LeaderboardRow({
             YOU
           </span>
         )}
-        {Boolean(entry.is_vip) && (
-          <VipBadge size={14} className="shrink-0" />
-        )}
         {entry.is_subscriber && (
-          <span className="shrink-0 rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium text-foreground">
-            SUB
-          </span>
+          <SubscriberBadge
+            durationMonths={entry.subscription_duration_months}
+            size={25}
+            className="shrink-0"
+          />
+        )}
+        {Boolean(entry.is_vip) && (
+          <VipBadge size={25} className="shrink-0" />
         )}
       </div>
 

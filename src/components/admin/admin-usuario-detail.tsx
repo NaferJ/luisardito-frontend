@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { Crown, Star, Plus, Minus, AlertTriangle } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { VipBadge } from "@/components/vip-badge"
+import { SubscriberBadge } from "@/components/subscriber-badge"
 import { DiscordLogo } from "@/components/brand-icons"
 import {
   updateUsuarioPuntos,
@@ -49,6 +50,7 @@ export function AdminUsuarioDetail({
 
   const isVip = Boolean(usuario.vip_status?.is_active ?? usuario.vip_info?.is_active ?? usuario.is_vip ?? false)
   const isSub = usuario.subscriber_status?.is_active ?? false
+  const subDuration = usuario.subscriber_status?.subscription_duration_months
   const isAdmin = [3, 4, 5].includes(usuario.rol_id)
   const avatar = userAvatar(usuario)
   const name = userName(usuario)
@@ -107,7 +109,13 @@ export function AdminUsuarioDetail({
           <div className="flex flex-wrap items-center gap-2">
             <span className="truncate text-[18px] font-semibold text-foreground">{name}</span>
             {isVip && <Badge icon={<VipBadge size={12} />} label="VIP" className="bg-gold/20 text-gold-bright" />}
-            {isSub && <Badge icon={<Star className="size-3" />} label="SUB" className="bg-foreground/10 text-foreground" />}
+            {isSub && (
+              subDuration != null ? (
+                <SubscriberBadge durationMonths={subDuration} size={14} />
+              ) : (
+                <Badge icon={<Star className="size-3" />} label="SUB" className="bg-foreground/10 text-foreground" />
+              )
+            )}
             {isAdmin && <Badge label="ADMIN" className="bg-gold text-gold-foreground" />}
           </div>
           <span className="truncate text-[13px] text-muted-foreground">{usuario.email}</span>

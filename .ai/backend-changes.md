@@ -30,25 +30,30 @@ Everything the **external API server** (the separate Node/Express backend, not t
 
 ---
 
-### 2. Last redeemer on product (`ultimo_canje`)
-**Why:** The redesigned product card shows a bottom-left avatar representing the last person who redeemed (canjeó) the product. Currently `lastRedeemer` is always `null` because the backend doesn't expose this. The card falls back to a colored dot, which is not the intended design.
+### 2. Last redeemer on product (`ultimo_canje`) — RESOLVED (backend PR #72, merged)
+**Why:** The redesigned product card shows a bottom-left avatar representing the last person who redeemed (canjeó) the product.
 
-**Change:**
-- Add an optional `ultimo_canje` field to the product response (same endpoints as #1):
-  ```json
-  "ultimo_canje": {
-    "usuario_id": 123,
-    "nickname": "someuser",
-    "kick_data": { "avatar_url": "...", "username": "..." },
-    "fecha": "2026-08-10T..."
-  } | null
-  ```
-- This is a join on the most recent `Canje` row for that product with `estado != 'cancelado'`.
-- Should be `null` when the product has never been redeemed.
+**Status:** Backend PR #72 already implemented and merged. `ultimo_canje` is exposed on:
+- `GET /api/productos`
+- `GET /api/productos/admin`
+- `GET /api/productos/:id`
+- `GET /api/productos/slug/:slug`
 
-**Frontend side:**
-- Map `ultimo_canje` → `lastRedeemer` in `product-mapper.ts`.
-- `DesignCard` already renders `lastRedeemer.avatar` / `lastRedeemer.name` when present.
+Response shape (verified against running local API):
+```json
+"ultimo_canje": {
+  "usuario_id": 3,
+  "nickname": "NaferJ",
+  "display_name": "NaferJ",
+  "avatar": null,
+  "kick_data": { "avatar_url": null, "username": null },
+  "fecha": "2026-09-05T01:04:17Z"
+} | null
+```
+
+Selects most recent redemption with `estado IN ('pendiente', 'entregado')` — cancelled/returned excluded. `null` when never redeemed.
+
+**Frontend side:** Already wired — `product-mapper.ts` maps `ultimo_canje` → `lastRedeemer`, `DesignCard` renders the avatar when present, falls back to colored dot when `avatar` is null.
 
 ---
 
@@ -167,3 +172,43 @@ Everything the **external API server** (the separate Node/Express backend, not t
 - All new product fields must be **optional** in the response so the frontend doesn't break during rollout.
 - The frontend already has graceful fallbacks for missing data (cycled ratios, colored avatar dot, empty leaderboard). Nothing should crash if a field is absent.
 - Naming: the existing API uses Spanish-ish field names (`nombre`, `precio`, `created_at`). New fields can follow either convention as long as the frontend type matches. Recommend `imagen_width` / `imagen_height` (consistent with `imagen_url`) and `ultimo_canje` (consistent with `canjes_count`).
+
+---
+
+## Subscriber badge — backend gaps (frontend issue #5)
+
+The frontend has a scalable subscriber badge system (`src/lib/subscriber-tiers.ts` +
+`src/components/subscriber-badge.tsx`) that maps `subscription_duration_months` to
+tiered badge images. The leaderboard endpoint already exposes the field (backend #74,
+shipped). The following gaps remain:
+
+### Gap 1 — `subscription_duration_months` on user endpoints (backend #78, in progress)
+
+`GET /api/usuarios/me`, `GET /api/usuarios`, and `GET /api/kick-admin/users` now
+include `subscription_duration_months` on `subscriber_status` (backend PR pending
+review). Frontend types and rendering are ready.
+
+**CONFIRMED:** `subscription_duration_months` is simply how many months the
+user has been subscribed (accumulated, from Kick's `duration` field). The
+frontend tier mapping is 1 month → tier 1, 2 months → tier 2, 3 months →
+tier 3, 4 months → tier 4, 5 months → tier 5, 6+ months → tier 6 (capped).
+
+**Edge case:** Gifted subscriptions (`channel.subscription.gifts`) do not
+include a duration field. A user known only through a gift can have
+`is_subscriber: true` with `subscription_duration_months: null`. The
+frontend `SubscriberBadge` handles this by returning `null` (no badge)
+when duration is null — correct behavior.
+
+### Gap 2 — VIP status on user endpoint (RESOLVED, no backend change needed)
+
+`GET /api/usuarios/me` already returns `vip_status: { is_active, is_permanent,
+expires_soon, expires_at }`. The frontend was checking `vip_info?.is_active ??
+user.is_vip` and missing `vip_status`. Fixed in the frontend — AccountPill,
+profile view, and admin canjes list now check `vip_status?.is_active` first,
+then fall back to `vip_info` and `is_vip`.
+
+### Gap 3 — `canjes.controller.ts` subscriber_status (out of scope for #78)
+
+The redemption history endpoint still builds `subscriber_status` with the old
+2-field shape. If the frontend needs the badge on redemption history views,
+that's a separate issue.

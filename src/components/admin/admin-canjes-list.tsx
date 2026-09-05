@@ -126,7 +126,7 @@ function canjeCurrentPrice(c: Canje): number | undefined {
 }
 
 function isVip(u?: Usuario): boolean {
-  return Boolean(u?.vip_info?.is_active ?? u?.is_vip ?? false)
+  return Boolean(u?.vip_status?.is_active ?? u?.vip_info?.is_active ?? u?.is_vip ?? false)
 }
 
 function isSub(u?: Usuario): boolean {

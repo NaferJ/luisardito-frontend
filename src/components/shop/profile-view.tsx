@@ -11,6 +11,7 @@ import {
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { KickLogo, DiscordLogo } from "@/components/brand-icons"
 import { VipBadge } from "@/components/vip-badge"
+import { SubscriberBadge } from "@/components/subscriber-badge"
 import type { Usuario } from "@/types"
 
 function displayName(user: Usuario): string {
@@ -42,8 +43,9 @@ export function ProfileView({
   const name = displayName(user)
   const avatar = avatarUrl(user)
   const isAdmin = [3, 4, 5].includes(user.rol_id)
-  const isVip = Boolean(user.vip_info?.is_active ?? user.is_vip ?? false)
+  const isVip = Boolean(user.vip_status?.is_active ?? user.vip_info?.is_active ?? user.is_vip ?? false)
   const isSubscriber = user.subscriber_status?.is_active ?? false
+  const subDuration = user.subscriber_status?.subscription_duration_months
   const discordLinked = user.discord_info?.linked ?? user.discordLinked ?? false
 
   const handleLogout = async () => {
@@ -83,10 +85,14 @@ export function ProfileView({
               </span>
             )}
             {isSubscriber && (
-              <span className="flex items-center gap-1 rounded-full bg-foreground/10 px-2 py-0.5 text-[11px] font-bold text-foreground">
-                <Star className="size-3" aria-hidden="true" />
-                SUB
-              </span>
+              subDuration != null ? (
+                <SubscriberBadge durationMonths={subDuration} size={18} />
+              ) : (
+                <span className="flex items-center gap-1 rounded-full bg-foreground/10 px-2 py-0.5 text-[11px] font-bold text-foreground">
+                  <Star className="size-3" aria-hidden="true" />
+                  SUB
+                </span>
+              )
             )}
             {isAdmin && (
               <span className="rounded-full bg-gold px-2 py-0.5 text-[11px] font-bold text-gold-foreground">
