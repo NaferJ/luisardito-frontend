@@ -21,12 +21,12 @@ interface CanjesPageProps {
   }>
 }
 
-const VALID_STATUSES: CanjesStatus[] = [
+const VALID_STATUSES: ReadonlySet<CanjesStatus> = new Set([
   'pendiente',
   'entregado',
   'cancelado',
   'devuelto',
-]
+])
 
 function parsePage(value: string | undefined): number {
   const page = Number.parseInt(value ?? '1', 10)
@@ -34,7 +34,7 @@ function parsePage(value: string | undefined): number {
 }
 
 function parseStatus(value: string | undefined): CanjesStatus | 'all' {
-  return value && VALID_STATUSES.includes(value as CanjesStatus)
+  return value && VALID_STATUSES.has(value as CanjesStatus)
     ? (value as CanjesStatus)
     : 'all'
 }
