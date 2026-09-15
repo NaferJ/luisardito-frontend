@@ -1,5 +1,5 @@
 import { useId } from "react"
-import { cn } from "@/lib/utils"
+import { BadgeHoverLabel } from "@/components/ui/badge-hover-label"
 
 /**
  * Kick's official VIP badge icon, used instead of the literal text "VIP".
@@ -23,16 +23,15 @@ export function VipBadge({
   const idB = `vip-badge-red-${uid}`
 
   return (
-    <svg
+    <BadgeHoverLabel label="VIP member" className={className}>
+      <svg
       width={size}
       height={size}
       viewBox="0 0 20 20"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
-      className={cn("inline-block shrink-0 cursor-pointer align-middle", className)}
-      aria-label="VIP"
-      role="img"
-      title="VIP"
+      className="inline-block shrink-0 align-middle"
+      aria-hidden="true"
     >
       <path
         fill={`url(#${idA})`}
@@ -56,6 +55,7 @@ export function VipBadge({
           <stop offset=".99" stopColor="#ff9500" />
         </linearGradient>
       </defs>
-    </svg>
+      </svg>
+    </BadgeHoverLabel>
   )
 }

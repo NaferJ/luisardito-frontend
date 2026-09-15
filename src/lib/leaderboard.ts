@@ -37,10 +37,22 @@ export interface LeaderboardMeta {
   hours_until_reset: number | null
 }
 
+export interface LeaderboardStats {
+  total_users: number
+  total_points: number
+  average_points: number
+  top_user: { nickname: string; puntos: number } | null
+  vip_users: number
+}
+
 interface LeaderboardResponse {
   data: LeaderboardEntry[]
   meta: LeaderboardMeta
   user_position?: LeaderboardEntry | null
+}
+
+interface StatsResponse {
+  stats: LeaderboardStats
 }
 
 /** Fetch the top N leaderboard entries by points. */
@@ -96,10 +108,23 @@ export async function getFullLeaderboard(
 /** Fetch the current user's leaderboard position. Requires auth. */
 export async function getMyLeaderboardPosition(): Promise<LeaderboardEntry | null> {
   try {
-    const response = await apiFetch<{ data: LeaderboardEntry } | LeaderboardEntry>(
+    const response = await apiFetch<{ data: LeaderboardEntry | null }>(
       '/api/leaderboard/me',
     )
-    return Array.isArray(response) ? response[0] ?? null : (response.data ?? response ?? null)
+    return response.data ?? null
+  } catch {
+    return null
+  }
+}
+
+/** Fetch aggregate leaderboard totals for the compact page context. */
+export async function getLeaderboardStats(): Promise<LeaderboardStats | null> {
+  try {
+    const response = await apiFetch<StatsResponse>(
+      '/api/leaderboard/stats',
+      { skipAuth: true },
+    )
+    return response.stats ?? null
   } catch {
     return null
   }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/auth'
 import {
   getLeaderboardPage,
+  getLeaderboardStats,
   getMyLeaderboardPosition,
 } from '@/lib/leaderboard'
 import { LeaderboardView } from '@/components/shop/leaderboard-view'
@@ -14,8 +15,9 @@ export const metadata: Metadata = {
 const INITIAL_PAGE_SIZE = 25
 
 export default async function LeaderboardPage() {
-  const [{ entries, meta }, user] = await Promise.all([
+  const [{ entries, meta }, stats, user] = await Promise.all([
     getLeaderboardPage(INITIAL_PAGE_SIZE, 0),
+    getLeaderboardStats(),
     getCurrentUser(),
   ])
 
@@ -36,6 +38,7 @@ export default async function LeaderboardPage() {
       <LeaderboardView
         initialEntries={entries}
         meta={meta}
+        stats={stats}
         myPosition={myPosition}
         myUserId={user?.id}
       />
