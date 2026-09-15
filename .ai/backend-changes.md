@@ -85,27 +85,25 @@ Selects most recent redemption with `estado IN ('pendiente', 'entregado')` — c
 
 ---
 
-### 4. CORS for the new domains
-**Why:** The v2 frontend will run on `luisardito.com` and `shop.luisardito.com` (and locally on `localhost:3000`). The backend must allow these origins.
+### 4. CORS for the new domains — RESOLVED
+**Why:** The v2 frontend runs on `luisardito.com` and `shop.luisardito.com` (and locally on `localhost:3000`). The backend must allow these origins.
 
-**Change:**
-- Add to CORS allowlist:
-  - `https://luisardito.com`
-  - `https://www.luisardito.com`
-  - `https://shop.luisardito.com`
-  - `http://localhost:3000` (dev)
-- Keep whatever legacy origins are already allowed.
+**Status:** The backend CORS middleware already allows:
+- `https://luisardito.com`
+- `https://www.luisardito.com`
+- `https://shop.luisardito.com`
+- Luisardito subdomains and localhost development origins
+
+No backend code change is currently needed; verify the production configuration during deployment.
 
 ---
 
 ## P1 — Needed soon (frontend already calls or will call these)
 
-### 5. Confirm canje creation endpoint works for v2 (`POST /api/canjes`)
-**Why:** The v2 product detail overlay calls `/shop/api/redeem` (a Next.js route handler in this repo) which will proxy to the backend's `POST /api/canjes` with `{ producto_id }`. The legacy uses the same endpoint, so it likely already works.
+### 5. Canje creation endpoint and frontend proxy — RESOLVED
+**Why:** The product detail overlay calls `/shop/api/redeem`, which proxies to the backend's authenticated `POST /api/canjes` endpoint with `{ producto_id }`.
 
-**Action:**
-- Confirm `POST /api/canjes` accepts `{ producto_id: number }` with auth, returns the created canje, and handles insufficient points / out-of-stock errors with clear messages.
-- **Frontend side (this repo):** Create `src/app/shop/api/redeem/route.ts` that proxies to `POST /api/canjes`. This file does **not** exist yet — the overlay calls it but gets a 404 today.
+**Status:** `src/app/shop/api/redeem/route.ts` exists and forwards the request and authentication cookies to the backend. The backend endpoint handles redemption creation and returns its validation errors to the proxy.
 
 ---
 
@@ -157,8 +155,8 @@ Selects most recent redemption with `estado IN ('pendiente', 'entregado')` — c
 | 1 | Product image dimensions | Frontend-only (Cloudinary already returns them) | P0 | Small |
 | 2 | Last redeemer on product | Backend | P0 | Small |
 | 3 | Verify leaderboard fields | Backend | P0 | Trivial |
-| 4 | CORS for new domains | Backend | P0 | Trivial |
-| 5 | Confirm canje creation + create `/shop/api/redeem` proxy | Backend (verify) + Frontend (create route) | P1 | Small |
+| 4 | CORS for new domains — resolved | Backend | P0 | Complete |
+| 5 | Canje creation + `/shop/api/redeem` proxy — resolved | Backend + Frontend | P1 | Complete |
 | 6 | Bookmark persistence | Backend (if option a) | P1 | Medium |
 | 7 | Status page | External service (recommended) | P2 | Trivial |
 | 8 | Changelog route | Frontend only | P2 | Small |
@@ -242,7 +240,5 @@ stores status, sort, and page in the URL so navigation is reload-safe and
 shareable. The summary is intentionally read from the backend because it
 represents the complete history, not just the current page.
 
-Backend issue #80 is assigned to NaferJ and currently In Progress on the
-backend board. The backend branch is `feat/canjes-server-pagination`; its old
-`feat/subscription-duration-on-user-endpoints` branch is safe to delete after
-explicit confirmation.
+Backend issue #80 and PR #81 are complete. The frontend consumes the paginated
+response and no additional backend work is currently required for this flow.

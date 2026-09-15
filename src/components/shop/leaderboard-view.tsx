@@ -10,9 +10,6 @@ import {
   X,
   Crown,
   Clock,
-  Users,
-  Trophy,
-  Star,
   Loader2,
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
@@ -21,7 +18,6 @@ import { SubscriberBadge } from "@/components/subscriber-badge"
 import type {
   LeaderboardEntry,
   LeaderboardMeta,
-  LeaderboardStats,
 } from "@/lib/leaderboard"
 import { publicApiFetch } from "@/lib/public-api"
 
@@ -78,26 +74,6 @@ function ChangeIndicator({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
     default:
       return <Minus className="size-3 text-muted-foreground" aria-hidden="true" />
   }
-}
-
-function StatPill({
-  icon: Icon,
-  label,
-  value,
-}: Readonly<{
-  icon: typeof Users
-  label: string
-  value: string
-}>) {
-  return (
-    <div className="flex items-center gap-2">
-      <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <div className="flex flex-col">
-        <span className="text-[10px] leading-tight text-muted-foreground">{label}</span>
-        <span className="text-[13px] font-semibold leading-tight text-foreground">{value}</span>
-      </div>
-    </div>
-  )
 }
 
 function LeaderboardRow({
@@ -191,13 +167,11 @@ function LeaderboardRow({
 export function LeaderboardView({
   initialEntries,
   meta,
-  stats,
   myPosition,
   myUserId,
 }: Readonly<{
   initialEntries: LeaderboardEntry[]
   meta: LeaderboardMeta | null
-  stats: LeaderboardStats | null
   myPosition: LeaderboardEntry | null
   myUserId?: number
 }>) {
@@ -269,32 +243,6 @@ export function LeaderboardView({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Stats header */}
-      {stats && (
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-sm border border-border bg-card px-4 py-3">
-          <StatPill
-            icon={Users}
-            label="Ranked users"
-            value={formatCompactNumber(stats.total_users)}
-          />
-          <StatPill
-            icon={Star}
-            label="Total points"
-            value={formatCompactNumber(stats.total_points)}
-          />
-          <StatPill
-            icon={Trophy}
-            label="Top user"
-            value={stats.top_user?.nickname ?? "—"}
-          />
-          <StatPill
-            icon={Crown}
-            label="VIP users"
-            value={formatCompactNumber(stats.vip_users)}
-          />
-        </div>
-      )}
-
       {/* Reset countdown banner */}
       {meta?.days_until_reset != null && meta.days_until_reset > 0 && (
         <div className="flex items-center gap-2 rounded-sm border border-gold/30 bg-gold/5 px-4 py-2.5">

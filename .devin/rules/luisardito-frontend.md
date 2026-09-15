@@ -9,9 +9,9 @@ the same house rules for different tools.
 
 **Next.js 16 (App Router)** frontend for the Luisardito site. **React 19**,
 **Tailwind CSS v4**, strict TypeScript, ESLint 9, deployed on Vercel.
-This is a frontend-only app — there are no API routes, no database, no CMS
-in this repo. Styling is Tailwind utility classes only (no CSS-in-JS, no
-styled-components). Geist fonts via `next/font/google`.
+The app owns UI plus thin route handlers for OAuth and backend proxying; there
+is no database or CMS in this repo. Styling is Tailwind utility classes only
+(no CSS-in-JS or styled-components). Geist fonts via `next/font/google`.
 
 ## Color palette and theme
 
@@ -69,12 +69,13 @@ colors in data files). All theme tokens are defined as CSS variables in
   Do not load fonts via `<link>` tags or CSS `@import`.
 - Use `next/image` for images, `next/link` for internal navigation.
 - Do not add CSS Modules unless Tailwind utilities are genuinely insufficient.
-- Do not install UI libraries (shadcn, MUI, Chakra, etc.) unless explicitly asked.
+- Reuse the existing Base UI/shadcn primitives and local `src/components/ui/*`
+  components. Do not introduce another UI system unless explicitly asked.
 
 ## Environment
 
-- No `.env.example` exists yet. If env vars are introduced, create `.env.example`
-  with safe placeholders and keep it as the single source of truth.
+- `.env.example` is the single source of truth for environment variable
+  documentation. Keep every placeholder safe and update it when vars change.
 - Keep `.gitignore` excluding `node_modules`, `.env*` (except the example),
   `.next`, build output. Never commit real secrets.
 

@@ -37,22 +37,10 @@ export interface LeaderboardMeta {
   hours_until_reset: number | null
 }
 
-export interface LeaderboardStats {
-  total_users: number
-  total_points: number
-  average_points: number
-  top_user: { nickname: string; puntos: number } | null
-  vip_users: number
-}
-
 interface LeaderboardResponse {
   data: LeaderboardEntry[]
   meta: LeaderboardMeta
   user_position?: LeaderboardEntry | null
-}
-
-interface StatsResponse {
-  stats: LeaderboardStats
 }
 
 /** Fetch the top N leaderboard entries by points. */
@@ -112,19 +100,6 @@ export async function getMyLeaderboardPosition(): Promise<LeaderboardEntry | nul
       '/api/leaderboard/me',
     )
     return Array.isArray(response) ? response[0] ?? null : (response.data ?? response ?? null)
-  } catch {
-    return null
-  }
-}
-
-/** Fetch general leaderboard statistics (total users, points, top user, VIP count). */
-export async function getLeaderboardStats(): Promise<LeaderboardStats | null> {
-  try {
-    const response = await apiFetch<StatsResponse>(
-      '/api/leaderboard/stats',
-      { skipAuth: true },
-    )
-    return response.stats ?? null
   } catch {
     return null
   }

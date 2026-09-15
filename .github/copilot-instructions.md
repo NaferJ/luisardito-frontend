@@ -9,10 +9,10 @@ and `.windsurf/rules.md` — they encode the same house rules for different tool
 
 **Next.js 16 (App Router)** frontend for the Luisardito site. **React 19**,
 **Tailwind CSS v4**, strict TypeScript, ESLint 9, deployed on Vercel.
-This is a frontend-only app — there are no API routes, no database, no CMS
-in this repo. It consumes a separate backend (`luisardito-shop-backend`, read-only).
-Styling is Tailwind utility classes only (no CSS-in-JS, no styled-components).
-Geist fonts via `next/font/google`.
+The app owns UI plus thin route handlers for OAuth and backend proxying; there
+is no database or CMS in this repo. It consumes a separate backend
+(`luisardito-shop-backend`, read-only). Styling is Tailwind utility classes only
+(no CSS-in-JS or styled-components). Geist fonts via `next/font/google`.
 
 ## Code conventions
 
@@ -49,7 +49,8 @@ Geist fonts via `next/font/google`.
   Do not load fonts via `<link>` tags or CSS `@import`.
 - Use `next/image` for images, `next/link` for internal navigation.
 - Do not add CSS Modules unless Tailwind utilities are genuinely insufficient.
-- Do not install UI libraries (shadcn, MUI, Chakra, etc.) unless explicitly asked.
+- Reuse the existing Base UI/shadcn primitives and local `src/components/ui/*`
+  components. Do not introduce another UI system unless explicitly asked.
 
 ## Color palette and theme
 

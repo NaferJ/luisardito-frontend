@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Luisardito Frontend
 
-## Getting Started
+Next.js 16 App Router frontend for Luisardito, including the public site, points-redemption shop, authenticated account pages, and admin interfaces. The application uses React 19, strict TypeScript, Tailwind CSS v4, and a small set of route handlers that proxy authentication or protected backend operations.
 
-First, run the development server:
+The separate `luisardito-shop-backend` service owns the API, database, authentication state, and business logic. Do not duplicate backend behavior in this repository.
+
+## Requirements
+
+- Node.js 20 or later
+- npm
+- The backend running locally on `http://localhost:3001` for full shop functionality
+
+## Local setup
+
+Install exactly the dependencies recorded in the lock file:
+
+```bash
+npm ci
+```
+
+Copy `.env.example` to `.env` and replace the safe placeholders with values for your environment. All frontend environment variables are prefixed with `NEXT_PUBLIC_` and are bundled into the client where used.
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`. The shop is available under `/shop`; production also maps `shop.luisardito.com` to that route tree.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/app/` — routes, layouts, server actions, and thin route handlers
+- `src/components/` — shared, shop, and admin UI
+- `src/lib/` — API clients, authentication, data mapping, and utilities
+- `src/types/` — backend response and application types
+- `src/content/changelog/` — typed release notes
+- `.ai/` — project context and historical implementation notes
 
-## Learn More
+## Commands
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` — run the development server
+- `npm run lint` — run ESLint
+- `npm run build` — create a production build
+- `npm run start` — serve the production build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+There is currently no automated test framework. Before opening a pull request, run:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm ci
+npm run lint
+npm run build
+```
 
-## Deploy on Vercel
+On Windows, use `npm ci` for routine installs. Follow the cross-platform lock-file instructions in `AGENTS.md` when dependencies must be added or updated.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The frontend deploys to Vercel. Environment variables and pre-deployment checks are documented in `.env.example` and `.ai/deploy-checklist.md`.
