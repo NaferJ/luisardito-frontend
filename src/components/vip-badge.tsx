@@ -1,5 +1,8 @@
+"use client"
+
 import { useId } from "react"
 import { BadgeHoverLabel } from "@/components/ui/badge-hover-label"
+import { useI18n } from "@/components/i18n/provider"
 
 /**
  * Kick's official VIP badge icon, used instead of the literal text "VIP".
@@ -15,6 +18,7 @@ export function VipBadge({
   className?: string
   size?: number
 }>) {
+  const { dictionary } = useI18n()
   const reactId = useId()
   // useId returns something like ":r1:" which is invalid in a URL/SVG id,
   // so we sanitize it.
@@ -23,7 +27,7 @@ export function VipBadge({
   const idB = `vip-badge-red-${uid}`
 
   return (
-    <BadgeHoverLabel label="VIP member" className={className}>
+    <BadgeHoverLabel label={dictionary.vipMember.label} className={className}>
       <svg
       width={size}
       height={size}

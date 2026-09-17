@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react"
 import Image from "next/image"
 import { showcaseSlides, type ShowcaseSlide, type SocialLink } from "@/lib/landing-data"
+import { useI18n, useLocale } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
 import { cn } from "@/lib/utils"
 
 const IMAGE_DELAY_MS = 200
@@ -117,17 +119,19 @@ function ShowcaseControls({
   onTogglePlay: () => void
   onToggleMute: () => void
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.landing
   return (
-    <div className="flex items-center gap-3" aria-label="Showcase controls">
+    <div className="flex items-center gap-3" aria-label={t.showcaseControls}>
       {/* Progress dots — one thin bar per slide, fills left to right */}
-      <div className="flex flex-1 items-center gap-1.5" aria-label="Choose slide">
+      <div className="flex flex-1 items-center gap-1.5" aria-label={t.chooseSlide}>
         {slides.map((s, i) => (
           <button
             key={s.channelId}
             type="button"
             onClick={() => onSlideChange(i)}
             disabled={i === currentSlide}
-            aria-label={`Show ${s.name}`}
+            aria-label={interpolate(t.showSlide, { name: s.name })}
             aria-current={i === currentSlide}
             className={cn(
               "progress-dot h-1 flex-1 rounded-full",
@@ -148,7 +152,7 @@ function ShowcaseControls({
       <button
         type="button"
         onClick={onTogglePlay}
-        aria-label={isPlaying ? "Pause" : "Play"}
+        aria-label={isPlaying ? t.pause : t.play}
         aria-pressed={!isPlaying}
         className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-secondary"
       >
@@ -168,7 +172,7 @@ function ShowcaseControls({
       <button
         type="button"
         onClick={onToggleMute}
-        aria-label={isMuted ? "Unmute" : "Mute"}
+        aria-label={isMuted ? t.unmute : t.mute}
         className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-secondary"
       >
         {isMuted ? (
@@ -201,12 +205,13 @@ function HorizontalSlide({
   videoRef: React.RefObject<HTMLVideoElement | null>
   controls: React.ReactNode
 }>) {
+  const locale = useLocale()
   const expanded = phase === "expanded"
 
   return (
     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:justify-center">
       {/* Left: text block (static, no animation) */}
-      <div className="flex shrink-0 self-center flex-col gap-3 sm:w-[35%] sm:justify-center">
+      <div className="flex w-full max-w-md shrink-0 self-center flex-col gap-3 sm:w-[35%] sm:max-w-none sm:justify-center">
         {/* Controls — at the top */}
         {controls}
 
@@ -223,17 +228,17 @@ function HorizontalSlide({
           </div>
           <div className="flex min-w-0 flex-col gap-2">
             <h3 className="text-[15px] font-semibold text-foreground">{slide.name}</h3>
-            <p className="text-[13px] leading-relaxed text-muted-foreground">{slide.description}</p>
+            <p className="text-[13px] leading-relaxed text-muted-foreground">{slide.description[locale]}</p>
             <SocialLinks socials={slide.socials} />
           </div>
         </div>
       </div>
 
       {/* Right: video with ambient glow — only this animates, fills remaining row width */}
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex w-full flex-1 items-center justify-center sm:w-auto">
         <div
           className={cn(
-            "relative w-[560px] transition-all duration-500 ease-out",
+            "relative w-full max-w-[560px] transition-all duration-500 ease-out",
             expanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none",
           )}
         >
@@ -284,12 +289,14 @@ function VerticalSlide({
   videoRefs: React.RefObject<(HTMLVideoElement | null)[]>
   controls: React.ReactNode
 }>) {
+  const locale = useLocale()
+  const { dictionary } = useI18n()
   const videos = slide.verticalVideos ?? []
 
   return (
     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:justify-center">
       {/* Left: text block (same layout as horizontal slides) */}
-      <div className="flex shrink-0 self-center flex-col gap-3 sm:w-[35%] sm:justify-center">
+      <div className="flex w-full max-w-md shrink-0 self-center flex-col gap-3 sm:w-[35%] sm:max-w-none sm:justify-center">
         {/* Controls — at the top */}
         {controls}
 
@@ -306,7 +313,7 @@ function VerticalSlide({
           </div>
           <div className="flex min-w-0 flex-col gap-2">
             <h3 className="text-[15px] font-semibold text-foreground">{slide.name}</h3>
-            <p className="text-[13px] leading-relaxed text-muted-foreground">{slide.description}</p>
+            <p className="text-[13px] leading-relaxed text-muted-foreground">{slide.description[locale]}</p>
             <SocialLinks socials={slide.socials} />
           </div>
         </div>
@@ -333,7 +340,7 @@ function VerticalSlide({
               >
                 <video
                   src={video}
-                  className="aspect-[9/16] w-36 object-cover opacity-60 sm:w-44"
+                  className="aspect-[9/16] w-[clamp(88px,28vw,144px)] object-cover opacity-60 sm:w-44"
                   playsInline
                   loop
                   muted
@@ -342,7 +349,7 @@ function VerticalSlide({
                 />
               </div>
               {/* The actual video, sharp and on top */}
-              <div className="relative aspect-[9/16] w-36 overflow-hidden rounded-2xl bg-secondary sm:w-44">
+              <div className="relative aspect-[9/16] w-[clamp(88px,28vw,144px)] overflow-hidden rounded-2xl bg-secondary sm:w-44">
                 <video
                   ref={(el) => {
                     if (videoRefs.current) videoRefs.current[i] = el
@@ -351,7 +358,7 @@ function VerticalSlide({
                   className="size-full object-cover"
                   playsInline
                   loop
-                  aria-label={`${slide.name} video ${i + 1}`}
+                  aria-label={interpolate(dictionary.landing.slideVideo, { name: slide.name, n: i + 1 })}
                 />
                 {/* Pause overlay for inactive videos */}
                 {!isActive && isVisible && (

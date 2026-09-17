@@ -16,25 +16,29 @@ import {
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { formatDateTime as formatDate } from "@/lib/admin-utils"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import type { HistorialPunto } from "@/types"
 
 type SortMode = "date-desc" | "date-asc" | "points-desc" | "points-asc"
 type FilterType = "all" | "positive" | "negative" | "vip" | "migration" | "gifts"
+type HistorialDict = Dictionary["historial"]
 
-const SORT_OPTIONS: { mode: SortMode; label: string }[] = [
-  { mode: "date-desc", label: "Newest" },
-  { mode: "date-asc", label: "Oldest" },
-  { mode: "points-desc", label: "Most points" },
-  { mode: "points-asc", label: "Fewest points" },
+const SORT_OPTIONS: { mode: SortMode; label: (t: HistorialDict) => string }[] = [
+  { mode: "date-desc", label: (t) => t.sort.newest },
+  { mode: "date-asc", label: (t) => t.sort.oldest },
+  { mode: "points-desc", label: (t) => t.sort.mostPoints },
+  { mode: "points-asc", label: (t) => t.sort.fewestPoints },
 ]
 
-const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "positive", label: "Earned" },
-  { value: "negative", label: "Spent" },
-  { value: "vip", label: "VIP" },
-  { value: "migration", label: "Migration" },
-  { value: "gifts", label: "Gifts" },
+const FILTER_OPTIONS: { value: FilterType; label: (t: HistorialDict) => string }[] = [
+  { value: "all", label: (t) => t.filters.all },
+  { value: "positive", label: (t) => t.filters.earned },
+  { value: "negative", label: (t) => t.filters.spent },
+  { value: "vip", label: (t) => t.filters.vip },
+  { value: "migration", label: (t) => t.filters.migration },
+  { value: "gifts", label: (t) => t.filters.gifts },
 ]
 
 function getEventIcon(item: HistorialPunto): typeof MessageSquare {
@@ -50,18 +54,20 @@ function getEventIcon(item: HistorialPunto): typeof MessageSquare {
   return ArrowLeftRight
 }
 
-function getEventTitle(item: HistorialPunto): string {
+function getEventTitle(item: HistorialPunto, t: HistorialDict): string {
   const concept = item.concepto ?? item.motivo ?? ""
   const eventData = item.kick_event_data
-  if (eventData?.event_type === "botrix_migration") return "Botrix migration"
+  if (eventData?.event_type === "botrix_migration") return t.events.botrixMigration
   if (eventData?.event_type === "vip_granted") {
-    const duration = eventData.duration_days ? `${eventData.duration_days}d` : "permanent"
-    return `VIP granted (${duration})`
+    const duration = eventData.duration_days
+      ? interpolate(t.events.daysShort, { days: eventData.duration_days })
+      : t.events.permanent
+    return t.events.vipGranted.replace("{duration}", duration)
   }
   if (eventData?.event_type === "kicks.gifted") {
-    return `Gift of ${eventData.kick_amount ?? 0} kicks`
+    return interpolate(t.events.kicksGifted, { amount: eventData.kick_amount ?? 0 })
   }
-  return concept || "Points movement"
+  return concept || t.events.pointsMovement
 }
 
 function getCambio(item: HistorialPunto): number {
@@ -73,6 +79,8 @@ export function HistorialList({
 }: Readonly<{
   historial: HistorialPunto[]
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.historial
   const [search, setSearch] = useState("")
   const [filterType, setFilterType] = useState<FilterType>("all")
   const [sortMode, setSortMode] = useState<SortMode>("date-desc")
@@ -162,9 +170,9 @@ export function HistorialList({
     return (
       <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-border p-8">
         <Clock className="size-8 text-muted-foreground" aria-hidden="true" />
-        <p className="text-[15px] font-medium text-foreground">No points history yet</p>
+        <p className="text-[15px] font-medium text-foreground">{t.empty}</p>
         <p className="text-[13px] text-muted-foreground">
-          Start watching streams to earn points and build your history.
+          {t.emptyHint}
         </p>
       </div>
     )
@@ -174,13 +182,13 @@ export function HistorialList({
     <div className="flex flex-col gap-4">
       {/* Stats row */}
       <div className="flex flex-wrap gap-2">
-        <StatChip label={`${stats.total} ${stats.total === 1 ? "entry" : "entries"}`} />
-        <StatChip label={`+${formatCompactNumber(stats.ganados)} earned`} accent="positive" />
+        <StatChip label={`${stats.total} ${stats.total === 1 ? t.entry : t.entries}`} />
+        <StatChip label={`+${formatCompactNumber(stats.ganados)} ${t.earned}`} accent="positive" />
         {stats.gastados > 0 && (
-          <StatChip label={`-${formatCompactNumber(stats.gastados)} spent`} accent="negative" />
+          <StatChip label={`-${formatCompactNumber(stats.gastados)} ${t.spent}`} accent="negative" />
         )}
-        <StatChip label={`Balance: ${formatCompactNumber(stats.balance)}`} outline />
-        {stats.avg > 0 && <StatChip label={`Avg: ${stats.avg} pts`} />}
+        <StatChip label={`${t.balance}: ${formatCompactNumber(stats.balance)}`} outline />
+        {stats.avg > 0 && <StatChip label={`${t.avg}: ${stats.avg} pts`} />}
       </div>
 
       {/* Filter bar */}
@@ -191,15 +199,15 @@ export function HistorialList({
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search..."
-            aria-label="Search history"
+            placeholder={t.searchPlaceholder}
+            aria-label={t.searchLabel}
             className="h-8 w-full rounded-full border border-border bg-background pl-8 pr-7 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              aria-label="Clear search"
+              aria-label={t.clearSearch}
               className="absolute right-2 flex size-4 items-center justify-center text-muted-foreground hover:text-foreground"
             >
               <X className="size-3" aria-hidden="true" />
@@ -221,7 +229,7 @@ export function HistorialList({
                   : "bg-background text-muted-foreground hover:text-foreground",
               )}
             >
-              {opt.label}
+              {opt.label(t)}
             </button>
           ))}
         </div>
@@ -230,12 +238,12 @@ export function HistorialList({
           <select
             value={sortMode}
             onChange={(e) => setSortMode(e.target.value as SortMode)}
-            aria-label="Sort by"
+            aria-label={t.sortBy}
             className="h-7 rounded-full border border-border bg-background px-3 text-[12px] text-foreground focus:border-gold focus:outline-none"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.mode} value={opt.mode}>
-                {opt.label}
+                {opt.label(t)}
               </option>
             ))}
           </select>
@@ -249,7 +257,7 @@ export function HistorialList({
               }}
               className="text-[12px] text-muted-foreground hover:text-foreground"
             >
-              Clear
+              {t.clear}
             </button>
           )}
           <span className="shrink-0 text-[12px] text-muted-foreground">
@@ -261,7 +269,7 @@ export function HistorialList({
       {/* History list */}
       {filtered.length === 0 ? (
         <div className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-border p-6">
-          <p className="text-[13px] text-muted-foreground">No results match your filters.</p>
+          <p className="text-[13px] text-muted-foreground">{t.noResults}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -269,7 +277,7 @@ export function HistorialList({
             const cambio = getCambio(item)
             const isPositive = cambio > 0
             const EventIcon = getEventIcon(item)
-            const title = getEventTitle(item)
+            const title = getEventTitle(item, t)
             return (
               <div
                 key={item.id}
@@ -306,7 +314,7 @@ export function HistorialList({
                     {formatCompactNumber(cambio)}
                   </div>
                   <span className="text-[11px] text-muted-foreground">
-                    Bal: {formatCompactNumber(item.saldo_actual)}
+                    {t.balanceShort}: {formatCompactNumber(item.saldo_actual)}
                   </span>
                 </div>
               </div>

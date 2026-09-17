@@ -5,6 +5,7 @@ import { DesignCard } from "@/components/design-card"
 import { ProductDetailOverlay } from "@/components/product-detail-overlay"
 import { LeaderboardAside } from "@/components/leaderboard-aside"
 import { productToCard } from "@/lib/product-mapper"
+import { useI18n } from "@/components/i18n/provider"
 import { cn } from "@/lib/utils"
 import type { Producto } from "@/types"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
@@ -78,6 +79,7 @@ export function ProductFeed({
   onOverlayClose,
   onOverlayNavigate,
 }: ProductFeedProps) {
+  const { dictionary } = useI18n()
   const [openIndex, setOpenIndex] = useState<number | null>(initialOpenIndex)
   // Adjust state during render when the prop changes (React-recommended
   // pattern, avoids setState-in-effect). This keeps the overlay in sync with
@@ -88,7 +90,7 @@ export function ProductFeed({
     setOpenIndex(initialOpenIndex)
   }
 
-  const cards = products.map((p, i) => productToCard(p, i))
+  const cards = products.map((p, i) => productToCard(p, i, dictionary.card))
 
   const handleClose = () => {
     if (onOverlayClose) {
@@ -123,7 +125,7 @@ export function ProductFeed({
       <div
         className={cn(
           "transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-          openIndex !== null && "lg:translate-x-[292px]",
+          openIndex !== null && "xl:translate-x-[292px]",
         )}
       >
         {/* 2 columns on mobile */}

@@ -16,7 +16,7 @@ export async function getAllCanjes(): Promise<Canje[]> {
 
 // ─── Usuarios (admin) ───
 
-export interface AdminUsuario extends Usuario {
+export interface AdminUsuario extends Omit<Usuario, "vip_info" | "kick_data" | "user_type"> {
   kick_data?: {
     username: string
     avatar_url: string

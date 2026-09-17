@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { getAuthToken } from '@/lib/cookies'
 import type { Usuario } from '@/types'
+import { getRequestLocale } from '@/lib/i18n/request-locale'
 
 const ADMIN_ROLES = new Set([3, 4, 5])
 
@@ -19,7 +20,7 @@ export async function getCurrentUser(): Promise<Usuario | null> {
 export async function requireAuth(): Promise<Usuario> {
   const user = await getCurrentUser()
   if (!user) {
-    redirect('/shop')
+    redirect(`/${await getRequestLocale()}/shop`)
   }
   return user
 }
@@ -27,7 +28,7 @@ export async function requireAuth(): Promise<Usuario> {
 export async function requireAdmin(): Promise<Usuario> {
   const user = await requireAuth()
   if (!ADMIN_ROLES.has(user.rol_id)) {
-    redirect('/shop')
+    redirect(`/${await getRequestLocale()}/shop`)
   }
   return user
 }

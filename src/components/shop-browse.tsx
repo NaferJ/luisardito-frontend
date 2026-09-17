@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { ChevronDown, Search, X } from "lucide-react"
 import { ProductFeed } from "@/components/product-feed"
+import { useI18n, useLocale } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import { cn } from "@/lib/utils"
 import type { Producto } from "@/types"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
@@ -16,12 +19,12 @@ import type { LeaderboardEntry } from "@/lib/leaderboard"
  */
 type SortMode = "price_desc" | "price_asc" | "stock_desc" | "canjes_desc" | "newest"
 
-const SORT_OPTIONS: { mode: SortMode; label: string }[] = [
-  { mode: "price_desc", label: "Highest price" },
-  { mode: "price_asc", label: "Lowest price" },
-  { mode: "stock_desc", label: "Most stock" },
-  { mode: "canjes_desc", label: "Most redeemed" },
-  { mode: "newest", label: "Newest" },
+const SORT_OPTIONS: { mode: SortMode; label: (t: Dictionary["browse"]) => string }[] = [
+  { mode: "price_desc", label: (t) => t.sort.highestPrice },
+  { mode: "price_asc", label: (t) => t.sort.lowestPrice },
+  { mode: "stock_desc", label: (t) => t.sort.mostStock },
+  { mode: "canjes_desc", label: (t) => t.sort.mostRedeemed },
+  { mode: "newest", label: (t) => t.sort.newest },
 ]
 
 /** URL-safe identifier for a product: slug if available, otherwise ID. */
@@ -52,12 +55,11 @@ function sortProducts(products: Producto[], mode: SortMode): Producto[] {
 }
 
 /**
- * Extract the slug from a pathname like "/shop/miku" → "miku".
- * Returns null for "/shop" (no slug).
+ * Extract the slug from a locale-prefixed pathname like "/es/shop/miku" → "miku".
+ * Returns null for the bare shop page (no slug).
  */
 function slugFromPathname(pathname: string): string | null {
-  if (pathname === "/shop") return null
-  const match = /^\/shop\/(.+)$/.exec(pathname)
+  const match = /^\/(?:es|en)\/shop\/(.+)$/.exec(pathname)
   return match ? decodeURIComponent(match[1]) : null
 }
 
@@ -71,6 +73,9 @@ export function ShopBrowse({
   /** Slug of the product to open on initial load (direct link from [slug] page). */
   initialOpenSlug?: string | null
 }>) {
+  const { dictionary } = useI18n()
+  const locale = useLocale()
+  const t = dictionary.browse
   const [openSlug, setOpenSlug] = useState<string | null>(initialOpenSlug)
   const [sortMode, setSortMode] = useState<SortMode>("price_desc")
   const [onSaleOnly, setOnSaleOnly] = useState(false)
@@ -123,12 +128,12 @@ export function ShopBrowse({
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as SortMode)}
-              aria-label="Sort products"
+              aria-label={t.sortLabel}
               className="h-8 appearance-none rounded-full border border-border bg-secondary pl-3.5 pr-8 text-[13px] font-medium text-foreground focus:border-gold focus:outline-none"
             >
               {SORT_OPTIONS.map((option) => (
                 <option key={option.mode} value={option.mode}>
-                  {option.label}
+                  {option.label(t)}
                 </option>
               ))}
             </select>
@@ -153,7 +158,7 @@ export function ShopBrowse({
                     : "bg-secondary text-muted-foreground hover:text-foreground",
                 )}
               >
-                {option.label}
+                {option.label(t)}
               </button>
             ))}
           </div>
@@ -169,7 +174,7 @@ export function ShopBrowse({
                 : "bg-secondary text-muted-foreground hover:text-foreground",
             )}
           >
-            On Sale
+            {t.onSale}
           </button>
         </div>
 
@@ -177,7 +182,7 @@ export function ShopBrowse({
           {/* Result count */}
           <span className="shrink-0 text-[13px] text-muted-foreground">
             {visibleProducts.length}{" "}
-            {visibleProducts.length === 1 ? "product" : "products"}
+            {visibleProducts.length === 1 ? t.product : t.products}
           </span>
 
           {/* Search input — wide enough by default to show the full
@@ -188,15 +193,15 @@ export function ShopBrowse({
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products..."
-              aria-label="Search products"
+              placeholder={t.searchPlaceholder}
+              aria-label={t.searchLabel}
               className="h-8 w-full rounded-full border border-border bg-secondary pl-8 pr-7 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                aria-label="Clear search"
+                aria-label={t.clearSearch}
                 className="absolute right-2 flex size-4 items-center justify-center text-muted-foreground transition-transform active:scale-90 hover:text-foreground"
               >
                 <X className="size-3" aria-hidden="true" />
@@ -213,18 +218,18 @@ export function ShopBrowse({
           initialOpenIndex={openIndex}
           onCardOpen={(slug) => {
             setOpenSlug(slug)
-            window.history.pushState(null, "", `/shop/${slug}`)
+            window.history.pushState(null, "", `/${locale}/shop/${slug}`)
           }}
           onOverlayClose={() => {
             setOpenSlug(null)
-            window.history.pushState(null, "", "/shop")
+            window.history.pushState(null, "", `/${locale}/shop`)
           }}
           onOverlayNavigate={(nextIndex) => {
             const product = visibleProducts[nextIndex]
             if (product) {
               const slug = productSlug(product)
               setOpenSlug(slug)
-              window.history.pushState(null, "", `/shop/${slug}`)
+              window.history.pushState(null, "", `/${locale}/shop/${slug}`)
             }
           }}
         />
@@ -232,8 +237,8 @@ export function ShopBrowse({
         <div className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-border p-8">
           <p className="text-[13px] text-muted-foreground">
             {search.trim()
-              ? `No products match "${search.trim()}".`
-              : "No products available right now. Check back soon."}
+              ? interpolate(t.noMatch, { query: search.trim() })
+              : t.empty}
           </p>
         </div>
       )}

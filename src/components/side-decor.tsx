@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 import { Dithering } from "@paper-design/shaders-react"
+import { hasLocale } from "@/lib/i18n/locales"
 import { useOverlayColors } from "@/lib/overlay-color-store"
 
 type SideDecorProps = {
@@ -163,7 +164,9 @@ export function SideDecor({ side }: SideDecorProps) {
   // saturation — just enough to stay visible. The original product color is
   // kept rather than swapped for a different candidate.
   const overlayColors = useOverlayColors()
-  const isLanding = pathname === "/"
+  const pathSegments = pathname.split("/").filter(Boolean)
+  const isLanding =
+    pathSegments.length === 0 || (pathSegments.length === 1 && hasLocale(pathSegments[0]))
   const defaultColor = isLanding
     ? isDark
       ? "#588C23"
@@ -222,26 +225,30 @@ export function SideDecor({ side }: SideDecorProps) {
 
   // Offset the right side's animation phase so the two sides are out of sync
   const frameOffset = side === "right" ? 5000 : 0
+  const maskGradient = side === "left"
+    ? "linear-gradient(to right, black 0%, black 30%, transparent 100%)"
+    : "linear-gradient(to left, black 0%, black 30%, transparent 100%)"
+  const backingGradient = side === "left"
+    ? `linear-gradient(to right, ${colorBack} 0%, ${colorBack}e6 35%, transparent 100%)`
+    : `linear-gradient(to left, ${colorBack} 0%, ${colorBack}e6 35%, transparent 100%)`
 
   return (
     <div
       aria-hidden="true"
-      // Widths below `lg` are capped at the page's own edge padding (`p-4`
-      // = 16px in `site-shell.tsx`) so the decoration never creeps into
-      // actual page content on mobile/tablet — it only fills the margin
-      // that's already there, just like the full 120px strip does at `lg`.
-      className="pointer-events-none fixed inset-y-0 z-[15] block w-1.5 overflow-hidden sm:w-2 md:w-4 lg:w-[120px]"
+      className="pointer-events-none fixed inset-y-0 z-[60] isolate block w-2 overflow-hidden sm:w-3 md:w-5 lg:w-5 xl:w-[clamp(24px,calc(10vw-104px),96px)]"
       style={{
         ...(side === "left" ? { left: 0 } : { right: 0 }),
-        backgroundColor: colorBack,
+        background: backingGradient,
         opacity: mounted ? 1 : 0,
         transition: "opacity 0.6s ease-in-out",
+        maskImage: maskGradient,
+        WebkitMaskImage: maskGradient,
       }}
     >
       <Dithering
         width="100%"
         height="100%"
-        colorBack={colorBack}
+        colorBack="rgba(0, 0, 0, 0)"
         colorFront={displayColor}
         shape="wave"
         type="4x4"
@@ -252,38 +259,6 @@ export function SideDecor({ side }: SideDecorProps) {
         rotation={90}
         fit="cover"
         style={side === "right" ? { transform: "scaleX(-1)" } : undefined}
-      />
-
-      {/* Inner edge fade — blends into content area */}
-      <div
-        className="absolute inset-y-0 w-[70%]"
-        style={
-          side === "left"
-            ? {
-                right: 0,
-                background: `linear-gradient(to right, transparent, ${colorBack} 95%)`,
-              }
-            : {
-                left: 0,
-                background: `linear-gradient(to left, transparent, ${colorBack} 95%)`,
-              }
-        }
-      />
-
-      {/* Outer edge fade — softens the screen edge */}
-      <div
-        className="absolute inset-y-0 w-[25%]"
-        style={
-          side === "left"
-            ? {
-                left: 0,
-                background: `linear-gradient(to right, ${colorBack}, transparent)`,
-              }
-            : {
-                right: 0,
-                background: `linear-gradient(to left, ${colorBack}, transparent)`,
-              }
-        }
       />
     </div>
   )

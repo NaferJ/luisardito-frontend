@@ -5,11 +5,20 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** Compact number formatter for points/online counts: 193900 -> 193.9K,
- *  5050000 -> 5.05M, 1000000 -> 1M, 2000 -> 2K. */
 export function formatCompactNumber(value: number): string {
   return new Intl.NumberFormat("en-US", {
     notation: "compact",
     maximumFractionDigits: 2,
   }).format(value)
+}
+
+export function safeImageUrl(url?: string | null): string | undefined {
+  if (!url || url.startsWith("//")) return undefined
+  try {
+    const base = typeof window === "undefined" ? "http://localhost" : window.location.origin
+    const { protocol } = new URL(url, base)
+    return protocol === "http:" || protocol === "https:" ? url : undefined
+  } catch {
+    return undefined
+  }
 }

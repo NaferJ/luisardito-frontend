@@ -3,6 +3,8 @@
 import { useState, useRef } from "react"
 import Image from "next/image"
 import { Upload, X } from "lucide-react"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
 import { cn } from "@/lib/utils"
 
 interface ImageUploadProps {
@@ -28,6 +30,8 @@ export function ImageUpload({
   folder = "luisardito-shop/productos",
   maxSizeMB = 5,
 }: ImageUploadProps) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.upload
   const [preview, setPreview] = useState<string | null>(value ?? null)
   const [isUploading, setIsUploading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -38,11 +42,11 @@ export function ImageUpload({
   const validateFile = (file: File): boolean => {
     const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]
     if (!validTypes.includes(file.type)) {
-      setError("Use JPG, PNG, WEBP, GIF, or AVIF")
+      setError(t.invalidType)
       return false
     }
     if (file.size > maxSizeMB * 1024 * 1024) {
-      setError(`Max size: ${maxSizeMB}MB`)
+      setError(interpolate(t.maxSize, { n: maxSizeMB }))
       return false
     }
     setError(null)
@@ -58,7 +62,7 @@ export function ImageUpload({
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
     if (!cloudName || !uploadPreset) {
-      setError("Cloudinary not configured")
+      setError(t.notConfigured)
       setIsUploading(false)
       return
     }
@@ -78,10 +82,10 @@ export function ImageUpload({
           try {
             resolve(JSON.parse(xhr.responseText) as CloudinaryUploadResult)
           } catch {
-            reject(new Error("Invalid Cloudinary response"))
+            reject(new Error(t.invalidResponse))
           }
         }
-        xhr.onerror = () => reject(new Error("Upload failed"))
+        xhr.onerror = () => reject(new Error(t.uploadFailed))
         if (xhr.upload) {
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
@@ -102,7 +106,7 @@ export function ImageUpload({
         imagen_height: res.height,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed")
+      setError(err instanceof Error ? err.message : t.uploadFailed)
     } finally {
       setIsUploading(false)
       setProgress(0)
@@ -150,7 +154,7 @@ export function ImageUpload({
           <div className="size-12 shrink-0 overflow-hidden rounded-sm border border-border bg-secondary">
             <Image
               src={preview}
-              alt="Uploaded"
+              alt={t.uploadedAlt}
               width={48}
               height={48}
               className="size-full object-cover"
@@ -164,7 +168,7 @@ export function ImageUpload({
               disabled={isUploading}
               className="h-8 rounded-full border border-border bg-secondary px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
             >
-              Replace
+              {t.replace}
             </button>
             <button
               type="button"
@@ -173,7 +177,7 @@ export function ImageUpload({
               className="flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
             >
               <X className="size-3.5" />
-              Remove
+              {t.remove}
             </button>
           </div>
         </div>
@@ -198,10 +202,10 @@ export function ImageUpload({
           )}
         >
           <Upload className="size-5 text-muted-foreground" />
-          <span className="text-[13px] font-medium text-foreground">Click to upload</span>
-          <span className="text-[12px] text-muted-foreground">or drag and drop</span>
+          <span className="text-[13px] font-medium text-foreground">{t.clickToUpload}</span>
+          <span className="text-[12px] text-muted-foreground">{t.dragAndDrop}</span>
           <span className="text-[11px] text-muted-foreground">
-            JPG, PNG, WEBP, GIF, AVIF. Max {maxSizeMB}MB
+            {interpolate(t.acceptedTypes, { n: maxSizeMB })}
           </span>
         </div>
       )}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useLocalizedRouter } from "@/components/i18n/use-localized-router"
 import {
   Plus,
   Trash2,
@@ -29,7 +29,10 @@ import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
 import { Pagination } from "@/components/admin/shared/pagination"
-import { deletePromocion, fetchPromocionEstadisticas } from "@/app/shop/admin/promociones/actions"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
+import { deletePromocion, fetchPromocionEstadisticas } from "@/app/[lang]/shop/admin/promociones/actions"
 import type { Promocion, PromocionEstadisticas } from "@/types"
 
 // ─── Types ───
@@ -37,33 +40,34 @@ import type { Promocion, PromocionEstadisticas } from "@/types"
 type EstadoFilter = "all" | "activo" | "programado" | "expirado" | "inactivo" | "pausado"
 type SortKey = "nombre" | "descuento" | "inicio" | "fin" | "estado" | "usos"
 type SortDir = "asc" | "desc"
+type PromosDict = Dictionary["admin"]["promocionesList"]
 
 // ─── Constants ───
 
-const ESTADO_OPTIONS: { value: EstadoFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "activo", label: "Active" },
-  { value: "programado", label: "Scheduled" },
-  { value: "expirado", label: "Expired" },
-  { value: "inactivo", label: "Inactive" },
-  { value: "pausado", label: "Paused" },
+const ESTADO_OPTIONS: { value: EstadoFilter; label: (t: PromosDict) => string }[] = [
+  { value: "all", label: (t) => t.estados.all },
+  { value: "activo", label: (t) => t.estados.activo },
+  { value: "programado", label: (t) => t.estados.programado },
+  { value: "expirado", label: (t) => t.estados.expirado },
+  { value: "inactivo", label: (t) => t.estados.inactivo },
+  { value: "pausado", label: (t) => t.estados.pausado },
 ]
 
-const ESTADO_STYLES: Record<string, { icon: typeof Clock; className: string; label: string }> = {
-  activo: { icon: CheckCircle2, className: "text-gold-bright", label: "Active" },
-  programado: { icon: CalendarClock, className: "text-foreground", label: "Scheduled" },
-  expirado: { icon: XCircle, className: "text-destructive", label: "Expired" },
-  inactivo: { icon: XCircle, className: "text-muted-foreground", label: "Inactive" },
-  pausado: { icon: Pause, className: "text-muted-foreground", label: "Paused" },
+const ESTADO_STYLES: Record<string, { icon: typeof Clock; className: string; label: (t: PromosDict) => string }> = {
+  activo: { icon: CheckCircle2, className: "text-gold-bright", label: (t) => t.estados.activo },
+  programado: { icon: CalendarClock, className: "text-foreground", label: (t) => t.estados.programado },
+  expirado: { icon: XCircle, className: "text-destructive", label: (t) => t.estados.expirado },
+  inactivo: { icon: XCircle, className: "text-muted-foreground", label: (t) => t.estados.inactivo },
+  pausado: { icon: Pause, className: "text-muted-foreground", label: (t) => t.estados.pausado },
 }
 
-const COLUMNS: { key: SortKey; label: string; className: string }[] = [
-  { key: "nombre", label: "Name", className: "min-w-0 flex-1" },
-  { key: "descuento", label: "Discount", className: "w-24 shrink-0 text-right" },
-  { key: "inicio", label: "Start", className: "hidden w-28 shrink-0 sm:block" },
-  { key: "fin", label: "End", className: "hidden w-28 shrink-0 sm:block" },
-  { key: "usos", label: "Uses", className: "w-20 shrink-0 text-right" },
-  { key: "estado", label: "Status", className: "w-24 shrink-0" },
+const COLUMNS: { key: SortKey; label: (t: PromosDict) => string; className: string }[] = [
+  { key: "nombre", label: (t) => t.columns.nombre, className: "min-w-0 flex-1" },
+  { key: "descuento", label: (t) => t.columns.descuento, className: "w-24 shrink-0 text-right" },
+  { key: "inicio", label: (t) => t.columns.inicio, className: "hidden w-28 shrink-0 sm:block" },
+  { key: "fin", label: (t) => t.columns.fin, className: "hidden w-28 shrink-0 sm:block" },
+  { key: "usos", label: (t) => t.columns.usos, className: "w-20 shrink-0 text-right" },
+  { key: "estado", label: (t) => t.columns.estado, className: "w-24 shrink-0" },
 ]
 
 // ─── Helpers ───
@@ -113,10 +117,10 @@ function getDateRange(preset: DatePreset): { start: number | null } {
 }
 
 /** Generate CSV from promotions array and trigger download. */
-function exportCSV(promociones: Promocion[]): void {
+function exportCSV(promociones: Promocion[], t: PromosDict): void {
   const headers = [
-    "ID", "Name", "Title", "Code", "Type", "Discount Type", "Value",
-    "Start", "End", "Uses", "Max Uses", "Status", "Requires Code", "Priority",
+    "ID", t.csv.title, t.columns.nombre, t.csv.code, t.csv.type, t.csv.discountType, t.csv.value,
+    t.columns.inicio, t.columns.fin, t.columns.usos, t.csv.maxUses, t.columns.estado, t.csv.requiresCode, t.csv.priority,
   ]
   const rows = promociones.map((p) => [
     p.id,
@@ -140,7 +144,9 @@ function exportCSV(promociones: Promocion[]): void {
 // ─── Component ───
 
 export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Promocion[] }>) {
-  const router = useRouter()
+  const router = useLocalizedRouter()
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.promocionesList
   const [search, setSearch] = useState("")
   const [estadoFilter, setEstadoFilter] = useState<EstadoFilter>("all")
   const [datePreset, setDatePreset] = useState<DatePreset>("all")
@@ -213,7 +219,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
 
   // ─── Actions ───
   const handleDelete = (id: number, name: string) => {
-    if (!confirm(`Delete promotion "${name}"? This is a soft delete.`)) return
+    if (!confirm(interpolate(t.confirmDeletePromo, { name }))) return
     startTransition(async () => {
       await deletePromocion(String(id))
     })
@@ -236,48 +242,48 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-[15px] font-medium text-foreground">Promotions</h1>
+            <h1 className="text-[15px] font-medium text-foreground">{t.title}</h1>
             <span className="text-[13px] text-muted-foreground">
-              {filtered.length} of {promociones.length}
+              {interpolate(t.countOf, { shown: filtered.length, total: promociones.length })}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <SearchInput
               value={search}
               onChange={onSearchChange}
-              placeholder="Search name, code..."
-              ariaLabel="Search promotions"
+              placeholder={t.searchPlaceholder}
+              ariaLabel={t.searchAria}
               widthClassName="w-44 focus:w-56"
             />
-            <CsvButton onClick={() => exportCSV(filtered)} />
+            <CsvButton onClick={() => exportCSV(filtered, t)} />
             <button
               type="button"
               onClick={() => router.push("/shop/admin/promociones/new")}
               className="flex h-8 items-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-opacity hover:opacity-85"
             >
               <Plus className="size-3.5" />
-              New promotion
+              {t.newPromotion}
             </button>
           </div>
         </div>
 
         {/* Stats cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <StatCard icon={<Tag className="size-3.5" />} label="Total" value={stats.total} />
-          <StatCard icon={<CheckCircle2 className="size-3.5" />} label="Active" value={stats.activos} valueClass="text-gold-bright" />
-          <StatCard icon={<CalendarClock className="size-3.5" />} label="Scheduled" value={stats.programados} valueClass="text-foreground" />
-          <StatCard icon={<XCircle className="size-3.5" />} label="Expired" value={stats.expirados} valueClass="text-destructive" />
-          <StatCard icon={<Pause className="size-3.5" />} label="Paused/Inactive" value={stats.pausados} valueClass="text-muted-foreground" />
+          <StatCard icon={<Tag className="size-3.5" />} label={t.stats.total} value={stats.total} />
+          <StatCard icon={<CheckCircle2 className="size-3.5" />} label={t.stats.active} value={stats.activos} valueClass="text-gold-bright" />
+          <StatCard icon={<CalendarClock className="size-3.5" />} label={t.stats.scheduled} value={stats.programados} valueClass="text-foreground" />
+          <StatCard icon={<XCircle className="size-3.5" />} label={t.stats.expired} value={stats.expirados} valueClass="text-destructive" />
+          <StatCard icon={<Pause className="size-3.5" />} label={t.stats.pausedInactive} value={stats.pausados} valueClass="text-muted-foreground" />
         </div>
 
         {/* Filters row: estado pills + date range */}
         <FilterPills
-          options={ESTADO_OPTIONS}
+          options={ESTADO_OPTIONS.map((o) => ({ ...o, label: o.label(t) }))}
           value={estadoFilter}
           onChange={onEstadoChange}
           datePreset={datePreset}
           onDateChange={onDateChange}
-          dateAriaLabel="Date range (by end date)"
+          dateAriaLabel={t.dateAriaLabel}
         />
 
         {/* Table */}
@@ -285,12 +291,12 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
           <div className="overflow-hidden rounded-lg border border-border">
             {/* Column headers */}
             <SortHeader
-              columns={COLUMNS.map((c) => ({ ...c, alignRight: c.key === "descuento" || c.key === "usos" }))}
+              columns={COLUMNS.map((c) => ({ ...c, label: c.label(t), alignRight: c.key === "descuento" || c.key === "usos" }))}
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
               leadingLabel="ID"
-              trailingLabel="Actions"
+              trailingLabel={t.actions}
             />
 
             {/* Rows */}
@@ -302,8 +308,8 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                 const active = isCurrentlyActive(p)
                 const upcoming = isUpcoming(p)
                 let usageBarColor = "bg-foreground"
-                if (usage >= 90) usageBarColor = "bg-destructive"
-                else if (usage >= 70) usageBarColor = "bg-gold-bright"
+                if (usage !== null && usage >= 90) usageBarColor = "bg-destructive"
+                else if (usage !== null && usage >= 70) usageBarColor = "bg-gold-bright"
 
                 return (
                   <div
@@ -327,12 +333,12 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                         </span>
                         {active && (
                           <span className="shrink-0 rounded-full bg-gold/20 px-1.5 py-0.5 text-[9px] font-bold text-gold-bright">
-                            LIVE
+                            {t.badgeLive}
                           </span>
                         )}
                         {upcoming && (
                           <span className="shrink-0 rounded-full bg-foreground/10 px-1.5 py-0.5 text-[9px] font-bold text-foreground">
-                            SOON
+                            {t.badgeSoon}
                           </span>
                         )}
                       </div>
@@ -382,7 +388,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                     {/* Status */}
                     <div className={cn("flex w-24 shrink-0 items-center gap-1 text-[12px] font-medium", estado.className)}>
                       <EstadoIcon className="size-3 shrink-0" aria-hidden="true" />
-                      {estado.label}
+                      {estado.label(t)}
                     </div>
 
                     {/* Actions */}
@@ -391,7 +397,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                         type="button"
                         onClick={() => router.push(`/shop/admin/promociones/${p.id}/edit`)}
                         className="text-muted-foreground transition-colors hover:text-foreground"
-                        aria-label="Edit"
+                        aria-label={t.edit}
                       >
                         <Pencil className="size-3.5" />
                       </button>
@@ -400,7 +406,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                         onClick={() => handleDelete(p.id, p.titulo || p.nombre)}
                         disabled={pending}
                         className="text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
-                        aria-label="Delete"
+                        aria-label={t.delete}
                       >
                         <Trash2 className="size-3.5" />
                       </button>
@@ -424,7 +430,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
           <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
             <div className="flex flex-col items-center gap-3">
               <p className="text-[13px] text-muted-foreground">
-                {search.trim() ? `No results match "${search.trim()}".` : "No promotions yet."}
+                {search.trim() ? interpolate(t.emptySearch, { query: search.trim() }) : t.empty}
               </p>
               {!search.trim() && (
                 <button
@@ -433,7 +439,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                   className="flex h-8 items-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-opacity hover:opacity-85"
                 >
                   <Plus className="size-3.5" />
-                  Create your first promotion
+                  {t.createFirst}
                 </button>
               )}
             </div>
@@ -471,6 +477,9 @@ function DetailDrawer({
   onNavigate: (nextIndex: number) => void
   onEdit: (id: number) => void
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.promocionesList
+  const formT = dictionary.admin.promocionForm
   const promocion = promociones[index]
   const [estadisticas, setEstadisticas] = useState<PromocionEstadisticas | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)
@@ -537,25 +546,25 @@ function DetailDrawer({
     ? ` / ${promocion.cantidad_usos_maximos.toLocaleString()}`
     : ""
   const statRows = [
-    { label: "Status", value: estado.label },
-    { label: "Discount", value: discountLabel(promocion) },
-    { label: "Type", value: promocion.tipo },
-    { label: "Discount type", value: promocion.tipo_descuento },
-    { label: "Start", value: formatDateLong(promocion.fecha_inicio) },
-    { label: "End", value: formatDateLong(promocion.fecha_fin) },
-    { label: "Uses", value: `${promocion.cantidad_usos_actuales.toLocaleString()}${maxUsesSuffix}` },
-    { label: "Uses per user", value: String(promocion.usos_por_usuario) },
-    { label: "Min points", value: `${formatCompactNumber(promocion.minimo_puntos)} pts` },
-    { label: "Priority", value: String(promocion.prioridad) },
-    { label: "Requires code", value: promocion.requiere_codigo ? "Yes" : "No" },
-    { label: "Accumulation", value: promocion.aplica_acumulacion ? "Allowed" : "Not allowed" },
+    { label: t.drawer.status, value: estado.label(t) },
+    { label: t.drawer.discount, value: discountLabel(promocion) },
+    { label: t.drawer.type, value: formT.tipos[promocion.tipo as keyof typeof formT.tipos] ?? promocion.tipo },
+    { label: t.drawer.discountType, value: formT.descuentos[promocion.tipo_descuento as keyof typeof formT.descuentos] ?? promocion.tipo_descuento },
+    { label: t.drawer.start, value: formatDateLong(promocion.fecha_inicio) },
+    { label: t.drawer.end, value: formatDateLong(promocion.fecha_fin) },
+    { label: t.drawer.uses, value: `${promocion.cantidad_usos_actuales.toLocaleString()}${maxUsesSuffix}` },
+    { label: t.drawer.usesPerUser, value: String(promocion.usos_por_usuario) },
+    { label: t.drawer.minPoints, value: interpolate(t.pts, { n: formatCompactNumber(promocion.minimo_puntos) }) },
+    { label: t.drawer.priority, value: String(promocion.prioridad) },
+    { label: t.drawer.requiresCode, value: promocion.requiere_codigo ? t.yes : t.no },
+    { label: t.drawer.accumulation, value: promocion.aplica_acumulacion ? t.allowed : t.notAllowed },
   ]
 
   return (
     <>
       {/* Static metadata sidebar */}
       <aside
-        aria-label={`Promotion #${promocion.id}`}
+        aria-label={interpolate(t.drawer.promotionAria, { id: promocion.id })}
         className="fixed inset-y-0 left-0 right-0 z-20 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
       >
         {/* Header — close + prev/next */}
@@ -563,7 +572,7 @@ function DetailDrawer({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t.drawer.close}
             className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
           >
             <X className="size-4" aria-hidden="true" />
@@ -573,7 +582,7 @@ function DetailDrawer({
               type="button"
               onClick={() => index > 0 && onNavigate(index - 1)}
               disabled={index === 0}
-              aria-label="Previous promotion"
+              aria-label={t.drawer.previousPromotion}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
@@ -585,7 +594,7 @@ function DetailDrawer({
               type="button"
               onClick={() => index < promociones.length - 1 && onNavigate(index + 1)}
               disabled={index === promociones.length - 1}
-              aria-label="Next promotion"
+              aria-label={t.drawer.nextPromotion}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
             >
               <ChevronRight className="size-4" aria-hidden="true" />
@@ -601,7 +610,7 @@ function DetailDrawer({
               <span className="text-[11px] tabular-nums text-muted-foreground">#{promocion.id}</span>
               <div className={cn("flex items-center gap-1 text-[12px] font-medium", estado.className)}>
                 <EstadoIcon className="size-3" aria-hidden="true" />
-                {estado.label}
+                {estado.label(t)}
               </div>
               {active && (
                 <span className="rounded-full bg-gold/20 px-1.5 py-0.5 text-[9px] font-bold text-gold-bright">
@@ -614,7 +623,7 @@ function DetailDrawer({
             </h2>
             {promocion.codigo && (
               <p className="font-mono text-[13px] text-muted-foreground">
-                Code: {promocion.codigo}
+                {interpolate(t.drawer.codeLabel, { code: promocion.codigo })}
               </p>
             )}
             {promocion.descripcion && (
@@ -628,7 +637,7 @@ function DetailDrawer({
           {promocion.cantidad_usos_maximos && (
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-[12px]">
-                <span className="text-muted-foreground">Usage</span>
+                <span className="text-muted-foreground">{t.drawer.usage}</span>
                 <span className="font-medium text-foreground">
                   {promocion.cantidad_usos_actuales.toLocaleString()} / {promocion.cantidad_usos_maximos.toLocaleString()}
                 </span>
@@ -648,7 +657,7 @@ function DetailDrawer({
           {/* Key-value stats */}
           <div className="flex flex-col gap-0">
             <span className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Details
+              {t.drawer.details}
             </span>
             {statRows.map((row) => (
               <div key={row.label} className="flex items-baseline justify-between gap-3 border-b border-border/40 py-1.5 last:border-b-0">
@@ -661,12 +670,12 @@ function DetailDrawer({
           {/* Statistics from backend */}
           <div className="flex flex-col gap-3">
             <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Usage statistics
+              {t.drawer.usageStatistics}
             </span>
             {loadingStats && (
               <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
                 <Clock className="size-3 animate-spin" aria-hidden="true" />
-                Loading statistics...
+                {t.drawer.loadingStats}
               </div>
             )}
             {statsError && (
@@ -677,20 +686,20 @@ function DetailDrawer({
             {estadisticas && !loadingStats && (
               <>
                 <div className="grid grid-cols-2 gap-2">
-                  <StatMini icon={<TrendingUp className="size-3" />} label="Total uses" value={estadisticas.estadisticas.total_usos} />
-                  <StatMini icon={<Users className="size-3" />} label="Unique users" value={estadisticas.estadisticas.usuarios_unicos} />
-                  <StatMini icon={<Percent className="size-3" />} label="Avg discount" value={estadisticas.estadisticas.descuento_promedio} />
-                  <StatMini icon={<Gift className="size-3" />} label="Points saved" value={estadisticas.estadisticas.puntos_descontados_total} />
+                  <StatMini icon={<TrendingUp className="size-3" />} label={t.drawer.totalUses} value={estadisticas.estadisticas.total_usos} />
+                  <StatMini icon={<Users className="size-3" />} label={t.drawer.uniqueUsers} value={estadisticas.estadisticas.usuarios_unicos} />
+                  <StatMini icon={<Percent className="size-3" />} label={t.drawer.avgDiscount} value={estadisticas.estadisticas.descuento_promedio} />
+                  <StatMini icon={<Gift className="size-3" />} label={t.drawer.pointsSaved} value={estadisticas.estadisticas.puntos_descontados_total} />
                 </div>
 
                 {/* Top users */}
                 {estadisticas.topUsuarios.length > 0 && (
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-[11px] text-muted-foreground">Top users</span>
+                    <span className="text-[11px] text-muted-foreground">{t.drawer.topUsers}</span>
                     {estadisticas.topUsuarios.slice(0, 5).map((u) => (
                       <div key={u.usuario_id} className="flex items-center justify-between text-[12px]">
-                        <span className="truncate text-foreground">{u.Usuario?.username ?? `User #${u.usuario_id}`}</span>
-                        <span className="shrink-0 text-muted-foreground">{u.usos} uses</span>
+                        <span className="truncate text-foreground">{u.Usuario?.username ?? interpolate(t.userFallback, { id: u.usuario_id })}</span>
+                        <span className="shrink-0 text-muted-foreground">{interpolate(t.uses, { n: u.usos })}</span>
                       </div>
                     ))}
                   </div>
@@ -699,11 +708,11 @@ function DetailDrawer({
                 {/* Top products */}
                 {estadisticas.topProductos.length > 0 && (
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-[11px] text-muted-foreground">Top products</span>
+                    <span className="text-[11px] text-muted-foreground">{t.drawer.topProducts}</span>
                     {estadisticas.topProductos.slice(0, 5).map((p) => (
                       <div key={p.producto_id} className="flex items-center justify-between text-[12px]">
-                        <span className="truncate text-foreground">{p.Producto?.nombre ?? `Product #${p.producto_id}`}</span>
-                        <span className="shrink-0 text-muted-foreground">{p.canjes} redemptions</span>
+                        <span className="truncate text-foreground">{p.Producto?.nombre ?? interpolate(t.productFallback, { id: p.producto_id })}</span>
+                        <span className="shrink-0 text-muted-foreground">{interpolate(t.redemptionsCount, { n: p.canjes })}</span>
                       </div>
                     ))}
                   </div>
@@ -716,7 +725,7 @@ function DetailDrawer({
           {promocion.productos && promocion.productos.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Linked products ({promocion.productos.length})
+                {interpolate(t.drawer.linkedProducts, { n: promocion.productos.length })}
               </span>
               {promocion.productos.slice(0, 10).map((prod) => (
                 <div key={prod.id} className="flex items-center gap-2 text-[12px]">
@@ -727,12 +736,12 @@ function DetailDrawer({
                     )}
                   </div>
                   <span className="truncate text-foreground">{prod.nombre}</span>
-                  <span className="ml-auto shrink-0 text-muted-foreground">{formatCompactNumber(prod.precio)} pts</span>
+                  <span className="ml-auto shrink-0 text-muted-foreground">{interpolate(t.pts, { n: formatCompactNumber(prod.precio) })}</span>
                 </div>
               ))}
               {promocion.productos.length > 10 && (
                 <span className="text-[11px] text-muted-foreground">
-                  + {promocion.productos.length - 10} more
+                  {interpolate(t.moreCount, { n: promocion.productos.length - 10 })}
                 </span>
               )}
             </div>
@@ -747,7 +756,7 @@ function DetailDrawer({
             className="flex h-9 w-full items-center justify-center gap-2 rounded-full bg-foreground text-[13px] font-medium text-background transition-opacity hover:opacity-85"
           >
             <Pencil className="size-3.5" />
-            Edit promotion
+            {t.drawer.editPromotion}
           </button>
         </div>
       </aside>

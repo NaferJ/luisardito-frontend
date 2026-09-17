@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useLocalizedRouter } from "@/components/i18n/use-localized-router"
 import {
   Crown,
   Star,
@@ -23,6 +23,9 @@ import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
 import { Pagination } from "@/components/admin/shared/pagination"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS, getDateRangeStart } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
@@ -35,34 +38,35 @@ import type { Canje } from "@/types"
 type SortKey = "nickname" | "puntos" | "creado" | "canjes"
 type SortDir = "asc" | "desc"
 type RoleFilter = "all" | "vip" | "sub" | "admin" | "discord"
+type UsersDict = Dictionary["admin"]["users"]
 
 // ─── Constants ───
 
-const COLUMNS: { key: SortKey; label: string; className: string }[] = [
-  { key: "nickname", label: "Name", className: "min-w-0 flex-1" },
-  { key: "canjes", label: "Canjes", className: "w-20 shrink-0 text-right" },
-  { key: "puntos", label: "Points", className: "w-28 shrink-0 text-right" },
-  { key: "creado", label: "Joined", className: "w-28 shrink-0 text-right" },
+const COLUMNS: { key: SortKey; label: (t: UsersDict) => string; className: string }[] = [
+  { key: "nickname", label: (t) => t.columns.usuario, className: "min-w-0 flex-1" },
+  { key: "canjes", label: (t) => t.columns.canjes, className: "w-20 shrink-0 text-right" },
+  { key: "puntos", label: (t) => t.columns.puntos, className: "w-28 shrink-0 text-right" },
+  { key: "creado", label: (t) => t.columns.registro, className: "w-28 shrink-0 text-right" },
 ]
 
-const ROLE_FILTERS: { value: RoleFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "vip", label: "VIP" },
-  { value: "sub", label: "Subs" },
-  { value: "admin", label: "Admins" },
-  { value: "discord", label: "Discord" },
+const ROLE_FILTERS: { value: RoleFilter; label: (t: UsersDict) => string }[] = [
+  { value: "all", label: (t) => t.roles.all },
+  { value: "vip", label: (t) => t.roles.vip },
+  { value: "sub", label: (t) => t.roles.subs },
+  { value: "admin", label: (t) => t.stats.admins },
+  { value: "discord", label: (t) => t.roles.discord },
 ]
 
 // ─── Helpers ───
 
-function relativeTime(dateStr: string): string {
+function relativeTime(dateStr: string, t: UsersDict): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const days = Math.floor(diff / 86400000)
-  if (days < 1) return "today"
-  if (days < 30) return `${days}d ago`
+  if (days < 1) return t.time.today
+  if (days < 30) return interpolate(t.time.daysAgo, { n: days })
   const months = Math.floor(days / 30)
-  if (months < 12) return `${months}mo ago`
-  return `${Math.floor(months / 12)}y ago`
+  if (months < 12) return interpolate(t.time.monthsAgo, { n: months })
+  return interpolate(t.time.yearsAgo, { n: Math.floor(months / 12) })
 }
 
 function formatDateLong(d: string): string {
@@ -106,19 +110,19 @@ function getDateRange(preset: DatePreset): { start: number | null } {
   return { start: getDateRangeStart(preset) }
 }
 
-function exportCSV(usuarios: AdminUsuario[]): void {
-  const headers = ["ID", "Name", "Discord", "Email", "Points", "Canjes", "Pending", "VIP", "Sub", "Admin", "Joined"]
+function exportCSV(usuarios: AdminUsuario[], t: UsersDict): void {
+  const headers = ["ID", t.csv.name, t.csv.discord, t.csv.email, t.csv.points, t.csv.canjes, t.csv.pending, t.csv.vip, t.csv.sub, t.csv.admin, t.csv.joined]
   const rows = usuarios.map((u) => [
     u.id,
     userName(u),
-    discordName(u) ?? "Not linked",
+    discordName(u) ?? t.notLinked,
     u.email,
     u.puntos,
     u.total_canjes ?? 0,
     u.canjes_pendientes ?? 0,
-    isVip(u) ? "Yes" : "No",
-    isSub(u) ? "Yes" : "No",
-    isAdmin(u) ? "Yes" : "No",
+    isVip(u) ? t.yes : t.no,
+    isSub(u) ? t.yes : t.no,
+    isAdmin(u) ? t.yes : t.no,
     new Date(u.creado).toISOString(),
   ])
   downloadCSV("users", headers, rows)
@@ -133,7 +137,9 @@ export function AdminUsuariosList({
   usuarios: AdminUsuario[]
   canjesByUser?: Record<number, Canje[]>
 }>) {
-  const router = useRouter()
+  const router = useLocalizedRouter()
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.users
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
   const [datePreset, setDatePreset] = useState<DatePreset>("all")
@@ -221,39 +227,39 @@ export function AdminUsuariosList({
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-[15px] font-medium text-foreground">Users</h1>
+            <h1 className="text-[15px] font-medium text-foreground">{t.title}</h1>
             <span className="text-[13px] text-muted-foreground">
-              {filtered.length} of {usuarios.length}
+              {interpolate(t.countOf, { shown: filtered.length, total: usuarios.length })}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <SearchInput
               value={search}
               onChange={onSearchChange}
-              placeholder="Search name, email..."
-              ariaLabel="Search users"
+              placeholder={t.searchPlaceholder}
+              ariaLabel={t.searchAria}
             />
-            <CsvButton onClick={() => exportCSV(filtered)} />
+            <CsvButton onClick={() => exportCSV(filtered, t)} />
           </div>
         </div>
 
         {/* Stats cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <StatCard icon={<Users className="size-3.5" />} label="Total" value={stats.total} />
-          <StatCard icon={<CrownIcon className="size-3.5" />} label="VIP" value={stats.vips} valueClass="text-gold-bright" />
-          <StatCard icon={<StarIcon className="size-3.5" />} label="Subs" value={stats.subs} />
-          <StatCard icon={<Shield className="size-3.5" />} label="Admins" value={stats.admins} />
-          <StatCard icon={<DiscordLogo className="size-3.5" />} label="Discord" value={stats.withDiscord} />
+          <StatCard icon={<Users className="size-3.5" />} label={t.stats.total} value={stats.total} />
+          <StatCard icon={<CrownIcon className="size-3.5" />} label={t.stats.vip} value={stats.vips} valueClass="text-gold-bright" />
+          <StatCard icon={<StarIcon className="size-3.5" />} label={t.stats.subs} value={stats.subs} />
+          <StatCard icon={<Shield className="size-3.5" />} label={t.stats.admins} value={stats.admins} />
+          <StatCard icon={<DiscordLogo className="size-3.5" />} label={t.stats.discord} value={stats.withDiscord} />
         </div>
 
         {/* Filters row: role pills + date range */}
         <FilterPills
-          options={ROLE_FILTERS}
+          options={ROLE_FILTERS.map((o) => ({ ...o, label: o.label(t) }))}
           value={roleFilter}
           onChange={onRoleChange}
           datePreset={datePreset}
           onDateChange={onDateChange}
-          dateAriaLabel="Date range"
+          dateAriaLabel={dictionary.adminShared.dateRange}
         />
 
         {/* Table */}
@@ -261,11 +267,11 @@ export function AdminUsuariosList({
           <div className="overflow-hidden rounded-lg border border-border">
             {/* Column headers */}
             <SortHeader
-              columns={COLUMNS.map((c) => ({ ...c, alignRight: c.key === "canjes" || c.key === "puntos" || c.key === "creado" }))}
+              columns={COLUMNS.map((c) => ({ ...c, label: c.label(t), alignRight: c.key === "canjes" || c.key === "puntos" || c.key === "creado" }))}
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
-              trailingLabel="Actions"
+              trailingLabel={t.actions}
             />
 
             {/* Rows */}
@@ -316,7 +322,7 @@ export function AdminUsuariosList({
                       ) : (
                         <div className="flex items-center gap-1 text-[11px] text-destructive/70">
                           <AlertTriangle className="size-2.5" />
-                          <span>No Discord</span>
+                          <span>{t.noDiscord}</span>
                         </div>
                       )}
                     </div>
@@ -336,7 +342,7 @@ export function AdminUsuariosList({
 
                     {/* Joined */}
                     <span className="w-28 shrink-0 text-right text-[12px] text-muted-foreground">
-                      {relativeTime(u.creado)}
+                      {relativeTime(u.creado, t)}
                     </span>
 
                     {/* Badges */}
@@ -369,7 +375,7 @@ export function AdminUsuariosList({
         ) : (
           <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
             <p className="text-[13px] text-muted-foreground">
-              {search.trim() ? `No users match "${search.trim()}".` : "No users yet."}
+              {search.trim() ? interpolate(t.emptySearch, { query: search.trim() }) : t.empty}
             </p>
           </div>
         )}
@@ -407,6 +413,9 @@ function UserDetailDrawer({
   canjesByUser?: Record<number, Canje[]>
   onManage: (id: number) => void
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.users
+  const canjesT = dictionary.canjes
   const u = usuarios[index]
   const avatar = userAvatar(u)
   const vip = isVip(u)
@@ -434,12 +443,12 @@ function UserDetailDrawer({
   }, [index, usuarios.length, onClose, onNavigate])
 
   const statRows = [
-    { label: "Points", value: `${formatCompactNumber(u.puntos)} pts` },
-    { label: "Total canjes", value: String(u.total_canjes ?? 0) },
-    { label: "Pending canjes", value: String(u.canjes_pendientes ?? 0) },
-    { label: "Discord", value: discord ? (dName ?? "Linked") : "Not linked" },
-    { label: "Joined", value: formatDateLong(u.creado) },
-    { label: "User type", value: u.user_type ?? "user" },
+    { label: t.drawer.points, value: interpolate(t.pts, { n: formatCompactNumber(u.puntos) }) },
+    { label: t.drawer.totalCanjes, value: String(u.total_canjes ?? 0) },
+    { label: t.drawer.pendingCanjes, value: String(u.canjes_pendientes ?? 0) },
+    { label: t.drawer.discord, value: discord ? (dName ?? t.linked) : t.notLinked },
+    { label: t.drawer.joined, value: formatDateLong(u.creado) },
+    { label: t.drawer.userType, value: u.user_type ?? t.drawer.user.toLowerCase() },
   ]
 
   return (
@@ -452,7 +461,7 @@ function UserDetailDrawer({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t.close}
           className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
         >
           <X className="size-4" aria-hidden="true" />
@@ -462,7 +471,7 @@ function UserDetailDrawer({
             type="button"
             onClick={() => index > 0 && onNavigate(index - 1)}
             disabled={index === 0}
-            aria-label="Previous user"
+            aria-label={t.previousUser}
             className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
           >
             <ChevronLeft className="size-4" aria-hidden="true" />
@@ -471,7 +480,7 @@ function UserDetailDrawer({
             type="button"
             onClick={() => index < usuarios.length - 1 && onNavigate(index + 1)}
             disabled={index === usuarios.length - 1}
-            aria-label="Next user"
+            aria-label={t.nextUser}
             className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
           >
             <ChevronRight className="size-4" aria-hidden="true" />
@@ -485,7 +494,7 @@ function UserDetailDrawer({
           {/* User identity */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
-              <span className="text-[13px] text-muted-foreground">User</span>
+              <span className="text-[13px] text-muted-foreground">{t.drawer.user}</span>
               <h2 className="text-[15px] font-medium text-foreground">{userName(u)}</h2>
             </div>
             {avatar && (
@@ -529,7 +538,7 @@ function UserDetailDrawer({
             ) : (
               <span className="flex items-center gap-1 rounded-full border border-destructive/40 px-2 py-0.5 text-[11px] font-bold text-destructive">
                 <AlertTriangle className="size-3" />
-                No Discord
+                {t.noDiscord}
               </span>
             )}
           </div>
@@ -553,11 +562,11 @@ function UserDetailDrawer({
           {/* Recent redemptions */}
           {recentCanjes.length > 0 && (
             <div className="flex flex-col gap-2">
-              <span className="text-[13px] text-muted-foreground">Recent redemptions</span>
+              <span className="text-[13px] text-muted-foreground">{t.drawer.recentRedemptions}</span>
               {recentCanjes.map((c) => (
                 <div key={c.id} className="flex items-center gap-2 text-[12px]">
                   <ShoppingBag className="size-3 shrink-0 text-muted-foreground" />
-                  <span className="truncate text-foreground">{c.Producto?.nombre ?? c.producto?.nombre ?? "Unknown"}</span>
+                  <span className="truncate text-foreground">{c.Producto?.nombre ?? c.producto?.nombre ?? t.unknown}</span>
                   <span className={cn(
                     "ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px]",
                     c.estado === "pendiente" && "bg-gold/20 text-gold-bright",
@@ -565,7 +574,7 @@ function UserDetailDrawer({
                     c.estado === "cancelado" && "bg-destructive/10 text-destructive",
                     c.estado === "devuelto" && "bg-secondary text-muted-foreground",
                   )}>
-                    {c.estado}
+                    {canjesT.status[c.estado as keyof typeof canjesT.status] ?? c.estado}
                   </span>
                 </div>
               ))}
@@ -578,7 +587,7 @@ function UserDetailDrawer({
             onClick={() => onManage(u.id)}
             className="flex h-10 items-center justify-center gap-2 rounded-full bg-foreground px-6 text-[14px] font-medium text-background transition-opacity hover:opacity-85"
           >
-            Manage user
+            {t.manage}
             <ChevronRight className="size-4" />
           </button>
         </div>

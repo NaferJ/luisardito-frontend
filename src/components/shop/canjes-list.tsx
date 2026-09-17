@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import Link from "next/link"
+import { LocaleLink } from "@/components/i18n/locale-link"
 import {
   Clock,
   CheckCircle2,
@@ -15,6 +15,9 @@ import {
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { formatDateTime as formatDate } from "@/lib/admin-utils"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import type { Canje, Producto } from "@/types"
 import type {
   CanjesSort,
@@ -24,42 +27,43 @@ import type {
 } from "@/lib/canjes"
 
 type StatusFilter = CanjesStatus | "all"
+type CanjesDict = Dictionary["canjes"]
 
-const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "pendiente", label: "Pending" },
-  { value: "entregado", label: "Delivered" },
-  { value: "cancelado", label: "Cancelled" },
-  { value: "devuelto", label: "Returned" },
+const STATUS_OPTIONS: { value: StatusFilter; label: (t: CanjesDict) => string }[] = [
+  { value: "all", label: (t) => t.status.all },
+  { value: "pendiente", label: (t) => t.status.pendiente },
+  { value: "entregado", label: (t) => t.status.entregado },
+  { value: "cancelado", label: (t) => t.status.cancelado },
+  { value: "devuelto", label: (t) => t.status.devuelto },
 ]
 
 const STATUS_STYLES: Record<
   CanjesStatus,
-  { icon: typeof Clock; className: string; cardClassName: string; label: string }
+  { icon: typeof Clock; className: string; cardClassName: string; label: (t: CanjesDict) => string }
 > = {
   pendiente: {
     icon: Clock,
     className: "border-gold/30 bg-gold/10 text-gold-bright",
     cardClassName: "border-gold/30",
-    label: "Pending",
+    label: (t) => t.status.pendiente,
   },
   entregado: {
     icon: CheckCircle2,
     className: "border-border bg-foreground/5 text-foreground",
     cardClassName: "border-border",
-    label: "Delivered",
+    label: (t) => t.status.entregado,
   },
   cancelado: {
     icon: XCircle,
     className: "border-destructive/25 bg-destructive/10 text-destructive",
     cardClassName: "border-destructive/20",
-    label: "Cancelled",
+    label: (t) => t.status.cancelado,
   },
   devuelto: {
     icon: RotateCcw,
     className: "border-border bg-muted text-muted-foreground",
     cardClassName: "border-border",
-    label: "Returned",
+    label: (t) => t.status.devuelto,
   },
 }
 
@@ -71,8 +75,8 @@ function canjePrice(c: Canje): number {
   return c.precio_al_canje ?? canjeProduct(c)?.precio ?? 0
 }
 
-function canjeName(c: Canje): string {
-  return canjeProduct(c)?.nombre ?? "Product unavailable"
+function canjeName(c: Canje, t: CanjesDict): string {
+  return canjeProduct(c)?.nombre ?? t.productUnavailable
 }
 
 function canjeImage(c: Canje): string | null {
@@ -87,6 +91,8 @@ function canjeHref(c: Canje): string | null {
 }
 
 function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.canjes
   const status = STATUS_STYLES[canje.estado]
   const StatusIcon = status.icon
   const img = canjeImage(canje)
@@ -98,7 +104,7 @@ function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
       <div className="size-20 shrink-0 overflow-hidden rounded-sm bg-muted sm:size-24">
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={img} alt={canjeName(canje)} className="size-full object-cover" />
+          <img src={img} alt={canjeName(canje, t)} className="size-full object-cover" />
         ) : (
           <div className="flex size-full items-center justify-center">
             <ShoppingBag className="size-5 text-muted-foreground" aria-hidden="true" />
@@ -111,15 +117,15 @@ function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
         <div className="flex min-w-0 items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-[14px] font-medium text-foreground">
-              {canjeName(canje)}
+              {canjeName(canje, t)}
             </p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">Redemption #{canje.id}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">{interpolate(t.redemptionId, { id: canje.id })}</p>
           </div>
           <div className="shrink-0 text-right">
             <span className="text-[16px] font-semibold tabular-nums text-gold-bright">
               {formatCompactNumber(canjePrice(canje))}
             </span>
-            <span className="ml-1 text-[11px] text-muted-foreground">pts</span>
+            <span className="ml-1 text-[11px] text-muted-foreground">{t.pointsShort}</span>
           </div>
         </div>
 
@@ -135,7 +141,7 @@ function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
             )}
           >
             <StatusIcon className="size-3.5" aria-hidden="true" />
-            {status.label}
+            {status.label(t)}
           </span>
         </div>
       </div>
@@ -157,9 +163,9 @@ function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
 
   if (href) {
     return (
-      <Link href={href} className={className} aria-label={`View ${canjeName(canje)}`}>
+      <LocaleLink href={href} className={className} aria-label={interpolate(t.view, { name: canjeName(canje, t) })}>
         {content}
-      </Link>
+      </LocaleLink>
     )
   }
 
@@ -181,6 +187,8 @@ export function CanjesList({
   statusFilter: StatusFilter
   sortMode: CanjesSort
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.canjes
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -206,17 +214,17 @@ export function CanjesList({
       <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-border p-8 text-center">
         <ShoppingBag className="size-8 text-muted-foreground" aria-hidden="true" />
         <div>
-          <p className="text-[15px] font-medium text-foreground">No redemptions yet</p>
+          <p className="text-[15px] font-medium text-foreground">{t.empty}</p>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            Your redeemed rewards and their status will appear here.
+            {t.emptyHint}
           </p>
         </div>
-        <Link
+        <LocaleLink
           href="/shop"
           className="mt-1 rounded-full bg-gold px-4 py-2 text-[12px] font-medium text-gold-foreground transition-[colors,transform] hover:bg-gold-bright active:scale-95"
         >
-          Browse rewards
-        </Link>
+          {t.browseRewards}
+        </LocaleLink>
       </div>
     )
   }
@@ -230,7 +238,7 @@ export function CanjesList({
       {/* Stats row */}
       <div className="flex flex-col justify-between gap-3 rounded-sm border border-border bg-card px-4 py-3 sm:flex-row sm:items-end">
         <div>
-          <p className="text-[11px] text-muted-foreground">Points spent</p>
+          <p className="text-[11px] text-muted-foreground">{t.pointsSpent}</p>
           <p className="text-[22px] font-semibold leading-tight tabular-nums text-gold-bright">
             {formatCompactNumber(summary.total_points)}
           </p>
@@ -238,12 +246,12 @@ export function CanjesList({
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
           <span>
             <span className="font-medium text-foreground">{summary.total}</span>{" "}
-            {summary.total === 1 ? "redemption" : "redemptions"}
+            {summary.total === 1 ? t.redemption : t.redemptions}
           </span>
           {summary.by_status.pendiente > 0 && (
             <span>
               <span className="font-medium text-gold-bright">{summary.by_status.pendiente}</span>{" "}
-              pending
+              {t.pending}
             </span>
           )}
         </div>
@@ -253,20 +261,20 @@ export function CanjesList({
       <div className="rounded-sm border border-border bg-secondary p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[12px] font-medium text-foreground">Redemption history</p>
+            <p className="text-[12px] font-medium text-foreground">{t.history}</p>
             <p className="text-[11px] text-muted-foreground">
-              {pagination.total} matching {pagination.total === 1 ? "redemption" : "redemptions"}
+              {interpolate(t.matching, { n: pagination.total })}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <select
               value={sortMode}
               onChange={(e) => updateQuery({ sort: e.target.value === "date-desc" ? null : e.target.value, page: null })}
-              aria-label="Sort redemptions"
+              aria-label={t.sortLabel}
               className="h-8 max-w-[132px] rounded-full border border-border bg-background px-3 text-[12px] text-foreground focus:border-gold focus:outline-none"
             >
-              <option value="date-desc">Newest first</option>
-              <option value="date-asc">Oldest first</option>
+              <option value="date-desc">{t.newestFirst}</option>
+              <option value="date-asc">{t.oldestFirst}</option>
             </select>
             {hasActiveFilters && (
               <button
@@ -274,13 +282,13 @@ export function CanjesList({
                 onClick={clearFilters}
                 className="h-8 rounded-full px-2 text-[12px] text-muted-foreground hover:text-foreground"
               >
-                Reset
+                {t.reset}
               </button>
             )}
           </div>
         </div>
 
-        <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-0.5" aria-label="Filter by status">
+        <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-0.5" aria-label={t.filterByStatus}>
           {STATUS_OPTIONS.map((option) => {
             const count = option.value === "all" ? summary.total : summary.by_status[option.value]
             const selected = statusFilter === option.value
@@ -302,7 +310,7 @@ export function CanjesList({
                     : "bg-background text-muted-foreground hover:text-foreground",
                 )}
               >
-                {option.label}
+                {option.label(t)}
                 <span
                   className={cn(
                     "text-[10px]",
@@ -320,14 +328,14 @@ export function CanjesList({
       {/* Redemption list */}
       {isEmptyPage ? (
         <div className="flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-border p-6 text-center">
-          <p className="text-[14px] font-medium text-foreground">No redemptions match this filter</p>
-          <p className="text-[12px] text-muted-foreground">Try another status or reset the filters.</p>
+          <p className="text-[14px] font-medium text-foreground">{t.noMatch}</p>
+          <p className="text-[12px] text-muted-foreground">{t.noMatchHint}</p>
           <button
             type="button"
             onClick={clearFilters}
             className="text-[12px] font-medium text-foreground underline underline-offset-4"
           >
-            Reset filters
+            {t.resetFilters}
           </button>
         </div>
       ) : (
@@ -341,10 +349,10 @@ export function CanjesList({
       {pagination.total > 0 && (
         <nav
           className="flex flex-col gap-3 border-t border-border/60 pt-3 sm:flex-row sm:items-center sm:justify-between"
-          aria-label="Redemptions pagination"
+          aria-label={t.pagination}
         >
           <p className="text-[12px] text-muted-foreground">
-            {rangeStart}–{rangeEnd} of {pagination.total}
+            {rangeStart}–{rangeEnd} {t.of} {pagination.total}
           </p>
           <div className="flex items-center justify-between gap-2 sm:justify-end">
             <button
@@ -354,7 +362,7 @@ export function CanjesList({
               className="flex h-8 items-center gap-1 rounded-full border border-border px-3 text-[12px] text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
             >
               <ChevronLeft className="size-3.5" aria-hidden="true" />
-              Previous
+              {t.previous}
             </button>
             <span className="text-[12px] tabular-nums text-foreground">
               {currentPage} / {totalPages}
@@ -365,7 +373,7 @@ export function CanjesList({
               disabled={!pagination.has_more}
               className="flex h-8 items-center gap-1 rounded-full border border-border px-3 text-[12px] text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
             >
-              Next
+              {t.next}
               <ChevronRight className="size-3.5" aria-hidden="true" />
             </button>
           </div>

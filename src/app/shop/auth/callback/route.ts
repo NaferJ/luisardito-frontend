@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { API_BASE_URL } from '@/lib/api'
 import { setAuthCookies } from '@/lib/cookies'
+import { getRequestLocale } from '@/lib/i18n/request-locale'
 
 interface TokenResponse {
   accessToken?: string
@@ -14,9 +15,11 @@ export async function GET(request: Request): Promise<Response> {
   const code = searchParams.get('code')
   const state = searchParams.get('state')
   const oauthError = searchParams.get('error')
+  const locale = await getRequestLocale()
+  const shopUrl = (error?: string) => `/${locale}/shop${error ? `?error=${encodeURIComponent(error)}` : ''}`
 
   if (oauthError) {
-    redirect(`/shop/login?error=${encodeURIComponent(oauthError)}`)
+    redirect(shopUrl(oauthError))
   }
 
   let tokens: TokenResponse = {}
@@ -31,21 +34,21 @@ export async function GET(request: Request): Promise<Response> {
         { cache: 'no-store' },
       )
       if (!response.ok) {
-        redirect('/shop/login?error=callback_exchange_failed')
+        redirect(shopUrl('callback_exchange_failed'))
       }
       tokens = (await response.json()) as TokenResponse
     } else {
-      redirect('/shop/login?error=missing_params')
+      redirect(shopUrl('missing_params'))
     }
 
     const accessToken = tokens.accessToken ?? tokens.token
     if (!accessToken) {
-      redirect('/shop/login?error=no_token')
+      redirect(shopUrl('no_token'))
     }
 
     await setAuthCookies(accessToken, tokens.refreshToken)
-    redirect('/shop')
+    redirect(shopUrl())
   } catch {
-    redirect('/shop/login?error=callback_failed')
+    redirect(shopUrl('callback_failed'))
   }
 }

@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useTransition, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useLocalizedRouter } from "@/components/i18n/use-localized-router"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
 import { ImageUpload } from "@/components/admin/image-upload"
 import { DesignCard } from "@/components/design-card"
 import type { DesignCardData } from "@/components/design-card"
-import { createProduct, updateProduct, type ProductFormData } from "@/app/shop/admin/products/actions"
+import { createProduct, updateProduct, type ProductFormData } from "@/app/[lang]/shop/admin/products/actions"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import type { Producto } from "@/types"
 
@@ -30,7 +32,10 @@ function generateSlug(text: string): string {
 const AVATAR_COLORS = ["bg-gold-highlight", "bg-gold-bright", "bg-gold-deep", "bg-gray-medium"]
 
 export function ProductForm({ mode, initialData }: ProductFormProps) {
-  const router = useRouter()
+  const router = useLocalizedRouter()
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.productForm
+  const card = dictionary.card
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
@@ -38,7 +43,9 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
   const [descripcion, setDescripcion] = useState(initialData?.descripcion ?? "")
   const [precio, setPrecio] = useState(initialData?.precio ?? 100)
   const [stock, setStock] = useState(initialData?.stock ?? 0)
-  const [estado, setEstado] = useState<"publicado" | "borrador">(initialData?.estado ?? "borrador")
+  const [estado, setEstado] = useState<"publicado" | "borrador">(
+    initialData?.estado === "publicado" ? "publicado" : "borrador",
+  )
   const [slug, setSlug] = useState(initialData?.slug ?? "")
   const [autoSlug, setAutoSlug] = useState(!initialData?.slug)
   const [imageData, setImageData] = useState<{
@@ -71,42 +78,42 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
     return {
       id: "preview",
       image: imageData?.imagen_url ?? "/placeholder.svg",
-      alt: nombre || "Product preview",
+      alt: nombre || t.fields.previewAlt,
       aspect: "aspect-[4/3]",
       aspectStyle: hasRealDimensions && imageData
         ? { aspectRatio: `${imageData.imagen_width} / ${imageData.imagen_height}` }
         : undefined,
       avatarColor: AVATAR_COLORS[0],
       badge: hasDiscount ? "star" : undefined,
-      tag: hasDiscount ? "Sale" : "Product",
-      title: nombre || "Product name",
+      tag: hasDiscount ? card.sale : card.product,
+      title: nombre || t.fields.previewName,
       author: `${formatCompactNumber(precio || 0)} pts`,
-      description: descripcion || "Product description",
-      timeAgo: stock > 0 ? `${stock} in stock` : "Out of stock",
+      description: descripcion || t.fields.previewDescription,
+      timeAgo: stock > 0 ? interpolate(card.inStock, { n: stock }) : card.outOfStock,
       impressions: formatCompactNumber(precio || 0),
       outbound: stock,
-      source: "Shop",
-      category: hasDiscount ? "On Sale" : "Product",
+      source: card.shop,
+      category: hasDiscount ? card.onSale : card.product,
       style: estado,
-      color: hasDiscount ? `${initialData?.descuento?.porcentajeDescuento ?? "0"} off` : "—",
-      interaction: [`${formatCompactNumber(precio || 0)} points`],
+      color: hasDiscount ? interpolate(card.percentOff, { percent: initialData?.descuento?.porcentajeDescuento ?? "0" }) : "—",
+      interaction: [interpolate(card.pointsLabel, { n: formatCompactNumber(precio || 0) })],
       lastRedeemer: null,
     }
-  }, [nombre, descripcion, precio, stock, estado, imageData, initialData])
+  }, [nombre, descripcion, precio, stock, estado, imageData, initialData, t, card])
 
   const submit = (saveAsDraft?: boolean) => {
     setError(null)
 
     if (!nombre.trim()) {
-      setError("Product name is required.")
+      setError(t.errors.nameRequired)
       return
     }
     if (!descripcion.trim()) {
-      setError("Description is required.")
+      setError(t.errors.descriptionRequired)
       return
     }
     if (precio <= 0) {
-      setError("Price must be greater than 0.")
+      setError(t.errors.pricePositive)
       return
     }
 
@@ -132,7 +139,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
           await updateProduct(String(initialData.id), data)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong.")
+        setError(err instanceof Error ? err.message : t.errors.generic)
       }
     })
   }
@@ -146,9 +153,9 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
     "h-10 w-full rounded-lg border border-border bg-card px-3 text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold"
   const labelClass = "text-[13px] text-muted-foreground"
 
-  let saveLabel = "Save changes"
-  if (isPending) saveLabel = "Saving..."
-  else if (mode === "create") saveLabel = "Create product"
+  let saveLabel = t.actions.save
+  if (isPending) saveLabel = t.actions.saving
+  else if (mode === "create") saveLabel = t.actions.create
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
@@ -165,18 +172,18 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
 
         {/* Basic info — full width on top */}
         <section className="flex flex-col gap-3 rounded-lg border border-border bg-card/50 p-4">
-          <h2 className="text-[14px] font-medium text-foreground">Basic info</h2>
+          <h2 className="text-[14px] font-medium text-foreground">{t.sections.basic}</h2>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="nombre" className={labelClass}>
-              Name <span className="text-destructive">*</span>
+              {t.fields.name} <span className="text-destructive">*</span>
             </label>
             <input
               id="nombre"
               type="text"
               value={nombre}
               onChange={(e) => handleNombreChange(e.target.value)}
-              placeholder="Official T-shirt"
+              placeholder={t.placeholders.name}
               maxLength={100}
               required
               className={inputClass}
@@ -191,13 +198,13 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
 
           <div className="flex flex-col gap-1">
             <label htmlFor="descripcion" className={labelClass}>
-              Description <span className="text-destructive">*</span>
+              {t.fields.description} <span className="text-destructive">*</span>
             </label>
             <textarea
               id="descripcion"
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Detailed product description..."
+              placeholder={t.placeholders.description}
               rows={3}
               maxLength={500}
               required
@@ -213,7 +220,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
 
           <div className="flex flex-col gap-1">
             <label htmlFor="slug" className={labelClass}>
-              Slug
+              {t.fields.slug}
             </label>
             <div className="flex items-center gap-2">
               <span className="shrink-0 text-[13px] text-muted-foreground">/shop/</span>
@@ -225,7 +232,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                   setSlug(e.target.value)
                   setAutoSlug(false)
                 }}
-                placeholder="official-t-shirt"
+                placeholder={t.placeholders.slug}
                 disabled={autoSlug}
                 className={cn(inputClass, "min-w-0 flex-1 disabled:opacity-50")}
               />
@@ -240,7 +247,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                 }}
                 className="size-3.5 accent-gold"
               />
-              {"Auto-generate from name"}
+              {t.fields.autoSlug}
             </label>
           </div>
         </section>
@@ -249,11 +256,11 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {/* Pricing & stock */}
           <section className="flex flex-col gap-3 rounded-lg border border-border bg-card/50 p-4">
-            <h2 className="text-[14px] font-medium text-foreground">Pricing & stock</h2>
+            <h2 className="text-[14px] font-medium text-foreground">{t.sections.pricing}</h2>
 
             <div className="flex flex-col gap-1">
               <label htmlFor="precio" className="text-[13px] font-medium text-foreground">
-                Price
+                {t.fields.price}
               </label>
               <div className="relative flex h-10 items-center rounded-lg border border-border bg-card focus-within:ring-2 focus-within:ring-gold">
                 <input
@@ -272,14 +279,14 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                   className="h-full w-full rounded-lg bg-transparent px-3 text-[16px] font-medium tabular-nums text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
                 />
                 <span className="pointer-events-none absolute right-3 text-[12px] text-muted-foreground">
-                  pts
+                  {dictionary.admin.products.pts}
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
               <label htmlFor="stock" className="text-[13px] font-medium text-foreground">
-                Stock
+                {t.fields.stock}
               </label>
               <div className="relative flex h-10 items-center rounded-lg border border-border bg-card focus-within:ring-2 focus-within:ring-gold">
                 <input
@@ -297,15 +304,15 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                   className="h-full w-full rounded-lg bg-transparent px-3 text-[16px] font-medium tabular-nums text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
                 />
                 <span className="pointer-events-none absolute right-3 text-[12px] text-muted-foreground">
-                  units
+                  {t.fields.units}
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
               <span className="flex flex-col gap-1 text-[13px] font-medium text-foreground">
-                Status
-                <fieldset className="flex h-10 gap-1" aria-label="Status">
+                {t.fields.status}
+                <fieldset className="flex h-10 gap-1" aria-label={t.fields.status}>
                   <button
                     type="button"
                     onClick={() => setEstado("borrador")}
@@ -320,7 +327,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                       "size-1.5 rounded-full",
                       estado === "borrador" ? "bg-muted-foreground" : "bg-muted-foreground/40",
                     )} />
-                    {"Draft"}
+                    {t.estados.borrador}
                   </button>
                   <button
                     type="button"
@@ -336,7 +343,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                       "size-1.5 rounded-full",
                       estado === "publicado" ? "bg-gold-bright" : "bg-muted-foreground/40",
                     )} />
-                    {"Live"}
+                    {t.estados.publicado}
                   </button>
                 </fieldset>
               </span>
@@ -345,7 +352,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
 
           {/* Product image */}
           <section className="flex flex-col gap-3 rounded-lg border border-border bg-card/50 p-4">
-            <h2 className="text-[14px] font-medium text-foreground">Product image</h2>
+            <h2 className="text-[14px] font-medium text-foreground">{t.sections.image}</h2>
             <ImageUpload
               value={imageData?.imagen_url ?? null}
               onChange={(result) => {
@@ -371,13 +378,13 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       {/* Right: live preview (sticky) */}
       <div className="hidden lg:sticky lg:top-8 lg:flex lg:w-[340px] lg:shrink-0 lg:flex-col lg:gap-3">
         <span className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
-          Live preview
+          {t.preview}
         </span>
         <div className="rounded-lg border border-border bg-card/30 p-4">
           <DesignCard card={previewCard} onOpen={() => {}} />
         </div>
         <p className="text-[12px] text-muted-foreground">
-          This is how the card will appear in the shop feed.
+          {t.previewHint}
         </p>
       </div>
 
@@ -398,7 +405,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             disabled={isPending}
             className="h-10 rounded-full border border-border bg-secondary px-6 text-[14px] font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
           >
-            Save as draft
+            {t.actions.saveDraft}
           </button>
           <button
             type="button"
@@ -406,7 +413,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             disabled={isPending}
             className="h-10 rounded-full px-4 text-[14px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
           >
-            Cancel
+            {t.actions.cancel}
           </button>
         </div>
       </div>

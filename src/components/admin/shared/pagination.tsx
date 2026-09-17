@@ -2,6 +2,8 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { PAGE_SIZE_OPTIONS, type PageSize } from "@/lib/admin-utils"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
 
 interface PaginationProps {
   readonly currentPage: number
@@ -21,22 +23,28 @@ export function Pagination({
   onPageChange,
   onPageSizeChange,
 }: PaginationProps) {
+  const { dictionary } = useI18n()
+  const shared = dictionary.adminShared
   if (totalPages <= 1) return null
 
   return (
     <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
       <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
         <span>
-          {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, totalItems)} of {totalItems}
+          {interpolate(shared.rangeOf, {
+            start: (currentPage - 1) * pageSize + 1,
+            end: Math.min(currentPage * pageSize, totalItems),
+            total: totalItems,
+          })}
         </span>
         <select
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value) as PageSize)}
           className="h-7 rounded-sm border border-border bg-background px-2 text-[12px] text-foreground focus:border-gold focus:outline-none"
-          aria-label="Page size"
+          aria-label={shared.pageSize}
         >
           {PAGE_SIZE_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s}/page</option>
+            <option key={s} value={s}>{interpolate(shared.perPage, { n: s })}</option>
           ))}
         </select>
       </div>
@@ -46,7 +54,7 @@ export function Pagination({
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
           className="flex size-7 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
-          aria-label="Previous page"
+          aria-label={shared.previousPage}
         >
           <ChevronLeft className="size-3.5" />
         </button>
@@ -58,7 +66,7 @@ export function Pagination({
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
           className="flex size-7 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
-          aria-label="Next page"
+          aria-label={shared.nextPage}
         >
           <ChevronRight className="size-3.5" />
         </button>

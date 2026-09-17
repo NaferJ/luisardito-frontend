@@ -5,17 +5,19 @@ import Image from "next/image"
 import { Bookmark, ChevronLeft, ChevronRight, X } from "lucide-react"
 import type { DesignCardData } from "@/components/design-card"
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/components/i18n/provider"
+import type { Dictionary } from "@/lib/i18n/shared"
 import { extractDominantColors } from "@/lib/extract-color"
 import { setOverlayColors } from "@/lib/overlay-color-store"
 
-const statRows = (card: DesignCardData) => [
-  { label: "Impressions", value: card.impressions },
-  { label: "Outbound", value: String(card.outbound) },
-  { label: "Source", value: card.source },
-  { label: "Category", value: card.category },
-  { label: "Style", value: card.style },
-  { label: "Color", value: card.color },
-  { label: "Interaction", value: card.interaction.join(" ") },
+const statRows = (card: DesignCardData, t: Dictionary["card"]) => [
+  { label: t.stats.impressions, value: card.impressions },
+  { label: t.stats.outbound, value: String(card.outbound) },
+  { label: t.stats.source, value: card.source },
+  { label: t.stats.category, value: card.category },
+  { label: t.stats.style, value: card.style },
+  { label: t.stats.color, value: card.color },
+  { label: t.stats.interaction, value: card.interaction.join(" ") },
 ]
 
 export function DesignDetailOverlay({
@@ -29,6 +31,8 @@ export function DesignDetailOverlay({
   onClose: () => void
   onNavigate: (nextIndex: number) => void
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.card
   const [saved, setSaved] = useState(false)
   const [savedCardId, setSavedCardId] = useState<string | undefined>(undefined)
   const card = cards[index]
@@ -80,22 +84,18 @@ export function DesignDetailOverlay({
 
   return (
     <>
-      {/* Static metadata sidebar — always opaque, never animated.
-          Sits at z-20 so the lightbox (z-50) and its blur layer only paint
-          to the right of it (the lightbox media is offset by 292px via a
-          spacer). This matches the reference: the panel never moves and
-          never goes transparent, so the feed can never show through it.
-          The "slide-in" illusion is created by the feed shifting right,
-          not by the panel itself moving. */}
+      {/* Static metadata sidebar above the full overlay backdrop. The panel
+          never moves or becomes transparent; the feed creates the slide-in
+          illusion by shifting right. */}
       <aside
         aria-label={card.title}
-        className="fixed inset-y-0 left-0 right-0 z-20 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
+        className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
       >
         <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t.close}
             className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
           >
             <X className="size-4" aria-hidden="true" />
@@ -105,7 +105,7 @@ export function DesignDetailOverlay({
               type="button"
               onClick={() => index > 0 && onNavigate(index - 1)}
               disabled={index === 0}
-              aria-label="Previous design"
+              aria-label={t.previousDesign}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
@@ -114,7 +114,7 @@ export function DesignDetailOverlay({
               type="button"
               onClick={() => index < cards.length - 1 && onNavigate(index + 1)}
               disabled={index === cards.length - 1}
-              aria-label="Next design"
+              aria-label={t.nextDesign}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
             >
               <ChevronRight className="size-4" aria-hidden="true" />
@@ -134,7 +134,7 @@ export function DesignDetailOverlay({
                   type="button"
                   onClick={() => setSaved((s) => !s)}
                   aria-pressed={saved}
-                  aria-label="Save design"
+                  aria-label={t.saveDesign}
                   className={cn(
                     "flex size-7 shrink-0 items-center justify-center rounded-full transition-colors",
                     saved ? "bg-gold text-gold-foreground" : "bg-secondary text-foreground hover:bg-accent",
@@ -152,7 +152,7 @@ export function DesignDetailOverlay({
             </div>
 
             <div className="flex flex-col">
-              {statRows(card).map((row, i) => (
+              {statRows(card, t).map((row, i) => (
                 <div
                   key={row.label}
                   className={cn(
@@ -169,26 +169,18 @@ export function DesignDetailOverlay({
         </div>
       </aside>
 
-      {/* Lightbox: covers the overlay area but the blur + media are offset
-          right by a 292px spacer so they never paint behind the sidebar.
-          The container is pointer-events-none so only the media card
-          captures interactions. */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label={card.title}
-        className="fixed inset-y-0 left-0 right-0 z-50 hidden flex-row overflow-hidden pointer-events-none lg:flex lg:left-[max(252px,calc(50vw-588px))] lg:right-[120px]"
+        className="fixed inset-y-0 left-0 right-0 z-40 hidden flex-row overflow-hidden pointer-events-none xl:flex xl:left-[max(252px,calc(50vw-588px))]"
       >
-        {/* Spacer — reserves the sidebar area so blur/media don't paint there */}
-        <div className="hidden lg:block lg:w-[292px] lg:shrink-0" />
-
-        {/* Media + blur area. Blur lives on its own static layer so it always
-            paints correctly; only the image content fades + scales in on top. */}
-        <div className="relative flex min-w-0 flex-1 items-center justify-center">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-background/70 backdrop-blur-[8px]"
-          />
+        <div
+          aria-hidden="true"
+          className="pointer-events-auto absolute inset-0 bg-background/70 backdrop-blur-[8px]"
+        />
+        <div className="relative z-10 hidden xl:block xl:w-[292px] xl:shrink-0" />
+        <div className="relative z-10 flex min-w-0 flex-1 items-center justify-center">
           <div className="overlay-media relative aspect-[4/3] w-full max-w-2xl overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border">
             <Image src={card.image || "/placeholder.svg"} alt={card.alt} fill className="object-cover" priority />
           </div>

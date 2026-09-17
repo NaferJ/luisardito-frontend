@@ -6,11 +6,13 @@ import { cn, formatCompactNumber } from "@/lib/utils"
 import { VipBadge } from "@/components/vip-badge"
 import { SubscriberBadge } from "@/components/subscriber-badge"
 import { DiscordLogo } from "@/components/brand-icons"
+import { useI18n, useLocale } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
 import {
   updateUsuarioPuntos,
   grantVip,
   removeVip,
-} from "@/app/shop/admin/usuarios/actions"
+} from "@/app/[lang]/shop/admin/usuarios/actions"
 import type { AdminUsuario } from "@/lib/admin"
 import type { Canje, HistorialPunto } from "@/types"
 
@@ -41,6 +43,10 @@ export function AdminUsuarioDetail({
   canjes: Canje[]
   historial: HistorialPunto[]
 }>) {
+  const { dictionary } = useI18n()
+  const locale = useLocale()
+  const t = dictionary.admin.userDetail
+  const canjesT = dictionary.canjes
   const [pending, startTransition] = useTransition()
   const [puntos, setPuntos] = useState(0)
   const [puntosMode, setPuntosMode] = useState<"add" | "set">("add")
@@ -60,7 +66,7 @@ export function AdminUsuarioDetail({
   const handleUpdatePuntos = () => {
     if (puntos === 0) return
     if (!motivo.trim()) {
-      setFeedback({ ok: false, msg: "Reason is required" })
+      setFeedback({ ok: false, msg: t.adjust.reasonRequired })
       return
     }
     setFeedback(null)
@@ -69,7 +75,7 @@ export function AdminUsuarioDetail({
       if (result.error) {
         setFeedback({ ok: false, msg: result.error })
       } else {
-        setFeedback({ ok: true, msg: "Points updated successfully" })
+        setFeedback({ ok: true, msg: t.adjust.updated })
         setPuntos(0)
         setMotivo("")
       }
@@ -80,16 +86,16 @@ export function AdminUsuarioDetail({
     setFeedback(null)
     startTransition(async () => {
       const result = await grantVip(String(usuario.id), vipDays > 0 ? vipDays : undefined)
-      setFeedback(result.error ? { ok: false, msg: result.error } : { ok: true, msg: "VIP granted" })
+      setFeedback(result.error ? { ok: false, msg: result.error } : { ok: true, msg: t.vip.granted })
     })
   }
 
   const handleRemoveVip = () => {
-    if (!confirm("Remove VIP from this user?")) return
+    if (!confirm(t.vip.confirmRemove)) return
     setFeedback(null)
     startTransition(async () => {
       const result = await removeVip(String(usuario.id))
-      setFeedback(result.error ? { ok: false, msg: result.error } : { ok: true, msg: "VIP removed" })
+      setFeedback(result.error ? { ok: false, msg: result.error } : { ok: true, msg: t.vip.removed })
     })
   }
 
@@ -129,20 +135,20 @@ export function AdminUsuarioDetail({
             ) : (
               <span className="flex items-center gap-1 text-[12px] text-destructive/70">
                 <AlertTriangle className="size-3" />
-                No Discord
+                {t.noDiscord}
               </span>
             )}
           </div>
         </div>
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-end">
-            <span className="text-[11px] text-muted-foreground">Points</span>
+            <span className="text-[11px] text-muted-foreground">{t.stats.points}</span>
             <span className="text-[16px] font-semibold text-gold-bright">{formatCompactNumber(usuario.puntos)}</span>
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-[11px] text-muted-foreground">Joined</span>
+            <span className="text-[11px] text-muted-foreground">{t.joined}</span>
             <span className="text-[14px] font-semibold text-foreground">
-              {new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(new Date(usuario.creado))}
+              {new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", { month: "short", year: "numeric" }).format(new Date(usuario.creado))}
             </span>
           </div>
         </div>
@@ -161,21 +167,21 @@ export function AdminUsuarioDetail({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Points adjustment */}
         <div className="flex flex-col gap-3 rounded-sm border border-border bg-secondary p-4">
-          <span className="text-[13px] font-medium text-foreground">Adjust points</span>
+          <span className="text-[13px] font-medium text-foreground">{t.adjust.title}</span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setPuntosMode("add")}
               className={cn("flex-1 rounded-sm border px-3 py-1.5 text-[12px] font-medium", puntosMode === "add" ? "border-gold bg-gold/10 text-gold-bright" : "border-border text-muted-foreground")}
             >
-              Add / Subtract
+              {t.adjust.addSubtract}
             </button>
             <button
               type="button"
               onClick={() => setPuntosMode("set")}
               className={cn("flex-1 rounded-sm border px-3 py-1.5 text-[12px] font-medium", puntosMode === "set" ? "border-gold bg-gold/10 text-gold-bright" : "border-border text-muted-foreground")}
             >
-              Set absolute
+              {t.adjust.setAbsolute}
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -197,12 +203,15 @@ export function AdminUsuarioDetail({
             type="text"
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
-            placeholder="Reason (required)"
+            placeholder={t.adjust.reasonPlaceholder}
             className="h-9 w-full rounded-sm border border-border bg-background px-3 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
           />
           {puntosMode === "add" && puntos !== 0 && (
             <p className="text-[12px] text-muted-foreground">
-              Result: {formatCompactNumber(usuario.puntos + puntos)} pts ({puntos > 0 ? "+" : ""}{formatCompactNumber(puntos)})
+              {interpolate(t.adjust.result, {
+                total: formatCompactNumber(usuario.puntos + puntos),
+                delta: (puntos > 0 ? "+" : "") + formatCompactNumber(puntos),
+              })}
             </p>
           )}
           <button
@@ -211,17 +220,17 @@ export function AdminUsuarioDetail({
             disabled={pending || puntos === 0}
             className="flex h-9 items-center justify-center rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
           >
-            {pending ? "Updating..." : "Update points"}
+            {pending ? t.adjust.updating : t.adjust.update}
           </button>
         </div>
 
         {/* VIP management */}
         <div className="flex flex-col gap-3 rounded-sm border border-border bg-secondary p-4">
-          <span className="text-[13px] font-medium text-foreground">VIP management</span>
+          <span className="text-[13px] font-medium text-foreground">{t.vip.title}</span>
           <div className="flex items-center gap-2 rounded-sm bg-muted px-3 py-2">
             <Crown className={cn("size-4", isVip ? "text-gold-bright" : "text-muted-foreground")} />
             <span className="text-[13px] text-foreground">
-              {isVip ? "VIP active" : "No VIP"}
+              {isVip ? t.vip.active : t.vip.none}
             </span>
             {(usuario.vip_status ?? usuario.vip_info)?.expires_at && (
               <span className="ml-auto text-[12px] text-muted-foreground">
@@ -229,7 +238,7 @@ export function AdminUsuarioDetail({
               </span>
             )}
             {(usuario.vip_status ?? usuario.vip_info)?.is_permanent && (
-              <span className="ml-auto text-[12px] text-gold-bright">Permanent</span>
+              <span className="ml-auto text-[12px] text-gold-bright">{t.vip.permanent}</span>
             )}
           </div>
           {!isVip && (
@@ -242,7 +251,7 @@ export function AdminUsuarioDetail({
                   min={0}
                   className="h-9 flex-1 rounded-sm border border-border bg-background px-3 text-[14px] text-foreground focus:border-gold focus:outline-none"
                 />
-                <span className="text-[12px] text-muted-foreground">days (0 = permanent)</span>
+                <span className="text-[12px] text-muted-foreground">{t.vip.days}</span>
               </div>
               <button
                 type="button"
@@ -251,7 +260,7 @@ export function AdminUsuarioDetail({
                 className="flex h-9 items-center justify-center gap-2 rounded-full bg-gold px-4 text-[13px] font-medium text-gold-foreground transition-opacity hover:opacity-85 disabled:opacity-50"
               >
                 <Crown className="size-3.5" />
-                {pending ? "Granting..." : "Grant VIP"}
+                {pending ? t.vip.granting : t.vip.grant}
               </button>
             </>
           )}
@@ -262,7 +271,7 @@ export function AdminUsuarioDetail({
               disabled={pending}
               className="flex h-9 items-center justify-center gap-2 rounded-full border border-destructive/40 px-4 text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
             >
-              {pending ? "Removing..." : "Remove VIP"}
+              {pending ? t.vip.removing : t.vip.remove}
             </button>
           )}
         </div>
@@ -272,15 +281,15 @@ export function AdminUsuarioDetail({
       {canjes.length > 0 && (
         <div className="flex flex-col gap-3 rounded-sm border border-border bg-secondary p-4">
           <span className="text-[13px] font-medium text-foreground">
-            Redemptions ({canjes.length})
+            {interpolate(t.redemptionsTitle, { n: canjes.length })}
           </span>
           <div className="flex flex-col gap-1.5">
             {canjes.slice(0, 10).map((c) => (
               <div key={c.id} className="flex items-center justify-between gap-3 text-[13px]">
-                <span className="truncate text-foreground">{c.Producto?.nombre ?? c.producto?.nombre ?? "Unknown"}</span>
+                <span className="truncate text-foreground">{c.Producto?.nombre ?? c.producto?.nombre ?? t.unknown}</span>
                 <span className="shrink-0 text-muted-foreground">{formatDate(c.fecha)}</span>
                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                  {c.estado}
+                  {canjesT.status[c.estado as keyof typeof canjesT.status] ?? c.estado}
                 </span>
               </div>
             ))}
@@ -292,7 +301,7 @@ export function AdminUsuarioDetail({
       {historial.length > 0 && (
         <div className="flex flex-col gap-3 rounded-sm border border-border bg-secondary p-4">
           <span className="text-[13px] font-medium text-foreground">
-            Points history ({historial.length})
+            {interpolate(t.historyTitle, { n: historial.length })}
           </span>
           <div className="flex flex-col gap-1.5">
             {historial.slice(0, 10).map((h) => {

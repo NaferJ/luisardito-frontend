@@ -1,13 +1,15 @@
 export type ChangeType = "added" | "improved" | "fixed"
 
+export type LocalizedText = { en: string; es: string }
+
 export type ChangelogChange = {
   type: ChangeType
-  text: string
+  text: LocalizedText
 }
 
 export type ChangelogRelease = {
   version: string
   date: string
-  title: string
+  title: LocalizedText
   changes: ChangelogChange[]
 }

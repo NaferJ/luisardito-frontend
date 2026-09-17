@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Calendar, ChevronDown } from "lucide-react"
 import type { ChangelogRelease } from "@/content/changelog/types"
+import { useI18n, useLocale } from "@/components/i18n/provider"
 
 const tagStyles: Record<
   ChangelogRelease["changes"][number]["type"],
@@ -13,21 +14,12 @@ const tagStyles: Record<
   fixed: "bg-destructive/15 text-destructive",
 }
 
-const tagLabels: Record<
-  ChangelogRelease["changes"][number]["type"],
-  string
-> = {
-  added: "Added",
-  improved: "Improved",
-  fixed: "Fixed",
-}
-
-function formatDate(iso: string): string {
+function formatDate(iso: string, locale: "es" | "en"): string {
   const date = new Date(iso + "T00:00:00")
   if (Number.isNaN(date.getTime())) {
     return iso
   }
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -42,6 +34,13 @@ export function ChangelogReleaseCard({
   defaultExpanded: boolean
 }>) {
   const [expanded, setExpanded] = useState(defaultExpanded)
+  const locale = useLocale()
+  const { dictionary } = useI18n()
+  const tagLabels: Record<ChangelogRelease["changes"][number]["type"], string> = {
+    added: dictionary.changelog.added,
+    improved: dictionary.changelog.improved,
+    fixed: dictionary.changelog.fixed,
+  }
 
   return (
     <article className="rounded-lg border border-border bg-secondary/30 p-4">
@@ -55,15 +54,17 @@ export function ChangelogReleaseCard({
           {release.version}
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-          {release.title}
+          {release.title[locale]}
         </span>
         <span className="hidden items-center gap-1.5 font-mono text-xs text-muted-foreground sm:flex">
           <Calendar className="size-3.5" />
-          {formatDate(release.date)}
+          {formatDate(release.date, locale)}
         </span>
         <span className="text-xs text-muted-foreground">
           {release.changes.length}{" "}
-          {release.changes.length === 1 ? "change" : "changes"}
+          {release.changes.length === 1
+            ? dictionary.changelog.change
+            : dictionary.changelog.changes}
         </span>
         <ChevronDown
           className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-out"
@@ -90,7 +91,7 @@ export function ChangelogReleaseCard({
                   {tagLabels[change.type]}
                 </span>
                 <span className="text-sm leading-relaxed text-foreground">
-                  {change.text}
+                  {change.text[locale]}
                 </span>
               </li>
             ))}

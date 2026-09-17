@@ -1,27 +1,32 @@
+"use client"
+
 import { Tag, Clock, Percent, TrendingDown } from "lucide-react"
+import { useI18n, useLocale } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import { cn } from "@/lib/utils"
 import type { Promocion } from "@/types"
 
-function formatDate(dateString: string): string {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(dateString: string, locale: "es" | "en"): string {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   }).format(new Date(dateString))
 }
 
-function discountLabel(promo: Promocion): string {
+function discountLabel(promo: Promocion, t: Dictionary["promociones"]): string {
   switch (promo.tipo_descuento) {
     case "porcentaje":
-      return `${promo.valor_descuento}% off`
+      return interpolate(t.discount.generic, { value: `${promo.valor_descuento}%` })
     case "fijo":
-      return `${promo.valor_descuento} pts off`
+      return interpolate(t.discount.generic, { value: `${promo.valor_descuento} pts` })
     case "2x1":
-      return "2 for 1"
+      return t.discount.twoForOne
     case "3x2":
-      return "3 for 2"
+      return t.discount.threeForTwo
     default:
-      return `${promo.valor_descuento} off`
+      return interpolate(t.discount.generic, { value: String(promo.valor_descuento) })
   }
 }
 
@@ -32,13 +37,17 @@ function daysLeft(fechaFin: string): number {
 }
 
 export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promocion[] }>) {
+  const { dictionary } = useI18n()
+  const locale = useLocale()
+  const t = dictionary.promociones
+
   if (promociones.length === 0) {
     return (
       <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-border p-8">
         <Tag className="size-8 text-muted-foreground" aria-hidden="true" />
-        <p className="text-[15px] font-medium text-foreground">No active promotions</p>
+        <p className="text-[15px] font-medium text-foreground">{t.empty}</p>
         <p className="text-[13px] text-muted-foreground">
-          Check back later for discounts and special offers.
+          {t.emptyHint}
         </p>
       </div>
     )
@@ -54,11 +63,11 @@ export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promoci
             ? promo.cantidad_usos_maximos - promo.cantidad_usos_actuales
             : null
         const usageExhausted = usageLeft !== null && usageLeft <= 0
-        let usageLabel = "Uses exhausted"
-        if (!usageExhausted) {
-          const unit = usageLeft === 1 ? "use" : "uses"
-          usageLabel = `${usageLeft} ${unit} left`
-        }
+        const usageLabel = usageExhausted
+          ? t.usesExhausted
+          : usageLeft === 1
+            ? t.usesLeftOne
+            : interpolate(t.usesLeftMany, { n: usageLeft ?? 0 })
 
         return (
           <div
@@ -76,7 +85,7 @@ export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promoci
                 </span>
                 {promo.codigo && (
                   <span className="font-mono text-[12px] text-muted-foreground">
-                    Code: {promo.codigo}
+                    {t.code}: {promo.codigo}
                   </span>
                 )}
               </div>
@@ -86,7 +95,7 @@ export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promoci
                 ) : (
                   <TrendingDown className="size-3" aria-hidden="true" />
                 )}
-                {discountLabel(promo)}
+                {discountLabel(promo, t)}
               </span>
             </div>
 
@@ -102,7 +111,7 @@ export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promoci
               <div className="flex items-center justify-between text-[12px]">
                 <span className="flex items-center gap-1 text-muted-foreground">
                   <Clock className="size-3" aria-hidden="true" />
-                  {formatDate(promo.fecha_inicio)} — {formatDate(promo.fecha_fin)}
+                  {formatDate(promo.fecha_inicio, locale)} — {formatDate(promo.fecha_fin, locale)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[12px]">
@@ -113,10 +122,10 @@ export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promoci
                       isExpiringSoon ? "text-gold-bright" : "text-muted-foreground",
                     )}
                   >
-                    {remaining} {remaining === 1 ? "day" : "days"} left
+                    {remaining} {remaining === 1 ? t.day : t.days} {t.left}
                   </span>
                 ) : (
-                  <span className="font-medium text-destructive">Expired</span>
+                  <span className="font-medium text-destructive">{t.expired}</span>
                 )}
                 {usageLeft !== null && (
                   <span className="text-muted-foreground">
@@ -124,7 +133,7 @@ export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promoci
                   </span>
                 )}
                 {promo.requiere_codigo && (
-                  <span className="text-muted-foreground">Code required</span>
+                  <span className="text-muted-foreground">{t.codeRequired}</span>
                 )}
               </div>
             </div>
