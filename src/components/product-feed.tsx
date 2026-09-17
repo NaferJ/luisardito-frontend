@@ -118,14 +118,13 @@ export function ProductFeed({
 
   return (
     <>
-      {/* When a product is open, the feed shifts right by 292px to uncover
-          the static metadata sidebar. The sidebar itself never moves —
-          this shift is what creates the "panel sliding in from the left"
-          illusion, matching the reference. */}
+      {/* On wide desktop screens, the feed shifts right by 292px to uncover
+          the static metadata sidebar. At constrained desktop widths the panel
+          overlays the feed instead, preventing the page from reflowing. */}
       <div
         className={cn(
           "transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-          openIndex !== null && "xl:translate-x-[292px]",
+          openIndex !== null && "2xl:translate-x-[292px]",
         )}
       >
         {/* 2 columns on mobile */}
