@@ -10,9 +10,26 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Luisardito Frontend
 
-Next.js 16 (App Router) frontend for the Luisardito site. React 19, Tailwind CSS v4, strict TypeScript, ESLint 9, deployed on Vercel. Frontend-only — no API routes, no database, no CMS in this repo. Consumes a separate backend (`luisardito-shop-backend`, read-only).
+Next.js 16 (App Router) frontend for the Luisardito site. React 19, Tailwind CSS v4, strict TypeScript, ESLint 9, deployed on Vercel. The app owns UI plus a small set of route handlers for OAuth and backend proxying; it has no database or CMS. It consumes a separate backend (`luisardito-shop-backend`, read-only).
 
 See `.devin/rules/luisardito-frontend.md` for full code conventions and rules.
+
+## Project map
+
+- `src/app/` — App Router pages, layouts, server actions, and thin route handlers
+- `src/components/` — shared UI; feature-specific shop and admin components live in subdirectories
+- `src/lib/` — API clients, authentication, data mapping, and shared utilities
+- `src/types/` — backend response and application types
+- `src/content/changelog/` — typed consumer-facing release notes
+- `.ai/` — project context and historical implementation notes; the GitHub board is the live backlog
+
+## Task-aware reading
+
+- Before changing Next.js behavior, read the relevant guide in `node_modules/next/dist/docs/` as required above.
+- For a route or page, read its `src/app/` entry plus the components and `src/lib/` modules it imports.
+- For API or data-shape work, inspect the shared client and types first; verify mismatches against the read-only backend instead of masking them here.
+- For visual changes, inspect `src/app/globals.css` and neighboring components so the existing grayscale/gold system and responsive patterns stay consistent.
+- For consumer-visible changes, check the issue milestone, `package.json`, and `src/content/changelog/` before deciding whether a version bump and release note are required.
 
 ## Commands
 

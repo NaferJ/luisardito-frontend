@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/auth'
 import {
   getLeaderboardPage,
-  getMyLeaderboardPosition,
   getLeaderboardStats,
+  getMyLeaderboardPosition,
 } from '@/lib/leaderboard'
 import { LeaderboardView } from '@/components/shop/leaderboard-view'
 

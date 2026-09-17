@@ -34,15 +34,16 @@ different tools.
 
 ## 4. Environment / dev setup
 
-- No `.env.example` exists yet. If env vars are introduced, create `.env.example`
-  with safe placeholders and keep it as the single source of truth.
+- `.env.example` is the single source of truth for environment variable
+  documentation. Keep every placeholder safe and update it when vars change.
 - Keep `.gitignore` excluding `node_modules`, `.env*` (except the example),
   `.next`, build output. Never commit real secrets.
 
 ## 5. Architecture & conventions
 
 - This is **Next.js 16 App Router**, not Pages Router. Use `src/app/` for routes,
-  layouts, and pages. There is no MVC layer and no Express.
+  layouts, pages, server actions, and thin OAuth/backend-proxy route handlers.
+  There is no MVC layer, Express server, database, or CMS in this repo.
 - Small, single-purpose modules. Strict TypeScript — no `any`, no non-null `!`
   to silence the compiler. Prefer precise types.
 - Use the **`@/*` → `src/*`** path alias for imports, not long relative paths.
@@ -66,7 +67,8 @@ different tools.
   Do not load fonts via `<link>` tags or CSS `@import`.
 - Use `next/image` for images, `next/link` for internal navigation.
 - Do not add CSS Modules unless Tailwind utilities are genuinely insufficient.
-- Do not install UI libraries (shadcn, MUI, Chakra, etc.) unless explicitly asked.
+- Reuse the existing Base UI/shadcn primitives and local `src/components/ui/*`
+  components. Do not introduce another UI system unless explicitly asked.
 
 ## 7. Commits (Conventional Commits, English)
 

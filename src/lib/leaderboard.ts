@@ -108,16 +108,16 @@ export async function getFullLeaderboard(
 /** Fetch the current user's leaderboard position. Requires auth. */
 export async function getMyLeaderboardPosition(): Promise<LeaderboardEntry | null> {
   try {
-    const response = await apiFetch<{ data: LeaderboardEntry } | LeaderboardEntry>(
+    const response = await apiFetch<{ data: LeaderboardEntry | null }>(
       '/api/leaderboard/me',
     )
-    return Array.isArray(response) ? response[0] ?? null : (response.data ?? response ?? null)
+    return response.data ?? null
   } catch {
     return null
   }
 }
 
-/** Fetch general leaderboard statistics (total users, points, top user, VIP count). */
+/** Fetch aggregate leaderboard totals for the compact page context. */
 export async function getLeaderboardStats(): Promise<LeaderboardStats | null> {
   try {
     const response = await apiFetch<StatsResponse>(

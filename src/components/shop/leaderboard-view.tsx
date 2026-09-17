@@ -10,14 +10,12 @@ import {
   X,
   Crown,
   Clock,
-  Users,
-  Trophy,
-  Star,
   Loader2,
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { VipBadge } from "@/components/vip-badge"
 import { SubscriberBadge } from "@/components/subscriber-badge"
+import { LeaderboardProfileOverlay } from "@/components/shop/leaderboard-profile-overlay"
 import type {
   LeaderboardEntry,
   LeaderboardMeta,
@@ -35,21 +33,31 @@ const SORT_OPTIONS: { mode: SortMode; label: string }[] = [
 
 const PAGE_SIZE = 25
 
-function formatWatchtime(minutes?: number): string {
-  if (!minutes || minutes <= 0) return "0h"
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
-  if (days > 0) return `${days}d ${hours % 24}h`
-  if (hours > 0) return `${hours}h`
-  return `${minutes}m`
+function entryName(entry: LeaderboardEntry): string {
+  return entry.kick_data?.username ?? entry.display_name ?? entry.nickname ?? "Anonymous"
 }
 
-function entryName(e: LeaderboardEntry): string {
-  return e.kick_data?.username ?? e.nickname ?? "Anonymous"
+function entryAvatar(entry: LeaderboardEntry): string | undefined {
+  return entry.kick_data?.avatar_url ?? undefined
 }
 
-function entryAvatar(e: LeaderboardEntry): string | undefined {
-  return e.kick_data?.avatar_url ?? undefined
+function formatLastUpdated(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value))
+}
+
+function resetCountdown(meta: LeaderboardMeta): string | null {
+  if (meta.hours_until_reset != null && meta.hours_until_reset < 24) {
+    return `${meta.hours_until_reset} ${meta.hours_until_reset === 1 ? "hour" : "hours"}`
+  }
+  if (meta.days_until_reset != null && meta.days_until_reset > 0) {
+    return `${meta.days_until_reset} ${meta.days_until_reset === 1 ? "day" : "days"}`
+  }
+  return null
 }
 
 function ChangeIndicator({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
@@ -80,23 +88,21 @@ function ChangeIndicator({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
   }
 }
 
-function StatPill({
-  icon: Icon,
-  label,
-  value,
-}: Readonly<{
-  icon: typeof Users
-  label: string
-  value: string
-}>) {
+function formatWatchtime(minutes?: number): string {
+  if (!minutes || minutes <= 0) return "0h"
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  if (days > 0) return `${days}d ${hours % 24}h`
+  if (hours > 0) return `${hours}h`
+  return `${minutes}m`
+}
+
+function RowMetric({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
-    <div className="flex items-center gap-2">
-      <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <div className="flex flex-col">
-        <span className="text-[10px] leading-tight text-muted-foreground">{label}</span>
-        <span className="text-[13px] font-semibold leading-tight text-foreground">{value}</span>
-      </div>
-    </div>
+    <span className="flex w-[4.5rem] min-w-0 flex-col gap-0.5 text-right">
+      <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="truncate text-[12px] tabular-nums text-foreground">{value}</span>
+    </span>
   )
 }
 
@@ -104,20 +110,25 @@ function LeaderboardRow({
   entry,
   isMe,
   index,
+  onOpen,
 }: Readonly<{
   entry: LeaderboardEntry
   isMe: boolean
   index: number
+  onOpen: () => void
 }>) {
   const isTop3 = entry.position <= 3
   const avatar = entryAvatar(entry)
   const name = entryName(entry)
 
   return (
-    <div
+    <button
+      type="button"
+      aria-label={`View ${name}'s leaderboard profile`}
+      onClick={onOpen}
       className={cn(
-        "flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-accent/30",
-        index % 2 === 1 ? "bg-secondary" : "bg-card",
+        "flex w-full cursor-pointer appearance-none items-center gap-3 border-0 border-b border-border/20 bg-transparent px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold",
+        index % 2 === 1 ? "bg-card/90" : "bg-background/70",
         isMe && "ring-1 ring-inset ring-gold/40",
       )}
     >
@@ -170,21 +181,21 @@ function LeaderboardRow({
         )}
       </div>
 
-      {/* Watchtime (hidden on mobile) */}
-      <span className="hidden shrink-0 text-[13px] text-muted-foreground sm:block">
-        {formatWatchtime(entry.watchtime_minutes)}
-      </span>
+      <div className="hidden w-[11rem] shrink-0 grid-cols-2 gap-3 lg:grid">
+        <RowMetric label="Watch" value={formatWatchtime(entry.watchtime_minutes)} />
+        <RowMetric label="Peak" value={formatCompactNumber(entry.max_puntos ?? 0)} />
+      </div>
 
       {/* Points + change */}
       <div className="flex shrink-0 items-center gap-2.5">
-        <span className="text-[14px] font-semibold tabular-nums text-gold-bright">
+        <span className="w-16 text-right text-[14px] font-semibold tabular-nums text-gold-bright">
           {formatCompactNumber(entry.puntos)}
         </span>
         <div className="w-10 text-right">
           <ChangeIndicator entry={entry} />
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -205,6 +216,7 @@ export function LeaderboardView({
   const [sortMode, setSortMode] = useState<SortMode>("position")
   const [extraEntries, setExtraEntries] = useState<LeaderboardEntry[]>([])
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [openUserId, setOpenUserId] = useState<number | null>(null)
   const [hasMore, setHasMore] = useState(initialEntries.length < (meta?.total ?? initialEntries.length))
 
   const allEntries = useMemo(
@@ -232,6 +244,15 @@ export function LeaderboardView({
   )
 
   const showPinnedMyPosition = myPosition && !myEntryInList
+  const displaysPinnedPosition = Boolean(showPinnedMyPosition && !search && sortMode === "position")
+  const detailEntries = useMemo(
+    () => displaysPinnedPosition && myPosition ? [...filtered, myPosition] : filtered,
+    [displaysPinnedPosition, filtered, myPosition],
+  )
+  const openIndex = openUserId == null
+    ? -1
+    : detailEntries.findIndex((entry) => entry.usuario_id === openUserId)
+  const countdown = meta ? resetCountdown(meta) : null
 
   const handleLoadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) return
@@ -269,42 +290,27 @@ export function LeaderboardView({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Stats header */}
       {stats && (
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-sm border border-border bg-card px-4 py-3">
-          <StatPill
-            icon={Users}
-            label="Ranked users"
-            value={formatCompactNumber(stats.total_users)}
-          />
-          <StatPill
-            icon={Star}
-            label="Total points"
-            value={formatCompactNumber(stats.total_points)}
-          />
-          <StatPill
-            icon={Trophy}
-            label="Top user"
-            value={stats.top_user?.nickname ?? "—"}
-          />
-          <StatPill
-            icon={Crown}
-            label="VIP users"
-            value={formatCompactNumber(stats.vip_users)}
-          />
+        <div className="flex items-baseline gap-2 border-b border-border/40 pb-3">
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Total points in play</span>
+          <strong className="text-[15px] font-semibold tabular-nums text-gold-bright">{formatCompactNumber(stats.total_points)}</strong>
         </div>
       )}
 
       {/* Reset countdown banner */}
-      {meta?.days_until_reset != null && meta.days_until_reset > 0 && (
-        <div className="flex items-center gap-2 rounded-sm border border-gold/30 bg-gold/5 px-4 py-2.5">
-          <Clock className="size-4 shrink-0 text-gold-bright" aria-hidden="true" />
-          <span className="text-[13px] text-foreground">
-            Leaderboard resets in{" "}
-            <span className="font-semibold text-gold-bright">
-              {meta.days_until_reset} {meta.days_until_reset === 1 ? "day" : "days"}
+      {(countdown || meta?.last_update) && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-sm border border-gold/30 bg-gold/5 px-4 py-2.5">
+          {countdown && (
+            <span className="flex items-center gap-2 text-[13px] text-foreground">
+              <Clock className="size-4 shrink-0 text-gold-bright" aria-hidden="true" />
+              Leaderboard resets in <strong className="font-semibold text-gold-bright">{countdown}</strong>
             </span>
-          </span>
+          )}
+          {meta?.last_update && (
+            <span className="text-[11px] text-muted-foreground sm:ml-auto">
+              Updated {formatLastUpdated(meta.last_update)}
+            </span>
+          )}
         </div>
       )}
 
@@ -362,18 +368,19 @@ export function LeaderboardView({
           <p className="text-[13px] text-muted-foreground">No users match your search.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-sm border border-border">
+        <div className="overflow-hidden rounded-sm border border-border/60 bg-background/50 shadow-sm">
           {filtered.map((entry, i) => (
             <LeaderboardRow
               key={entry.usuario_id}
               entry={entry}
               isMe={entry.usuario_id === myUserId}
               index={i}
+              onOpen={() => setOpenUserId(entry.usuario_id)}
             />
           ))}
 
           {/* Pinned "my position" — shown when user is outside the loaded list */}
-          {showPinnedMyPosition && !search && sortMode === "position" && (
+          {displaysPinnedPosition && myPosition && (
             <>
               <div className="flex items-center justify-center gap-1 bg-card py-1.5 text-muted-foreground">
                 <span className="text-[16px] leading-none">.</span>
@@ -384,6 +391,7 @@ export function LeaderboardView({
                 entry={myPosition}
                 isMe
                 index={1}
+                onOpen={() => setOpenUserId(myPosition.usuario_id)}
               />
             </>
           )}
@@ -409,6 +417,15 @@ export function LeaderboardView({
             )}
           </button>
         </div>
+      )}
+
+      {openIndex >= 0 && (
+        <LeaderboardProfileOverlay
+          entries={detailEntries}
+          index={openIndex}
+          onClose={() => setOpenUserId(null)}
+          onNavigate={(nextIndex) => setOpenUserId(detailEntries[nextIndex].usuario_id)}
+        />
       )}
     </div>
   )

@@ -1,6 +1,6 @@
 import Image from "next/image"
-import { cn } from "@/lib/utils"
 import { getSubscriberTier } from "@/lib/subscriber-tiers"
+import { BadgeHoverLabel } from "@/components/ui/badge-hover-label"
 
 /**
  * Tiered subscriber badge. Renders the badge image for the subscriber's
@@ -30,16 +30,13 @@ export function SubscriberBadge({
   if (!tier) return null
 
   return (
-    <span
-      title={tier.alt}
-      className={cn("inline-flex shrink-0 cursor-pointer align-middle", className)}
-    >
+    <BadgeHoverLabel label={tier.alt} className={className}>
       <Image
         src={tier.badge}
         alt={tier.alt}
         width={size}
         height={size}
       />
-    </span>
+    </BadgeHoverLabel>
   )
 }
