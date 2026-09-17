@@ -12,6 +12,9 @@ import { cn, formatCompactNumber } from "@/lib/utils"
 import { KickLogo, DiscordLogo } from "@/components/brand-icons"
 import { VipBadge } from "@/components/vip-badge"
 import { SubscriberBadge } from "@/components/subscriber-badge"
+import { useI18n, useLocale } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import type { Usuario } from "@/types"
 
 function displayName(user: Usuario): string {
@@ -22,14 +25,14 @@ function avatarUrl(user: Usuario): string | undefined {
   return user.kick_data?.avatar_url ?? user.kick_avatar ?? user.avatar_url ?? undefined
 }
 
-function formatVipExpiry(expiresAt?: string): string {
-  if (!expiresAt) return "Permanent"
+function formatVipExpiry(expiresAt: string | undefined, t: Dictionary["profile"]): string {
+  if (!expiresAt) return t.vip.permanent
   const date = new Date(expiresAt)
   const now = new Date()
   const days = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (days <= 0) return "Expired"
-  if (days === 1) return "Expires tomorrow"
-  return `Expires in ${days} days`
+  if (days <= 0) return t.vip.expired
+  if (days === 1) return t.vip.tomorrow
+  return interpolate(t.vip.inDays, { days })
 }
 
 export function ProfileView({
@@ -39,6 +42,9 @@ export function ProfileView({
   user: Usuario
   onLogout: () => Promise<void>
 }>) {
+  const { dictionary } = useI18n()
+  const locale = useLocale()
+  const t = dictionary.profile
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const name = displayName(user)
   const avatar = avatarUrl(user)
@@ -108,16 +114,16 @@ export function ProfileView({
         {/* Stats — inline to the right of the name */}
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-end">
-            <span className="text-[11px] text-muted-foreground">Points</span>
+            <span className="text-[11px] text-muted-foreground">{t.points}</span>
             <span className="text-[16px] font-semibold text-gold-bright">
               {formatCompactNumber(user.puntos)}
             </span>
           </div>
           {user.creado && (
             <div className="flex flex-col items-end">
-              <span className="text-[11px] text-muted-foreground">Member since</span>
+              <span className="text-[11px] text-muted-foreground">{t.memberSince}</span>
               <span className="text-[16px] font-semibold text-foreground">
-                {new Intl.DateTimeFormat("en-US", {
+                {new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
                   month: "short",
                   year: "numeric",
                 }).format(new Date(user.creado))}
@@ -128,7 +134,7 @@ export function ProfileView({
             <div className="flex flex-col items-end">
               <VipBadge size={16} />
               <span className="text-[14px] font-semibold text-gold-bright">
-                {formatVipExpiry(user.vip_info.expires_at)}
+                {formatVipExpiry(user.vip_info.expires_at, t)}
               </span>
             </div>
           )}
@@ -146,13 +152,13 @@ export function ProfileView({
           ) : (
             <LogOut className="size-3.5" aria-hidden="true" />
           )}
-          {isLoggingOut ? "..." : "Logout"}
+          {isLoggingOut ? "..." : t.logout}
         </button>
       </div>
 
       {/* Connected accounts */}
       <div className="flex flex-col gap-3 rounded-sm border border-border bg-secondary p-4">
-        <span className="text-[13px] font-medium text-foreground">Connected accounts</span>
+        <span className="text-[13px] font-medium text-foreground">{t.connectedAccounts}</span>
 
         {/* Kick */}
         <div className="flex items-center justify-between gap-3">
@@ -165,13 +171,13 @@ export function ProfileView({
               {user.kick_data?.username ? (
                 <span className="text-[12px] text-muted-foreground">@{user.kick_data.username}</span>
               ) : (
-                <span className="text-[12px] text-muted-foreground">Connected</span>
+                <span className="text-[12px] text-muted-foreground">{t.connected}</span>
               )}
             </div>
           </div>
           <span className="flex items-center gap-1.5 text-[12px] font-medium text-foreground">
             <span className="size-2 rounded-full bg-foreground" aria-hidden="true" />
-            {"Connected"}
+            {t.connected}
           </span>
         </div>
 
@@ -189,21 +195,21 @@ export function ProfileView({
               {discordLinked && user.discord_info?.username ? (
                 <span className="text-[12px] text-muted-foreground">@{user.discord_info.username}</span>
               ) : (
-                <span className="text-[12px] text-muted-foreground">Not connected</span>
+                <span className="text-[12px] text-muted-foreground">{t.notConnected}</span>
               )}
             </div>
           </div>
           {discordLinked ? (
             <span className="flex items-center gap-1.5 text-[12px] font-medium text-foreground">
               <span className="size-2 rounded-full bg-foreground" aria-hidden="true" />
-              {"Connected"}
+              {t.connected}
             </span>
           ) : (
             <a
               href={`${process.env.NEXT_PUBLIC_API_URL}/api/auth/discord`}
               className="flex items-center gap-1 text-[12px] font-medium text-gold-bright hover:text-gold-core"
             >
-              Link
+              {t.link}
               <ExternalLink className="size-3" aria-hidden="true" />
             </a>
           )}

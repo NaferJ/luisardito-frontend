@@ -26,6 +26,36 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: '/:lang(en|es)/shop/:path*',
+        has: [{ type: 'host', value: 'shop.luisardito.com' }],
+        destination: '/:lang/shop/:path*',
+      },
+      {
+        source: '/:lang(en|es)/shop',
+        has: [{ type: 'host', value: 'shop.luisardito.com' }],
+        destination: '/:lang/shop',
+      },
+      {
+        source: '/:lang(en|es)/:path*',
+        has: [{ type: 'host', value: 'shop.luisardito.com' }],
+        destination: '/:lang/shop/:path*',
+      },
+      {
+        source: '/:lang(en|es)',
+        has: [{ type: 'host', value: 'shop.luisardito.com' }],
+        destination: '/:lang/shop',
+      },
+      {
+        source: '/shop/:path*',
+        has: [{ type: 'host', value: 'shop.luisardito.com' }],
+        destination: '/shop/:path*',
+      },
+      {
+        source: '/shop',
+        has: [{ type: 'host', value: 'shop.luisardito.com' }],
+        destination: '/shop',
+      },
+      {
         source: '/:path*',
         has: [{ type: 'host', value: 'shop.luisardito.com' }],
         destination: '/shop/:path*',

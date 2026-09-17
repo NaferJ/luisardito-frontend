@@ -1,5 +1,7 @@
 import type { DesignCardData } from "@/components/design-card"
 import type { Producto } from "@/types"
+import type { Dictionary } from "@/lib/i18n/shared"
+import { interpolate } from "@/lib/i18n/shared"
 import { formatCompactNumber } from "@/lib/utils"
 
 const AVATAR_COLORS = [
@@ -23,7 +25,11 @@ const ASPECT_RATIOS = [
   "aspect-[2/3]",
 ]
 
-export function productToCard(product: Producto, index: number): DesignCardData {
+export function productToCard(
+  product: Producto,
+  index: number,
+  labels: Dictionary["card"],
+): DesignCardData {
   const hasDiscount = product.descuento?.tieneDescuento
   const price = hasDiscount ? product.descuento!.precioFinal : product.precio
 
@@ -54,18 +60,27 @@ export function productToCard(product: Producto, index: number): DesignCardData 
       : undefined,
     avatarColor: AVATAR_COLORS[index % AVATAR_COLORS.length],
     badge: hasDiscount ? "star" : undefined,
-    tag: hasDiscount ? "Sale" : "Product",
+    tag: hasDiscount ? labels.sale : labels.product,
     title: product.nombre,
     author: `${formatCompactNumber(price)} pts`,
     description: product.descripcion,
-    timeAgo: product.stock > 0 ? `${product.stock} in stock` : "Out of stock",
+    timeAgo:
+      product.stock > 0
+        ? interpolate(labels.inStock, { n: product.stock })
+        : labels.outOfStock,
     impressions: formatCompactNumber(price),
     outbound: product.stock,
-    source: "Shop",
-    category: hasDiscount ? "On Sale" : "Product",
+    source: labels.shop,
+    category: hasDiscount ? labels.onSale : labels.product,
     style: product.estado,
-    color: hasDiscount ? `${product.descuento!.porcentajeDescuento} off` : "—",
-    interaction: [`${formatCompactNumber(price)} points`],
+    color: hasDiscount
+      ? interpolate(labels.percentOff, {
+          percent: product.descuento!.porcentajeDescuento,
+        })
+      : "—",
+    interaction: [
+      interpolate(labels.pointsLabel, { n: formatCompactNumber(price) }),
+    ],
     lastRedeemer,
   }
 }

@@ -5,11 +5,15 @@ import Image from "next/image"
 import { ChevronLeft, ChevronRight, X, Gift, Package, Tag, Users, type LucideIcon } from "lucide-react"
 import type { Producto } from "@/types"
 import { useUser, useUpdateUser } from "@/components/user-provider"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate, type Dictionary } from "@/lib/i18n/shared"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { productToCard } from "@/lib/product-mapper"
 import { DesignCard } from "@/components/design-card"
 import { extractDominantColors } from "@/lib/extract-color"
 import { setOverlayColors } from "@/lib/overlay-color-store"
+
+type ProductDict = Dictionary["product"]
 
 interface RedemptionResult {
   success: boolean
@@ -52,16 +56,16 @@ interface StatRow {
  * the title), Redeemed (moved below the title), and Status (admin-only,
  * not relevant to shoppers).
  */
-function buildStatRows(product: Producto, hasDiscount: boolean): StatRow[] {
+function buildStatRows(product: Producto, hasDiscount: boolean, t: ProductDict): StatRow[] {
   return [
     ...(hasDiscount
-      ? [{ label: "Discount", value: product.descuento!.porcentajeDescuento, icon: Tag }]
+      ? [{ label: t.discount, value: product.descuento!.porcentajeDescuento, icon: Tag }]
       : []),
   ]
 }
 
 /** Render the redeem button's inner content based on current state. */
-function renderRedeemButtonContent(redeeming: boolean, cooldown: number): ReactNode {
+function renderRedeemButtonContent(redeeming: boolean, cooldown: number, t: ProductDict): ReactNode {
   if (redeeming) {
     return (
       <span className="size-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
@@ -71,14 +75,14 @@ function renderRedeemButtonContent(redeeming: boolean, cooldown: number): ReactN
     return (
       <>
         <Gift className="size-4 opacity-50" aria-hidden="true" />
-        Canjear ({cooldown}s)
+        {t.redeem} ({cooldown}s)
       </>
     )
   }
   return (
     <>
       <Gift className="size-4" aria-hidden="true" />
-      Canjear
+      {t.redeem}
     </>
   )
 }
@@ -134,6 +138,7 @@ function useRedeemProduct(
   product: Producto | undefined,
   user: ReturnType<typeof useUser>,
   updateUser: ReturnType<typeof useUpdateUser>,
+  t: ProductDict,
 ) {
   const [redeeming, setRedeeming] = useState(false)
   const [cooldown, setCooldown] = useState(0)
@@ -177,7 +182,7 @@ function useRedeemProduct(
         // Set resultProductId HERE so the render-phase clear above
         // doesn't immediately wipe the result we just set.
         setResultProductId(product.id)
-        setResult({ success: true, message: "Redemption successful! Check your canjes." })
+        setResult({ success: true, message: t.redeemSuccess })
 
         // 5-second cooldown to prevent accidental double-redemption.
         setCooldown(5)
@@ -190,11 +195,11 @@ function useRedeemProduct(
         }
       } else {
         setResultProductId(product.id)
-        setResult({ success: false, message: data.error || data.message || "Redemption failed" })
+        setResult({ success: false, message: data.error || data.message || t.redeemFailed })
       }
     } catch {
       setResultProductId(product.id)
-      setResult({ success: false, message: "Network error. Try again." })
+      setResult({ success: false, message: t.networkError })
     } finally {
       setRedeeming(false)
     }
@@ -214,6 +219,8 @@ export function ProductDetailOverlay({
   onClose: () => void
   onNavigate: (nextIndex: number) => void
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.product
   const user = useUser()
   const updateUser = useUpdateUser()
   const product = products[index]
@@ -225,6 +232,7 @@ export function ProductDetailOverlay({
     product,
     user,
     updateUser,
+    t,
   )
 
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -291,8 +299,8 @@ export function ProductDetailOverlay({
   const originalPrice = getOriginalPrice(product)
   const inStock = product.stock > 0
   const canRedeem = canRedeemProduct(user, product, price)
-  const statRows = buildStatRows(product, Boolean(hasDiscount))
-  const redeemButtonContent = renderRedeemButtonContent(redeeming, cooldown)
+  const statRows = buildStatRows(product, Boolean(hasDiscount), t)
+  const redeemButtonContent = renderRedeemButtonContent(redeeming, cooldown, t)
   const canGoPrev = index > 0
   const canGoNext = index < products.length - 1
 
@@ -305,7 +313,7 @@ export function ProductDetailOverlay({
           tapping arrows. */}
       <div
         ref={overlayRef}
-        className="overlay-enter fixed inset-0 z-20 overflow-y-auto lg:hidden"
+        className="overlay-enter fixed inset-0 z-20 overflow-y-auto xl:hidden"
       >
         {/* Blurred product image fills the background so the page subtly
             takes on the product's colors and the image "bleeds" into the page. */}
@@ -330,6 +338,7 @@ export function ProductDetailOverlay({
           onClose={onClose}
           onPrev={() => canGoPrev && onNavigate(index - 1)}
           onNext={() => canGoNext && onNavigate(index + 1)}
+          t={t}
         />
         <MobileImageHeader
           key={product.id}
@@ -347,8 +356,9 @@ export function ProductDetailOverlay({
               price={price}
               originalPrice={originalPrice}
               statRows={statRows}
+              t={t}
             />
-            <MoreProducts products={products} currentIndex={index} onSelect={onNavigate} />
+            <MoreProducts products={products} currentIndex={index} onSelect={onNavigate} t={t} />
           </div>
         </div>
       </div>
@@ -359,7 +369,7 @@ export function ProductDetailOverlay({
           the "More products" grid once content grew past the sticky item's
           static flow position). */}
       <div
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/20 bg-background/95 px-5 py-4 pb-[max(env(safe-area-inset-bottom)+2.5rem,2.5rem)] backdrop-blur-md lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/20 bg-background/95 px-5 py-4 pb-[max(env(safe-area-inset-bottom)+2.5rem,2.5rem)] backdrop-blur-md xl:hidden"
       >
         <RedeemSection
           user={user}
@@ -371,22 +381,22 @@ export function ProductDetailOverlay({
           result={result}
           buttonContent={redeemButtonContent}
           onRedeem={handleRedeem}
+          t={t}
         />
       </div>
 
-      {/* Desktop — static metadata sidebar, always opaque. Sits at z-20 so
-          the lightbox (z-50) and its blur layer only paint to the right of
-          it. The "slide-in" illusion comes from the feed shifting right, not
-          the panel moving. Content fades when the product changes. */}
+      {/* Desktop — static metadata sidebar above the full overlay backdrop.
+          The "slide-in" illusion comes from the feed shifting right, not the
+          panel moving. Content fades when the product changes. */}
       <aside
         aria-label={product.nombre}
-        className="overlay-enter fixed inset-y-0 left-[max(252px,calc(50vw-588px))] z-20 hidden w-[292px] flex-col overflow-hidden bg-background lg:flex"
+        className="overlay-enter fixed inset-y-0 left-[max(252px,calc(50vw-588px))] z-50 hidden w-[292px] flex-col overflow-hidden bg-background xl:flex"
       >
         <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t.close}
             className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90"
           >
             <X className="size-4" aria-hidden="true" />
@@ -396,7 +406,7 @@ export function ProductDetailOverlay({
               type="button"
               onClick={() => canGoPrev && onNavigate(index - 1)}
               disabled={!canGoPrev}
-              aria-label="Previous product"
+              aria-label={t.previousProduct}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary"
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
@@ -405,7 +415,7 @@ export function ProductDetailOverlay({
               type="button"
               onClick={() => canGoNext && onNavigate(index + 1)}
               disabled={!canGoNext}
-              aria-label="Next product"
+              aria-label={t.nextProduct}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary"
             >
               <ChevronRight className="size-4" aria-hidden="true" />
@@ -421,6 +431,7 @@ export function ProductDetailOverlay({
               price={price}
               originalPrice={originalPrice}
               statRows={statRows}
+              t={t}
             />
 
             <RedeemSection
@@ -433,6 +444,7 @@ export function ProductDetailOverlay({
               result={result}
               buttonContent={redeemButtonContent}
               onRedeem={handleRedeem}
+              t={t}
             />
           </div>
         </div>
@@ -453,12 +465,14 @@ function ProductInfo({
   price,
   originalPrice,
   statRows,
+  t,
 }: Readonly<{
   hasDiscount: boolean
   product: Producto
   price: number
   originalPrice: number | null
   statRows: StatRow[]
+  t: ProductDict
 }>) {
   return (
     <>
@@ -467,19 +481,19 @@ function ProductInfo({
             it gets the prime top position. */}
         <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
           <Package className="size-3.5" aria-hidden="true" />
-          <span>{product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}</span>
+          <span>{product.stock > 0 ? interpolate(t.inStock, { count: product.stock }) : t.outOfStock}</span>
         </div>
 
         <div className="flex flex-col gap-1">
           {hasDiscount ? (
-            <span className="text-[13px] text-gold-bright">On Sale</span>
+            <span className="text-[13px] text-gold-bright">{t.onSale}</span>
           ) : null}
           <h2 className="text-[17px] font-medium leading-snug text-foreground">{product.nombre}</h2>
           {/* Redeemed count directly below the title — social proof in the
               natural reading position. */}
           <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
             <Users className="size-3.5" aria-hidden="true" />
-            <span>{product.canjes_count ? formatCompactNumber(product.canjes_count) : "0"} redeemed</span>
+            <span>{interpolate(t.redeemed, { count: product.canjes_count ? formatCompactNumber(product.canjes_count) : "0" })}</span>
           </div>
         </div>
 
@@ -490,7 +504,7 @@ function ProductInfo({
           <span className="text-[20px] font-semibold leading-none text-gold-bright">
             {formatCompactNumber(price)}
           </span>
-          <span className="text-[13px] text-muted-foreground">points</span>
+          <span className="text-[13px] text-muted-foreground">{t.points}</span>
           {originalPrice && (
             <span className="text-[13px] text-muted-foreground line-through">
               {formatCompactNumber(originalPrice)}
@@ -536,6 +550,7 @@ function ProductTitleBar({
   onClose,
   onPrev,
   onNext,
+  t,
 }: Readonly<{
   titleRef: RefObject<HTMLDivElement | null>
   titleTextRef: RefObject<HTMLDivElement | null>
@@ -545,6 +560,7 @@ function ProductTitleBar({
   onClose: () => void
   onPrev: () => void
   onNext: () => void
+  t: ProductDict
 }>) {
   return (
     <div
@@ -554,7 +570,7 @@ function ProductTitleBar({
       <button
         type="button"
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t.close}
         className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90"
       >
         <X className="size-4" aria-hidden="true" />
@@ -570,7 +586,7 @@ function ProductTitleBar({
           type="button"
           onClick={onPrev}
           disabled={!canGoPrev}
-          aria-label="Previous product"
+          aria-label={t.previousProduct}
           className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90 disabled:opacity-40 disabled:hover:bg-background/80"
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
@@ -579,7 +595,7 @@ function ProductTitleBar({
           type="button"
           onClick={onNext}
           disabled={!canGoNext}
-          aria-label="Next product"
+          aria-label={t.nextProduct}
           className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90 disabled:opacity-40 disabled:hover:bg-background/80"
         >
           <ChevronRight className="size-4" aria-hidden="true" />
@@ -656,6 +672,7 @@ function RedeemSection({
   result,
   buttonContent,
   onRedeem,
+  t,
 }: Readonly<{
   user: ReturnType<typeof useUser>
   inStock: boolean
@@ -666,9 +683,10 @@ function RedeemSection({
   result: RedemptionResult | null
   buttonContent: ReactNode
   onRedeem: () => void
+  t: ProductDict
 }>) {
   if (!user) {
-    return <p className="text-[13px] text-muted-foreground">Log in to redeem this product.</p>
+    return <p className="text-[13px] text-muted-foreground">{t.loginToRedeem}</p>
   }
 
   return (
@@ -687,11 +705,11 @@ function RedeemSection({
         {buttonContent}
       </button>
       {!inStock && (
-        <span className="text-center text-[12px] text-muted-foreground">Out of stock</span>
+        <span className="text-center text-[12px] text-muted-foreground">{t.outOfStock}</span>
       )}
       {inStock && user.puntos < price && (
         <span className="text-center text-[12px] text-muted-foreground">
-          You need {formatCompactNumber(price - user.puntos)} more points
+          {interpolate(t.needMore, { count: formatCompactNumber(price - user.puntos) })}
         </span>
       )}
       {result && (
@@ -712,18 +730,21 @@ function MoreProducts({
   products,
   currentIndex,
   onSelect,
+  t,
 }: Readonly<{
   products: Producto[]
   currentIndex: number
   onSelect: (index: number) => void
+  t: ProductDict
 }>) {
+  const { dictionary } = useI18n()
   return (
     <div className="flex flex-col gap-3 pt-4">
-      <h3 className="text-[13px] font-medium text-muted-foreground">More products</h3>
+      <h3 className="text-[13px] font-medium text-muted-foreground">{t.moreProducts}</h3>
       <div className="grid grid-cols-2 gap-3 [&_article]:mb-0">
         {products.map((p, i) => {
           if (i === currentIndex) return null
-          const card = productToCard(p, i)
+          const card = productToCard(p, i, dictionary.card)
           return (
             <DesignCard
               key={card.id}
@@ -744,18 +765,14 @@ function ProductLightbox({ product }: Readonly<{ product: Producto }>) {
       role="dialog"
       aria-modal="true"
       aria-label={product.nombre}
-      className="fixed inset-y-0 left-0 right-0 z-50 hidden flex-row overflow-hidden pointer-events-none lg:flex lg:left-[max(252px,calc(50vw-588px))] lg:right-[120px]"
+      className="fixed inset-y-0 left-0 right-0 z-40 hidden flex-row overflow-hidden pointer-events-none xl:flex xl:left-[max(252px,calc(50vw-588px))]"
     >
-      {/* Spacer — reserves the sidebar area so blur/media don't paint there */}
-      <div className="hidden lg:block lg:w-[292px] lg:shrink-0" />
-
-      {/* Media + blur area. Blur lives on its own static layer so it always
-          paints correctly; only the image content fades + scales in on top. */}
-      <div className="relative flex min-w-0 flex-1 items-center justify-center">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-background/70 backdrop-blur-[8px]"
-        />
+      <div
+        aria-hidden="true"
+        className="pointer-events-auto absolute inset-0 bg-background/70 backdrop-blur-[8px]"
+      />
+      <div className="relative z-10 hidden xl:block xl:w-[292px] xl:shrink-0" />
+      <div className="relative z-10 flex min-w-0 flex-1 items-center justify-center">
         <div
           className="overlay-media relative w-full max-w-2xl overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border"
           style={

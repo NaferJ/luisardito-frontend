@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useLocalizedRouter } from "@/components/i18n/use-localized-router"
 import Image from "next/image"
 import {
   Plus,
@@ -20,45 +20,49 @@ import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
 import { Pagination } from "@/components/admin/shared/pagination"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import type { Producto } from "@/types"
 
 type SortKey = "nombre" | "precio" | "stock" | "canjes_count" | "actualizado"
 type SortDir = "asc" | "desc"
 type StatusFilter = "all" | "publicado" | "borrador" | "out_of_stock"
+type ProductsDict = Dictionary["admin"]["products"]
 
-const COLUMNS: { key: SortKey; label: string; className: string }[] = [
-  { key: "nombre", label: "Name", className: "min-w-0 flex-1" },
-  { key: "precio", label: "Price", className: "w-24 shrink-0 text-right" },
-  { key: "stock", label: "Stock", className: "w-20 shrink-0 text-right" },
-  { key: "canjes_count", label: "Redemptions", className: "w-28 shrink-0 text-right" },
-  { key: "actualizado", label: "Updated", className: "w-24 shrink-0 text-right" },
+const COLUMNS: { key: SortKey; label: (t: ProductsDict) => string; className: string }[] = [
+  { key: "nombre", label: (t) => t.columns.nombre, className: "min-w-0 flex-1" },
+  { key: "precio", label: (t) => t.columns.precio, className: "w-24 shrink-0 text-right" },
+  { key: "stock", label: (t) => t.columns.stock, className: "w-20 shrink-0 text-right" },
+  { key: "canjes_count", label: (t) => t.columns.canjes, className: "w-28 shrink-0 text-right" },
+  { key: "actualizado", label: (t) => t.columns.actualizado, className: "w-24 shrink-0 text-right" },
 ]
 
-const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "publicado", label: "Live" },
-  { value: "borrador", label: "Drafts" },
-  { value: "out_of_stock", label: "Out of stock" },
+const STATUS_OPTIONS: { value: StatusFilter; label: (t: ProductsDict) => string }[] = [
+  { value: "all", label: (t) => t.estados.all },
+  { value: "publicado", label: (t) => t.stats.live },
+  { value: "borrador", label: (t) => t.stats.draft },
+  { value: "out_of_stock", label: (t) => t.stats.outOfStock },
 ]
 
 /** Relative time formatter: "2d ago", "1w ago", "just now". */
-function relativeTime(dateStr: string): string {
+function relativeTime(dateStr: string, t: ProductsDict): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return "just now"
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 1) return t.time.justNow
+  if (mins < 60) return interpolate(t.time.minutesAgo, { n: mins })
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return interpolate(t.time.hoursAgo, { n: hours })
   const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d ago`
+  if (days < 7) return interpolate(t.time.daysAgo, { n: days })
   const weeks = Math.floor(days / 7)
-  if (weeks < 4) return `${weeks}w ago`
+  if (weeks < 4) return interpolate(t.time.weeksAgo, { n: weeks })
   const months = Math.floor(days / 30)
-  return `${months}mo ago`
+  return interpolate(t.time.monthsAgo, { n: months })
 }
 
-function exportCSV(products: Producto[]): void {
-  const headers = ["ID", "Name", "Slug", "Price", "Stock", "Status", "Redemptions", "Updated"]
+function exportCSV(products: Producto[], t: ProductsDict): void {
+  const headers = ["ID", t.csv.title, "Slug", t.csv.price, t.csv.stock, t.csv.status, t.csv.redemptions, t.columns.actualizado]
   const rows = products.map((p) => [
     p.id,
     p.nombre,
@@ -73,7 +77,9 @@ function exportCSV(products: Producto[]): void {
 }
 
 export function AdminProductList({ products }: Readonly<{ products: Producto[] }>) {
-  const router = useRouter()
+  const router = useLocalizedRouter()
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.products
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [sortKey, setSortKey] = useState<SortKey>("actualizado")
@@ -153,9 +159,9 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
       {/* Header row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-2">
-          <h1 className="text-[15px] font-medium text-foreground">Products</h1>
+          <h1 className="text-[15px] font-medium text-foreground">{t.title}</h1>
           <span className="text-[13px] text-muted-foreground">
-            {visibleProducts.length} of {products.length}
+            {interpolate(t.countOf, { shown: visibleProducts.length, total: products.length })}
           </span>
         </div>
 
@@ -164,12 +170,12 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
           <SearchInput
             value={search}
             onChange={onSearchChange}
-            placeholder="Search name, slug..."
-            ariaLabel="Search products"
+            placeholder={t.searchPlaceholder}
+            ariaLabel={t.searchAria}
           />
 
           {/* CSV export */}
-          <CsvButton onClick={() => exportCSV(visibleProducts)} />
+          <CsvButton onClick={() => exportCSV(visibleProducts, t)} />
 
           {/* New product */}
           <button
@@ -178,23 +184,23 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
             className="flex h-8 items-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-opacity hover:opacity-85"
           >
             <Plus className="size-3.5" />
-            New product
+            {t.newProduct}
           </button>
         </div>
       </div>
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard icon={<Package className="size-3.5" />} label="Total" value={stats.total} />
-        <StatCard icon={<CheckCircle2 className="size-3.5" />} label="Live" value={stats.live} valueClass="text-gold-bright" />
-        <StatCard icon={<FileEdit className="size-3.5" />} label="Drafts" value={stats.drafts} />
-        <StatCard icon={<PackageX className="size-3.5" />} label="Out of stock" value={stats.outOfStock} valueClass="text-destructive" />
-        <StatCard icon={<ShoppingBag className="size-3.5" />} label="Redemptions" value={stats.totalRedemptions} />
+        <StatCard icon={<Package className="size-3.5" />} label={t.stats.total} value={stats.total} />
+        <StatCard icon={<CheckCircle2 className="size-3.5" />} label={t.stats.live} value={stats.live} valueClass="text-gold-bright" />
+        <StatCard icon={<FileEdit className="size-3.5" />} label={t.stats.draft} value={stats.drafts} />
+        <StatCard icon={<PackageX className="size-3.5" />} label={t.stats.outOfStock} value={stats.outOfStock} valueClass="text-destructive" />
+        <StatCard icon={<ShoppingBag className="size-3.5" />} label={t.stats.redemptions} value={stats.totalRedemptions} />
       </div>
 
       {/* Filters row: status pills */}
       <FilterPills
-        options={STATUS_OPTIONS}
+        options={STATUS_OPTIONS.map((o) => ({ ...o, label: o.label(t) }))}
         value={statusFilter}
         onChange={onStatusChange}
       />
@@ -204,13 +210,13 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
         <div className="overflow-hidden rounded-lg border border-border">
           {/* Column headers */}
           <SortHeader
-            columns={COLUMNS.map((c) => ({ ...c, alignRight: c.key === "precio" || c.key === "stock" || c.key === "canjes_count" || c.key === "actualizado" }))}
+            columns={COLUMNS.map((c) => ({ ...c, label: c.label(t), alignRight: c.key === "precio" || c.key === "stock" || c.key === "canjes_count" || c.key === "actualizado" }))}
             sortKey={sortKey}
             sortDir={sortDir}
             onSort={toggleSort}
-            leadingLabel="Img"
+            leadingLabel={t.imageLabel}
             leadingClassName="w-10 shrink-0"
-            trailingLabel="Actions"
+            trailingLabel={t.actions}
           />
 
           {/* Rows */}
@@ -253,7 +259,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
 
                 {/* Price */}
                 <span className="w-24 shrink-0 text-right text-[13px] tabular-nums text-foreground">
-                  {formatCompactNumber(p.precio)} pts
+                  {interpolate(t.pts, { n: formatCompactNumber(p.precio) })}
                 </span>
 
                 {/* Stock */}
@@ -273,7 +279,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
 
                 {/* Updated */}
                 <span className="w-24 shrink-0 text-right text-[12px] text-muted-foreground">
-                  {relativeTime(p.actualizado ?? p.updated_at)}
+                  {relativeTime(p.actualizado ?? p.updated_at, t)}
                 </span>
 
                 {/* Actions (stopPropagation so row click doesn't fire) */}
@@ -286,7 +292,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
                         : "bg-secondary text-muted-foreground",
                     )}
                   >
-                    {p.estado === "publicado" ? "Live" : "Draft"}
+                    {p.estado === "publicado" ? t.badgeLive : t.badgeDraft}
                   </span>
                   <ArchiveProductButton id={String(p.id)} name={p.nombre} />
                 </div>
@@ -308,7 +314,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
         <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
           <div className="flex flex-col items-center gap-3">
             <p className="text-[13px] text-muted-foreground">
-              {search.trim() ? `No products match "${search.trim()}".` : "No products yet."}
+              {search.trim() ? interpolate(t.emptySearch, { query: search.trim() }) : t.empty}
             </p>
             {!search.trim() && (
               <button
@@ -317,7 +323,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
                 className="flex h-8 items-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-opacity hover:opacity-85"
               >
                 <Plus className="size-3.5" />
-                Create your first product
+                {t.createFirst}
               </button>
             )}
           </div>

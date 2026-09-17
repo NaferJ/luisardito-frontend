@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { LocaleLink } from "@/components/i18n/locale-link"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
 import { VipBadge } from "@/components/vip-badge"
@@ -33,7 +33,7 @@ export function LeaderboardAside({ entries }: Readonly<{ entries: LeaderboardEnt
           const name = entryName(entry)
           const avatar = entryAvatar(entry)
           return (
-            <Link
+            <LocaleLink
               key={entry.usuario_id}
               href="/shop/leaderboard"
               className="-mx-4 flex items-center gap-3 px-4 py-1.5 transition-colors hover:bg-accent/30"
@@ -74,16 +74,16 @@ export function LeaderboardAside({ entries }: Readonly<{ entries: LeaderboardEnt
               {Boolean(entry.is_vip) && (
                 <VipBadge size={25} className="shrink-0" />
               )}
-            </Link>
+            </LocaleLink>
           )
         })}
       </div>
-      <Link
+      <LocaleLink
         href="/shop/leaderboard"
         className="text-[13px] font-medium text-foreground underline underline-offset-4"
       >
         See full leaderboard
-      </Link>
+      </LocaleLink>
     </div>
   )
 }

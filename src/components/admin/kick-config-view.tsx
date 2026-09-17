@@ -18,11 +18,14 @@ import {
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { KickLogo } from "@/components/brand-icons"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import {
   updateKickPointsConfig,
   updateVipConfig,
   toggleMigration,
-} from "@/app/shop/admin/kick/actions"
+} from "@/app/[lang]/shop/admin/kick/actions"
 import type {
   KickPointsConfigEntry,
   KickAdminConfig,
@@ -35,45 +38,35 @@ const FEEDBACK_TIMEOUT_MS = 4000
 // The backend stores flat config_key strings; we group them into
 // categories for the UI and use English labels (the seeder uses Spanish).
 
+type KickDict = Dictionary["admin"]["kick"]
+type KickKey = keyof KickDict["keys"]
+
 interface PointsCategory {
-  readonly label: string
+  readonly label: (t: KickDict) => string
   readonly icon: typeof Coins
-  readonly keys: { key: string; label: string; hint: string }[]
+  readonly keys: KickKey[]
 }
 
 const POINTS_CATEGORIES: PointsCategory[] = [
   {
-    label: "Chat Messages",
+    label: (t) => t.categories.chat,
     icon: MessageSquare,
-    keys: [
-      { key: "chat_points_regular", label: "Regular messages", hint: "Points per chat message (non-subscribers)" },
-      { key: "chat_points_subscriber", label: "Subscriber messages", hint: "Points per chat message (subscribers)" },
-      { key: "chat_points_vip", label: "VIP messages", hint: "Points per chat message (VIP users)" },
-    ],
+    keys: ["chat_points_regular", "chat_points_subscriber", "chat_points_vip"],
   },
   {
-    label: "Engagement",
+    label: (t) => t.categories.engagement,
     icon: Heart,
-    keys: [
-      { key: "follow_points", label: "Follows", hint: "Points when a user follows the channel (first time only)" },
-    ],
+    keys: ["follow_points"],
   },
   {
-    label: "Subscriptions",
+    label: (t) => t.categories.subscriptions,
     icon: Zap,
-    keys: [
-      { key: "subscription_new_points", label: "New subscription", hint: "Points for first subscription to the channel" },
-      { key: "subscription_renewal_points", label: "Renewal", hint: "Points for renewing an existing subscription" },
-    ],
+    keys: ["subscription_new_points", "subscription_renewal_points"],
   },
   {
-    label: "Gifts",
+    label: (t) => t.categories.gifts,
     icon: Gift,
-    keys: [
-      { key: "gift_given_points", label: "Gift subscription", hint: "Points per subscription gifted to others" },
-      { key: "gift_received_points", label: "Receive gift", hint: "Points when receiving a gifted subscription" },
-      { key: "kicks_gifted_multiplier", label: "Gifted kicks multiplier", hint: "Points = number of kicks x this value" },
-    ],
+    keys: ["gift_given_points", "gift_received_points", "kicks_gifted_multiplier"],
   },
 ]
 
@@ -149,6 +142,7 @@ function buildVipConfig(adminConfig: KickAdminConfig | null): VipConfigState {
 function useKickConfig(
   pointsConfig: KickPointsConfigEntry[],
   adminConfig: KickAdminConfig | null,
+  t: KickDict,
 ) {
   const [pending, startTransition] = useTransition()
   const [feedback, setFeedback] = useState<FeedbackState | null>(null)
@@ -187,7 +181,7 @@ function useKickConfig(
       setFeedback(
         result.error
           ? { ok: false, msg: result.error }
-          : { ok: true, msg: `Saved ${key}` },
+          : { ok: true, msg: interpolate(t.feedbackMsgs.savedKey, { key }) },
       )
     })
   }
@@ -201,7 +195,7 @@ function useKickConfig(
       setFeedback(
         result.error
           ? { ok: false, msg: result.error }
-          : { ok: true, msg: `${key} ${newValue ? "enabled" : "disabled"}` },
+          : { ok: true, msg: interpolate(t.feedbackMsgs.keyState, { key, state: newValue ? t.enabled : t.disabled }) },
       )
     })
   }
@@ -218,7 +212,7 @@ function useKickConfig(
       setFeedback(
         result.error
           ? { ok: false, msg: result.error }
-          : { ok: true, msg: "VIP config saved" },
+          : { ok: true, msg: t.feedbackMsgs.vipSaved },
       )
     })
   }
@@ -232,7 +226,7 @@ function useKickConfig(
       setFeedback(
         result.error
           ? { ok: false, msg: result.error }
-          : { ok: true, msg: `Migration ${newValue ? "enabled" : "disabled"}` },
+          : { ok: true, msg: interpolate(t.feedbackMsgs.migrationState, { state: newValue ? t.enabled : t.disabled }) },
       )
     })
   }
@@ -263,6 +257,7 @@ export function KickConfigView({
   adminConfig: KickAdminConfig | null
   broadcasterStatus: BroadcasterStatus | null
 }>) {
+  const { dictionary } = useI18n()
   const {
     pending,
     feedback,
@@ -277,7 +272,7 @@ export function KickConfigView({
     handleToggleEnabled,
     handleSaveVip,
     handleToggleMigration,
-  } = useKickConfig(pointsConfig, adminConfig)
+  } = useKickConfig(pointsConfig, adminConfig, dictionary.admin.kick)
 
   const stats = buildStats(pointsConfig, adminConfig, broadcasterStatus)
   const configMap = buildConfigMap(pointsConfig)
@@ -336,6 +331,8 @@ export function KickConfigView({
 // ─── Sub-components ───
 
 function ConfigHeader({ broadcasterOnline }: Readonly<{ broadcasterOnline: boolean }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.kick
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex size-10 items-center justify-center rounded-sm bg-foreground">
@@ -343,10 +340,10 @@ function ConfigHeader({ broadcasterOnline }: Readonly<{ broadcasterOnline: boole
       </div>
       <div className="flex min-w-0 flex-col">
         <h1 className="text-[15px] font-medium text-foreground">
-          Kick Configuration
+          {t.title}
         </h1>
         <span className="text-[13px] text-muted-foreground">
-          Points, VIP, and broadcaster settings
+          {t.headerSubtitle}
         </span>
       </div>
       <div className="ml-auto flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1.5">
@@ -358,7 +355,7 @@ function ConfigHeader({ broadcasterOnline }: Readonly<{ broadcasterOnline: boole
           aria-hidden="true"
         />
         <span className="text-[12px] font-medium text-foreground">
-          {broadcasterOnline ? "Broadcaster online" : "Broadcaster offline"}
+          {broadcasterOnline ? t.broadcasterOnline : t.broadcasterOffline}
         </span>
       </div>
     </div>
@@ -366,39 +363,41 @@ function ConfigHeader({ broadcasterOnline }: Readonly<{ broadcasterOnline: boole
 }
 
 function StatsGrid({ stats }: Readonly<{ stats: Stats }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.kick
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       <StatCard
         icon={<Activity className="size-3.5" />}
-        label="Broadcaster"
-        value={stats.broadcasterOnline ? "Online" : "Offline"}
+        label={t.stats.broadcaster}
+        value={stats.broadcasterOnline ? t.online : t.offline}
         valueClass={stats.broadcasterOnline ? "text-gold-bright" : "text-muted-foreground"}
       />
       <StatCard
         icon={<Coins className="size-3.5" />}
-        label="Config entries"
+        label={t.stats.configEntries}
         value={String(stats.configEntries)}
       />
       <StatCard
         icon={<Crown className="size-3.5" />}
-        label="Active VIPs"
+        label={t.stats.activeVips}
         value={String(stats.activeVips)}
         valueClass="text-gold-bright"
       />
       <StatCard
         icon={<Crown className="size-3.5" />}
-        label="Expired VIPs"
+        label={t.stats.expiredVips}
         value={String(stats.expiredVips)}
         valueClass="text-muted-foreground"
       />
       <StatCard
         icon={<Users className="size-3.5" />}
-        label="Migrated users"
+        label={t.stats.migratedUsers}
         value={formatCompactNumber(stats.migratedUsers)}
       />
       <StatCard
         icon={<ArrowRightLeft className="size-3.5" />}
-        label="Points migrated"
+        label={t.stats.pointsMigrated}
         value={formatCompactNumber(stats.totalPointsMigrated)}
       />
     </div>
@@ -409,6 +408,7 @@ function FeedbackBanner({
   feedback,
   onDismiss,
 }: Readonly<{ feedback: FeedbackState; onDismiss: () => void }>) {
+  const { dictionary } = useI18n()
   return (
     <output
       className={cn(
@@ -428,7 +428,7 @@ function FeedbackBanner({
         type="button"
         onClick={onDismiss}
         className="text-muted-foreground transition-colors hover:text-foreground"
-        aria-label="Dismiss"
+        aria-label={dictionary.admin.kick.dismiss}
       >
         <XCircle className="size-3.5" aria-hidden="true" />
       </button>
@@ -439,12 +439,14 @@ function FeedbackBanner({
 function BroadcasterStatusCard({
   broadcasterStatus,
 }: Readonly<{ broadcasterStatus: BroadcasterStatus | null }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.kick
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-secondary p-4 sm:p-5">
       <div className="flex items-center gap-2">
         <Radio className="size-4 text-gold-bright" aria-hidden="true" />
         <span className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground">
-          Broadcaster status
+          {t.broadcasterStatus}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-4">
@@ -455,12 +457,12 @@ function BroadcasterStatusCard({
           <span className="text-[14px] font-medium text-foreground">
             {broadcasterStatus?.broadcaster
               ? `@${broadcasterStatus.broadcaster.kick_username}`
-              : "Not connected"}
+              : t.notConnected}
           </span>
           <span className="text-[12px] text-muted-foreground">
             {broadcasterStatus?.broadcaster
-              ? `Connected ${formatTimestamp(broadcasterStatus.broadcaster.connected_at)}`
-              : "No broadcaster linked to this channel"}
+              ? interpolate(t.connectedAt, { date: formatTimestamp(broadcasterStatus.broadcaster.connected_at) })
+              : t.noBroadcaster}
           </span>
         </div>
         {broadcasterStatus?.token && (
@@ -472,7 +474,7 @@ function BroadcasterStatusCard({
                 : "border-border bg-background",
             )}
           >
-            <span className="text-[11px] text-muted-foreground">Token</span>
+            <span className="text-[11px] text-muted-foreground">{t.token}</span>
             <span
               className={cn(
                 "text-[12px] font-medium",
@@ -481,7 +483,7 @@ function BroadcasterStatusCard({
                   : "text-foreground",
               )}
             >
-              {broadcasterStatus.token.is_expired ? "Expired" : "Valid"}
+              {broadcasterStatus.token.is_expired ? t.expired : t.valid}
             </span>
           </div>
         )}
@@ -499,7 +501,7 @@ function BroadcasterStatusCard({
               broadcasterStatus?.connected ? "text-foreground" : "text-muted-foreground",
             )}
           >
-            {broadcasterStatus?.connected ? "Online" : "Offline"}
+            {broadcasterStatus?.connected ? t.online : t.offline}
           </span>
         </div>
       </div>
@@ -524,36 +526,39 @@ function PointsConfigSection({
   onToggleEnabled: (key: string) => void
   onSavePoints: (key: string) => void
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.kick
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-secondary p-4 sm:p-5">
       <div className="flex items-center gap-2">
         <Coins className="size-4 text-gold-bright" aria-hidden="true" />
         <span className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground">
-          Points configuration
+          {t.pointsConfig}
         </span>
       </div>
 
       {POINTS_CATEGORIES.map((category) => {
         const CategoryIcon = category.icon
         // Only render categories that have at least one matching config entry
-        const visibleKeys = category.keys.filter((k) => configMap[k.key])
+        const visibleKeys = category.keys.filter((k) => configMap[k])
         if (visibleKeys.length === 0) return null
 
         return (
-          <div key={category.label} className="flex flex-col gap-2">
+          <div key={category.label(t)} className="flex flex-col gap-2">
             {/* Category header */}
             <div className="flex items-center gap-2 border-b border-border/60 pb-1.5">
               <CategoryIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
               <span className="text-[12px] font-semibold uppercase tracking-wide text-foreground">
-                {category.label}
+                {category.label(t)}
               </span>
             </div>
 
             {/* Config rows */}
             <div className="flex flex-col gap-1">
-              {visibleKeys.map((cfg) => {
-                const entry = configMap[cfg.key]
-                const isEnabled = pointsEnabled[cfg.key] ?? entry.enabled
+              {visibleKeys.map((cfgKey) => {
+                const entry = configMap[cfgKey]
+                const cfg = t.keys[cfgKey]
+                const isEnabled = pointsEnabled[cfgKey] ?? entry.enabled
                 return (
                   <div
                     key={entry.id}
@@ -575,10 +580,10 @@ function PointsConfigSection({
                     {/* Enabled toggle */}
                     <button
                       type="button"
-                      onClick={() => onToggleEnabled(cfg.key)}
+                      onClick={() => onToggleEnabled(cfgKey)}
                       disabled={pending}
                       className="flex shrink-0 items-center gap-1.5"
-                      aria-label={`Toggle ${cfg.label}`}
+                      aria-label={interpolate(t.toggleAria, { name: cfg.label })}
                       aria-pressed={isEnabled}
                     >
                       <span
@@ -595,18 +600,18 @@ function PointsConfigSection({
                         />
                       </span>
                       <span className="w-12 shrink-0 text-[11px] font-medium text-muted-foreground">
-                        {isEnabled ? "Active" : "Off"}
+                        {isEnabled ? t.active : t.off}
                       </span>
                     </button>
 
                     {/* Value input */}
                     <input
                       type="number"
-                      value={pointsValues[cfg.key] ?? 0}
+                      value={pointsValues[cfgKey] ?? 0}
                       onChange={(e) =>
                         setPointsValues((prev) => ({
                           ...prev,
-                          [cfg.key]: Number(e.target.value),
+                          [cfgKey]: Number(e.target.value),
                         }))
                       }
                       disabled={!isEnabled}
@@ -616,12 +621,12 @@ function PointsConfigSection({
                     {/* Save button */}
                     <button
                       type="button"
-                      onClick={() => onSavePoints(cfg.key)}
+                      onClick={() => onSavePoints(cfgKey)}
                       disabled={pending}
                       className="flex h-8 w-16 shrink-0 items-center justify-center gap-1 rounded-full bg-foreground px-2 text-[11px] font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
                     >
                       <Save className="size-3" aria-hidden="true" />
-                      Save
+                      {t.save}
                     </button>
                   </div>
                 )
@@ -647,12 +652,14 @@ function VipConfigSection({
   onSaveVip: () => void
   adminConfig: KickAdminConfig | null
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.kick
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-secondary p-4 sm:p-5">
       <div className="flex items-center gap-2">
         <Crown className="size-4 text-gold-bright" aria-hidden="true" />
         <span className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground">
-          VIP configuration
+          {t.vipConfig}
         </span>
       </div>
 
@@ -663,7 +670,7 @@ function VipConfigSection({
         className="flex items-center justify-between gap-3 rounded-sm border border-border bg-background px-3 py-2.5 transition-colors hover:border-gold/40"
       >
         <span className="text-[13px] font-medium text-foreground">
-          VIP points enabled
+          {t.vip.pointsEnabled}
         </span>
         <span
           className={cn(
@@ -683,17 +690,17 @@ function VipConfigSection({
       {/* VIP points fields */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <VipField
-          label="Chat points"
+          label={t.vip.chatPoints}
           value={vipConfig.chat}
           onChange={(v) => setVipConfig((prev) => ({ ...prev, chat: v }))}
         />
         <VipField
-          label="Follow points"
+          label={t.vip.followPoints}
           value={vipConfig.follow}
           onChange={(v) => setVipConfig((prev) => ({ ...prev, follow: v }))}
         />
         <VipField
-          label="Sub points"
+          label={t.vip.subPoints}
           value={vipConfig.sub}
           onChange={(v) => setVipConfig((prev) => ({ ...prev, sub: v }))}
         />
@@ -703,13 +710,13 @@ function VipConfigSection({
       {adminConfig && (
         <div className="flex flex-wrap gap-4 rounded-sm border border-border bg-background px-3 py-2.5 text-[12px] text-muted-foreground">
           <span>
-            Active VIPs:{" "}
+            {t.vip.activeVips}:{" "}
             <span className="font-medium text-gold-bright">
               {adminConfig.vip.stats.active_vips}
             </span>
           </span>
           <span>
-            Expired:{" "}
+            {t.vip.expired}:{" "}
             <span className="font-medium text-foreground">
               {adminConfig.vip.stats.expired_vips}
             </span>
@@ -724,7 +731,7 @@ function VipConfigSection({
         className="flex h-9 items-center justify-center gap-2 rounded-full bg-foreground px-5 text-[13px] font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
       >
         <Save className="size-3.5" aria-hidden="true" />
-        {pending ? "Saving..." : "Save VIP config"}
+        {pending ? t.saving : t.vip.saveConfig}
       </button>
     </div>
   )
@@ -741,25 +748,25 @@ function MigrationSection({
   pending: boolean
   onToggleMigration: () => void
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.kick
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-secondary p-4 sm:p-5">
       <div className="flex items-center gap-2">
         <ArrowRightLeft className="size-4 text-gold-bright" aria-hidden="true" />
         <span className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground">
-          Botrix migration
+          {t.migration.title}
         </span>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-background px-3 py-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-[13px] font-medium text-foreground">
-            Migration status
+            {t.migrationStatus}
           </span>
           <span className="text-[12px] text-muted-foreground">
-            {formatCompactNumber(adminConfig.migration.stats.migrated_users)} users
-            migrated
+            {interpolate(t.migration.usersMigrated, { users: formatCompactNumber(adminConfig.migration.stats.migrated_users) })}
             {" - "}
-            {formatCompactNumber(adminConfig.migration.stats.total_points_migrated)}{" "}
-            points transferred
+            {interpolate(t.migration.pointsTransferred, { points: formatCompactNumber(adminConfig.migration.stats.total_points_migrated) })}
           </span>
         </div>
         <button
@@ -782,7 +789,7 @@ function MigrationSection({
             />
           </span>
           <span className="text-[13px] font-medium text-foreground">
-            {migrationEnabled ? "Enabled" : "Disabled"}
+            {migrationEnabled ? t.enabled : t.disabled}
           </span>
         </button>
       </div>

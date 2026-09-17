@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 import { Calendar } from "lucide-react"
 import { DATE_PRESETS } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
+import { useI18n } from "@/components/i18n/provider"
 
 interface FilterPillsProps<T extends string> {
   readonly options: { value: T; label: string }[]
@@ -26,9 +27,12 @@ export function FilterPills<T extends string>({
   onChange,
   datePreset,
   onDateChange,
-  dateAriaLabel = "Date range",
+  dateAriaLabel,
   variant = "admin",
 }: FilterPillsProps<T>) {
+  const { dictionary } = useI18n()
+  const shared = dictionary.adminShared
+  const effectiveDateAriaLabel = dateAriaLabel ?? shared.dateRange
   const inactiveClass = variant === "shop"
     ? "bg-background text-muted-foreground hover:text-foreground"
     : "bg-secondary text-muted-foreground hover:text-foreground"
@@ -58,10 +62,10 @@ export function FilterPills<T extends string>({
             value={datePreset}
             onChange={(e) => onDateChange(e.target.value as DatePreset)}
             className="h-7 rounded-full border border-border bg-background px-3 text-[12px] text-foreground focus:border-gold focus:outline-none"
-            aria-label={dateAriaLabel}
+            aria-label={effectiveDateAriaLabel}
           >
             {DATE_PRESETS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>{shared.datePresets[opt.value]}</option>
             ))}
           </select>
         </div>

@@ -1,3 +1,5 @@
+import type { LocalizedText } from "@/content/changelog/types"
+
 export type ChannelPlatform = {
   label: string
   href: string
@@ -80,7 +82,7 @@ export const channels: Channel[] = [
 export type ShowcaseSlide = {
   channelId: string
   name: string
-  description: string
+  description: LocalizedText
   socials: SocialLink[]
   video?: string
   verticalVideos?: string[]
@@ -90,7 +92,10 @@ export const showcaseSlides: ShowcaseSlide[] = [
   {
     channelId: "luisardito",
     name: "Luisardito",
-    description: "The main channel. Planned videos, big productions, events and series.",
+    description: {
+      en: "The main channel. Planned videos, big productions, events and series.",
+      es: "El canal principal. Videos planeados, grandes producciones, eventos y series.",
+    },
     socials: [
       { label: "YouTube", href: "https://www.youtube.com/@luisarditoprime" },
       { label: "TikTok", href: "https://www.tiktok.com/@luisardox" },
@@ -101,7 +106,10 @@ export const showcaseSlides: ShowcaseSlide[] = [
   {
     channelId: "luisardium",
     name: "Luisardium",
-    description: "The gameplay channel. A lot of variety, a lot of games. Another side of the community.",
+    description: {
+      en: "The gameplay channel. A lot of variety, a lot of games. Another side of the community.",
+      es: "El canal de gameplays. Mucha variedad, muchos juegos. Otra cara de la comunidad.",
+    },
     socials: [
       { label: "YouTube", href: "https://www.youtube.com/@Luisardium" },
     ],
@@ -110,7 +118,10 @@ export const showcaseSlides: ShowcaseSlide[] = [
   {
     channelId: "luisarvoid",
     name: "Luisarvoid",
-    description: "The short-form channel. Clips, shorts and bite-sized content across every platform.",
+    description: {
+      en: "The short-form channel. Clips, shorts and bite-sized content across every platform.",
+      es: "El canal de formato corto. Clips, shorts y contenido breve en todas las plataformas.",
+    },
     socials: [
       { label: "YouTube", href: "https://www.youtube.com/@Luisarvoid" },
       { label: "TikTok", href: "https://www.tiktok.com/@Luisarvoid" },
@@ -125,68 +136,118 @@ export const showcaseSlides: ShowcaseSlide[] = [
 ]
 
 export type CommunityFeature = {
-  title: string
-  description: string
+  title: LocalizedText
+  description: LocalizedText
 }
 
 export const communityFeatures: CommunityFeature[] = [
   {
-    title: "Content for every format",
-    description:
-      "Long-form videos, gameplays and short-form clips. Three channels, each built for a different way to watch.",
+    title: {
+      en: "Content for every format",
+      es: "Contenido para cada formato",
+    },
+    description: {
+      en: "Long-form videos, gameplays and short-form clips. Three channels, each built for a different way to watch.",
+      es: "Videos largos, gameplays y clips cortos. Tres canales, cada uno pensado para una forma distinta de ver.",
+    },
   },
   {
-    title: "Active across every platform",
-    description:
-      "Streams, videos, clips and posts. The community shows up everywhere Luisardito does.",
+    title: {
+      en: "Active across every platform",
+      es: "Activo en todas las plataformas",
+    },
+    description: {
+      en: "Streams, videos, clips and posts. The community shows up everywhere Luisardito does.",
+      es: "Streams, videos, clips y publicaciones. La comunidad aparece en todas partes donde está Luisardito.",
+    },
   },
   {
-    title: "Earn by being active",
-    description:
-      "Gain loyalty points by chatting in streams, gifting subscriptions and gifting KICKS. Every action counts.",
+    title: {
+      en: "Earn by being active",
+      es: "Gana por ser activo",
+    },
+    description: {
+      en: "Gain loyalty points by chatting in streams, gifting subscriptions and gifting KICKS. Every action counts.",
+      es: "Gana puntos de lealtad chateando en streams, regalando suscripciones y regalando KICKS. Cada acción cuenta.",
+    },
   },
   {
-    title: "Redeem exclusive rewards",
-    description:
-      "Spend points on official merch, VIP access, exclusive emojis and special community rewards.",
+    title: {
+      en: "Redeem exclusive rewards",
+      es: "Canjea recompensas exclusivas",
+    },
+    description: {
+      en: "Spend points on official merch, VIP access, exclusive emojis and special community rewards.",
+      es: "Gasta puntos en merch oficial, acceso VIP, emojis exclusivos y recompensas especiales de la comunidad.",
+    },
   },
 ]
 
 export type FaqItem = {
-  question: string
-  answer: string
+  question: LocalizedText
+  answer: LocalizedText
 }
 
 export const faqItems: FaqItem[] = [
   {
-    question: "Who is Luisardito?",
-    answer:
-      "Luisardito is a content creator with an active universe of channels: Luisardito, Luisardium and Luisarvoid. This is the home of the whole universe.",
+    question: {
+      en: "Who is Luisardito?",
+      es: "¿Quién es Luisardito?",
+    },
+    answer: {
+      en: "Luisardito is a content creator with an active universe of channels: Luisardito, Luisardium and Luisarvoid. This is the home of the whole universe.",
+      es: "Luisardito es un creador de contenido con un universo activo de canales: Luisardito, Luisardium y Luisarvoid. Este es el hogar de todo el universo.",
+    },
   },
   {
-    question: "What is the shop?",
-    answer:
-      "The shop is the official rewards platform for the community. You earn loyalty points by participating in streams and redeem them for exclusive rewards.",
+    question: {
+      en: "What is the shop?",
+      es: "¿Qué es la tienda?",
+    },
+    answer: {
+      en: "The shop is the official rewards platform for the community. You earn loyalty points by participating in streams and redeem them for exclusive rewards.",
+      es: "La tienda es la plataforma oficial de recompensas de la comunidad. Ganas puntos de lealtad participando en streams y los canjeas por recompensas exclusivas.",
+    },
   },
   {
-    question: "How do I earn points?",
-    answer:
-      "You earn points by chatting during streams, gifting subscriptions, gifting KICKS and being an active part of the community. Each action has a defined point value.",
+    question: {
+      en: "How do I earn points?",
+      es: "¿Cómo gano puntos?",
+    },
+    answer: {
+      en: "You earn points by chatting during streams, gifting subscriptions, gifting KICKS and being an active part of the community. Each action has a defined point value.",
+      es: "Ganas puntos chateando durante los streams, regalando suscripciones, regalando KICKS y siendo parte activa de la comunidad. Cada acción tiene un valor en puntos definido.",
+    },
   },
   {
-    question: "What can I redeem?",
-    answer:
-      "Official merch, VIP access, exclusive emojis and other special rewards. The catalog is updated regularly with new items.",
+    question: {
+      en: "What can I redeem?",
+      es: "¿Qué puedo canjear?",
+    },
+    answer: {
+      en: "Official merch, VIP access, exclusive emojis and other special rewards. The catalog is updated regularly with new items.",
+      es: "Merch oficial, acceso VIP, emojis exclusivos y otras recompensas especiales. El catálogo se actualiza regularmente con nuevos artículos.",
+    },
   },
   {
-    question: "How long do I wait for my rewards?",
-    answer:
-      "Reward fulfillment is announced by Luisardito. Wait for an official announcement with details on delivery and timing for each reward.",
+    question: {
+      en: "How long do I wait for my rewards?",
+      es: "¿Cuánto tengo que esperar por mis recompensas?",
+    },
+    answer: {
+      en: "Reward fulfillment is announced by Luisardito. Wait for an official announcement with details on delivery and timing for each reward.",
+      es: "La entrega de recompensas es anunciada por Luisardito. Espera un anuncio oficial con los detalles de entrega y plazos de cada recompensa.",
+    },
   },
   {
-    question: "Where can I follow along?",
-    answer:
-      "Luisardito is on YouTube, TikTok and Instagram. Luisardium is on YouTube. Luisarvoid is on YouTube, TikTok, Instagram and Facebook. Links are in the channels section above.",
+    question: {
+      en: "Where can I follow along?",
+      es: "¿Dónde puedo seguirlo?",
+    },
+    answer: {
+      en: "Luisardito is on YouTube, TikTok and Instagram. Luisardium is on YouTube. Luisarvoid is on YouTube, TikTok, Instagram and Facebook. Links are in the channels section above.",
+      es: "Luisardito está en YouTube, TikTok e Instagram. Luisardium está en YouTube. Luisarvoid está en YouTube, TikTok, Instagram y Facebook. Los enlaces están en la sección de canales de arriba.",
+    },
   },
 ]
 

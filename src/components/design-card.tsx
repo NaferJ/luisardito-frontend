@@ -1,6 +1,10 @@
+"use client"
+
 import type { ReactNode } from "react"
 import Image from "next/image"
 import { ArrowUpRight, Bookmark, Star } from "lucide-react"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
 import { cn } from "@/lib/utils"
 
 export type DesignCardData = {
@@ -40,6 +44,8 @@ export function DesignCard({
   onOpen: () => void
   hideBookmark?: boolean
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.card
   let avatarElement: ReactNode
   if (card.lastRedeemer?.avatar) {
     avatarElement = (
@@ -93,7 +99,7 @@ export function DesignCard({
         <button
           type="button"
           onClick={onOpen}
-          aria-label={`Open ${card.title}`}
+          aria-label={interpolate(t.open, { title: card.title })}
           className="absolute inset-0 z-[1] cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
         />
 
@@ -116,7 +122,7 @@ export function DesignCard({
         {!hideBookmark && (
           <button
             type="button"
-            aria-label="Save"
+            aria-label={t.save}
             onClick={(e) => e.stopPropagation()}
             className="absolute top-2.5 right-2.5 z-30 flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition-[opacity,transform] duration-200 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold active:scale-90"
           >

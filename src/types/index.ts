@@ -17,7 +17,7 @@ export interface Usuario {
   kick_data?: {
     username: string
     avatar_url: string
-  }
+  } | null
   avatar_url?: string
 
   discord_username?: string

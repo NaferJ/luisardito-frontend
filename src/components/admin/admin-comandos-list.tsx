@@ -23,6 +23,9 @@ import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
 import { Pagination } from "@/components/admin/shared/pagination"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS, formatDate } from "@/lib/admin-utils"
 import {
@@ -31,7 +34,7 @@ import {
   toggleBotCommand,
   deleteBotCommand,
   type BotCommandFormData,
-} from "@/app/shop/admin/comandos/actions"
+} from "@/app/[lang]/shop/admin/comandos/actions"
 import type { BotCommand } from "@/lib/comandos"
 
 // ─── Types ───
@@ -40,34 +43,35 @@ type TypeFilter = "all" | "simple" | "dynamic"
 type StatusFilter = "all" | "enabled" | "disabled"
 type SortKey = "command" | "type" | "permission" | "uses" | "created"
 type SortDir = "asc" | "desc"
+type ComandosDict = Dictionary["admin"]["comandos"]
 
 // ─── Constants ───
 
-const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "simple", label: "Simple" },
-  { value: "dynamic", label: "Dynamic" },
+const TYPE_OPTIONS: { value: TypeFilter; label: (t: ComandosDict) => string }[] = [
+  { value: "all", label: (t) => t.all },
+  { value: "simple", label: (t) => t.types.simple },
+  { value: "dynamic", label: (t) => t.types.dynamic },
 ]
 
-const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "enabled", label: "Enabled" },
-  { value: "disabled", label: "Disabled" },
+const STATUS_OPTIONS: { value: StatusFilter; label: (t: ComandosDict) => string }[] = [
+  { value: "all", label: (t) => t.all },
+  { value: "enabled", label: (t) => t.status.enabled },
+  { value: "disabled", label: (t) => t.status.disabled },
 ]
 
-const COLUMNS: { key: SortKey; label: string; className: string }[] = [
-  { key: "command", label: "Command", className: "min-w-0 flex-1" },
-  { key: "type", label: "Type", className: "hidden w-20 shrink-0 sm:block" },
-  { key: "permission", label: "Permission", className: "hidden w-24 shrink-0 md:block" },
-  { key: "uses", label: "Uses", className: "w-16 shrink-0 text-right" },
-  { key: "created", label: "Created", className: "hidden w-28 shrink-0 lg:block" },
+const COLUMNS: { key: SortKey; label: (t: ComandosDict) => string; className: string }[] = [
+  { key: "command", label: (t) => t.columns.comando, className: "min-w-0 flex-1" },
+  { key: "type", label: (t) => t.columns.tipo, className: "hidden w-20 shrink-0 sm:block" },
+  { key: "permission", label: (t) => t.columns.permiso, className: "hidden w-24 shrink-0 md:block" },
+  { key: "uses", label: (t) => t.columns.usos, className: "w-16 shrink-0 text-right" },
+  { key: "created", label: (t) => t.columns.created, className: "hidden w-28 shrink-0 lg:block" },
 ]
 
 const PERMISSION_OPTIONS = [
-  { value: "viewer", label: "Viewer" },
-  { value: "vip", label: "VIP" },
-  { value: "moderator", label: "Moderator" },
-  { value: "broadcaster", label: "Broadcaster" },
+  { value: "viewer", label: (t: ComandosDict) => t.permissions.viewer },
+  { value: "vip", label: (t: ComandosDict) => t.permissions.vip },
+  { value: "moderator", label: (t: ComandosDict) => t.permissions.moderator },
+  { value: "broadcaster", label: (t: ComandosDict) => t.permissions.broadcaster },
 ] as const
 
 // ─── Helpers ───
@@ -83,13 +87,13 @@ function formatDateLong(d: string): string {
   }).format(new Date(d))
 }
 
-function formatRelative(d: string | null | undefined): string {
-  if (!d) return "Never"
+function formatRelative(d: string | null | undefined, t: ComandosDict): string {
+  if (!d) return t.time.never
   const diff = Date.now() - new Date(d).getTime()
-  if (diff < 60_000) return "Just now"
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
-  if (diff < 30 * 86_400_000) return `${Math.floor(diff / 86_400_000)}d ago`
+  if (diff < 60_000) return t.time.justNow
+  if (diff < 3_600_000) return interpolate(t.time.minutesAgo, { n: Math.floor(diff / 60_000) })
+  if (diff < 86_400_000) return interpolate(t.time.hoursAgo, { n: Math.floor(diff / 3_600_000) })
+  if (diff < 30 * 86_400_000) return interpolate(t.time.daysAgo, { n: Math.floor(diff / 86_400_000) })
   return formatDate(d)
 }
 
@@ -126,11 +130,11 @@ function fromCommand(c: BotCommand): BotCommandFormData {
 }
 
 /** Generate CSV from commands array and trigger download. */
-function exportCSV(commands: BotCommand[]): void {
+function exportCSV(commands: BotCommand[], t: ComandosDict): void {
   const headers = [
-    "ID", "Command", "Aliases", "Type", "Response Message", "Description",
-    "Enabled", "Permission", "Requires Permission", "Cooldown (s)",
-    "Auto-send (s)", "Usage Count", "Last Used", "Created", "Updated",
+    "ID", t.csv.command, t.csv.aliases, t.csv.type, t.csv.responseMessage, t.csv.description,
+    t.csv.enabled, t.csv.permission, t.csv.requiresPermission, t.csv.cooldown,
+    t.csv.autoSend, t.csv.usageCount, t.csv.lastUsed, t.csv.created, t.csv.updated,
   ]
   const rows = commands.map((c) => [
     c.id,
@@ -156,6 +160,8 @@ function exportCSV(commands: BotCommand[]): void {
 
 export function AdminComandosList({ commands: initialCommands }: Readonly<{ commands: BotCommand[] }>) {
   const router = useRouter()
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.comandos
   const [commands, setCommands] = useState<BotCommand[]>(initialCommands)
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
@@ -262,7 +268,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
   }
 
   const handleDelete = (id: number, name: string) => {
-    if (!confirm(`Delete command "!${name}"? This cannot be undone.`)) return
+    if (!confirm(interpolate(t.confirmDeleteCmd, { name }))) return
     startTransition(async () => {
       await deleteBotCommand(String(id))
     })
@@ -329,9 +335,9 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
   const onStatusChange = (v: StatusFilter) => { setStatusFilter(v); setCurrentPage(1) }
   const onPageSizeChange = (s: (typeof PAGE_SIZE_OPTIONS)[number]) => { setPageSize(s); setCurrentPage(1) }
 
-  let saveLabel = "Save"
-  if (pending) saveLabel = "Saving..."
-  else if (creating) saveLabel = "Create"
+  let saveLabel = t.form.save
+  if (pending) saveLabel = t.form.saving
+  else if (creating) saveLabel = t.form.create
 
   return (
     <>
@@ -344,20 +350,20 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-[15px] font-medium text-foreground">Bot Commands</h1>
+            <h1 className="text-[15px] font-medium text-foreground">{t.title}</h1>
             <span className="text-[13px] text-muted-foreground">
-              {filtered.length} of {commands.length}
+              {interpolate(t.countOf, { shown: filtered.length, total: commands.length })}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <SearchInput
               value={search}
               onChange={onSearchChange}
-              placeholder="Search command, alias..."
-              ariaLabel="Search commands"
+              placeholder={t.searchPlaceholder}
+              ariaLabel={t.searchAria}
               widthClassName="w-44 focus:w-56"
             />
-            <CsvButton onClick={() => exportCSV(filtered)} />
+            <CsvButton onClick={() => exportCSV(filtered, t)} />
             {!isEditing && (
               <button
                 type="button"
@@ -365,7 +371,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                 className="flex h-8 items-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-opacity hover:opacity-85"
               >
                 <Plus className="size-3.5" />
-                New command
+                {t.newCommand}
               </button>
             )}
           </div>
@@ -373,21 +379,21 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
 
         {/* Stats cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <StatCard icon={<Terminal className="size-3.5" />} label="Total" value={stats.total} />
-          <StatCard icon={<CheckCircle2 className="size-3.5" />} label="Enabled" value={stats.enabled} valueClass="text-gold-bright" />
-          <StatCard icon={<XCircle className="size-3.5" />} label="Disabled" value={stats.disabled} valueClass="text-muted-foreground" />
-          <StatCard icon={<Terminal className="size-3.5" />} label="Simple" value={stats.simple} />
-          <StatCard icon={<Zap className="size-3.5" />} label="Dynamic" value={stats.dynamic} valueClass="text-gold-bright" />
+          <StatCard icon={<Terminal className="size-3.5" />} label={t.stats.total} value={stats.total} />
+          <StatCard icon={<CheckCircle2 className="size-3.5" />} label={t.stats.enabled} value={stats.enabled} valueClass="text-gold-bright" />
+          <StatCard icon={<XCircle className="size-3.5" />} label={t.stats.disabled} value={stats.disabled} valueClass="text-muted-foreground" />
+          <StatCard icon={<Terminal className="size-3.5" />} label={t.stats.simple} value={stats.simple} />
+          <StatCard icon={<Zap className="size-3.5" />} label={t.stats.dynamic} value={stats.dynamic} valueClass="text-gold-bright" />
         </div>
 
         {/* Filters row: type pills + status pills */}
         <FilterPills
-          options={TYPE_OPTIONS}
+          options={TYPE_OPTIONS.map((o) => ({ ...o, label: o.label(t) }))}
           value={typeFilter}
           onChange={onTypeChange}
         />
         <FilterPills
-          options={STATUS_OPTIONS}
+          options={STATUS_OPTIONS.map((o) => ({ ...o, label: o.label(t) }))}
           value={statusFilter}
           onChange={onStatusChange}
         />
@@ -397,7 +403,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
           <div className="flex flex-col gap-4 rounded-sm border border-gold/40 bg-secondary p-4">
             <div className="flex items-center justify-between">
               <span className="text-[14px] font-medium text-foreground">
-                {creating ? "New command" : `Edit !${formData.command}`}
+                {creating ? t.newCommand : interpolate(t.form.editTitle, { name: formData.command })}
               </span>
               <button type="button" onClick={cancelEdit} className="text-muted-foreground hover:text-foreground">
                 <X className="size-4" />
@@ -412,43 +418,43 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="flex flex-col gap-1.5">
-                <span className="text-[12px] font-medium text-muted-foreground">Command (without !)</span>
+                <span className="text-[12px] font-medium text-muted-foreground">{t.form.command}</span>
                 <input
                   type="text"
                   value={formData.command}
                   onChange={(e) => set("command", e.target.value)}
-                  placeholder="hello"
+                  placeholder={t.form.commandPlaceholder}
                   className={inputClass}
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-[12px] font-medium text-muted-foreground">Aliases (comma-separated)</span>
+                <span className="text-[12px] font-medium text-muted-foreground">{t.form.aliases}</span>
                 <input
                   type="text"
                   value={aliasesText}
                   onChange={(e) => setAliasesText(e.target.value)}
-                  placeholder="hi, hey"
+                  placeholder={t.form.aliasesPlaceholder}
                   className={inputClass}
                 />
               </label>
             </div>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] font-medium text-muted-foreground">Response message</span>
+              <span className="text-[12px] font-medium text-muted-foreground">{t.form.responseMessage}</span>
               <textarea
                 value={formData.response_message}
                 onChange={(e) => set("response_message", e.target.value)}
                 rows={2}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
-                placeholder="Hello {username}!"
+                placeholder={t.form.responsePlaceholder}
               />
               <span className="text-[11px] text-muted-foreground">
-                Variables: {"{username}"}, {"{channel}"}, {"{args}"}, {"{target_user}"}, {"{points}"}
+                {t.form.variablesHint}
               </span>
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] font-medium text-muted-foreground">Description (optional)</span>
+              <span className="text-[12px] font-medium text-muted-foreground">{t.form.descriptionOptional}</span>
               <input
                 type="text"
                 value={formData.description}
@@ -459,30 +465,30 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <label className="flex flex-col gap-1.5">
-                <span className="text-[12px] font-medium text-muted-foreground">Type</span>
+                <span className="text-[12px] font-medium text-muted-foreground">{t.drawer.type}</span>
                 <select
                   value={formData.command_type}
                   onChange={(e) => set("command_type", e.target.value as "simple" | "dynamic")}
                   className={inputClass}
                 >
-                  <option value="simple">Simple</option>
-                  <option value="dynamic">Dynamic</option>
+                  <option value="simple">{t.types.simple}</option>
+                  <option value="dynamic">{t.types.dynamic}</option>
                 </select>
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-[12px] font-medium text-muted-foreground">Permission</span>
+                <span className="text-[12px] font-medium text-muted-foreground">{t.form.permission}</span>
                 <select
                   value={formData.permission_level}
                   onChange={(e) => set("permission_level", e.target.value as BotCommandFormData["permission_level"])}
                   className={inputClass}
                 >
                   {PERMISSION_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>{o.label(t)}</option>
                   ))}
                 </select>
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-[12px] font-medium text-muted-foreground">Cooldown (seconds)</span>
+                <span className="text-[12px] font-medium text-muted-foreground">{t.form.cooldown}</span>
                 <input
                   type="number"
                   min={0}
@@ -495,19 +501,19 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
 
             {formData.command_type === "dynamic" && (
               <label className="flex flex-col gap-1.5">
-                <span className="text-[12px] font-medium text-muted-foreground">Dynamic handler</span>
+                <span className="text-[12px] font-medium text-muted-foreground">{t.form.dynamicHandlerLabel}</span>
                 <input
                   type="text"
                   value={formData.dynamic_handler ?? ""}
                   onChange={(e) => set("dynamic_handler", e.target.value || null)}
-                  placeholder="e.g. puntos_handler"
+                  placeholder={t.form.handlerPlaceholder}
                   className={inputClass}
                 />
               </label>
             )}
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] font-medium text-muted-foreground">Auto-send interval (seconds, 0 = off)</span>
+              <span className="text-[12px] font-medium text-muted-foreground">{t.form.autoSend}</span>
               <input
                 type="number"
                 min={0}
@@ -526,7 +532,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                 <span className={cn("flex h-5 w-9 items-center rounded-full p-0.5 transition-colors", formData.enabled ? "bg-gold" : "bg-border")}>
                   <span className={cn("size-4 rounded-full bg-background transition-transform", formData.enabled && "translate-x-4")} />
                 </span>
-                <span className="text-[13px] text-foreground">Enabled</span>
+                <span className="text-[13px] text-foreground">{t.form.enabled}</span>
               </button>
               <button
                 type="button"
@@ -536,7 +542,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                 <span className={cn("flex h-5 w-9 items-center rounded-full p-0.5 transition-colors", formData.requires_permission ? "bg-gold" : "bg-border")}>
                   <span className={cn("size-4 rounded-full bg-background transition-transform", formData.requires_permission && "translate-x-4")} />
                 </span>
-                <span className="text-[13px] text-foreground">Requires permission</span>
+                <span className="text-[13px] text-foreground">{t.form.requiresPermission}</span>
               </button>
             </div>
 
@@ -555,7 +561,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                 onClick={cancelEdit}
                 className="flex h-9 items-center rounded-full border border-border px-5 text-[13px] font-medium text-foreground transition-colors hover:bg-secondary"
               >
-                Cancel
+                {t.form.cancel}
               </button>
             </div>
           </div>
@@ -566,12 +572,12 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
           <div className="overflow-hidden rounded-lg border border-border">
             {/* Column headers */}
             <SortHeader
-              columns={COLUMNS}
+              columns={COLUMNS.map((c) => ({ ...c, label: c.label(t) }))}
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
               leadingLabel="ID"
-              trailingLabel="Actions"
+              trailingLabel={t.actions}
             />
 
             {/* Rows */}
@@ -625,12 +631,12 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
 
                     {/* Type */}
                     <span className="hidden w-20 shrink-0 text-[12px] capitalize text-muted-foreground sm:block">
-                      {cmd.command_type}
+                      {t.types[cmd.command_type as keyof ComandosDict["types"]] ?? cmd.command_type}
                     </span>
 
                     {/* Permission */}
                     <span className="hidden w-24 shrink-0 text-[12px] capitalize text-muted-foreground md:block">
-                      {cmd.permission_level ?? "viewer"}
+                      {t.permissions[(cmd.permission_level ?? "viewer") as keyof ComandosDict["permissions"]] ?? cmd.permission_level}
                     </span>
 
                     {/* Uses */}
@@ -648,12 +654,12 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                       {cmd.enabled ? (
                         <>
                           <CheckCircle2 className="size-3 shrink-0 text-gold-bright" aria-hidden="true" />
-                          <span className="text-gold-bright">On</span>
+                          <span className="text-gold-bright">{t.on}</span>
                         </>
                       ) : (
                         <>
                           <XCircle className="size-3 shrink-0 text-muted-foreground" aria-hidden="true" />
-                          <span className="text-muted-foreground">Off</span>
+                          <span className="text-muted-foreground">{t.off}</span>
                         </>
                       )}
                     </div>
@@ -665,8 +671,8 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                         onClick={() => handleToggle(cmd.id)}
                         disabled={pending}
                         className="text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-                        aria-label={cmd.enabled ? "Disable" : "Enable"}
-                        title={cmd.enabled ? "Disable" : "Enable"}
+                        aria-label={cmd.enabled ? t.disable : t.enable}
+                        title={cmd.enabled ? t.disable : t.enable}
                       >
                         <Power className="size-3.5" />
                       </button>
@@ -674,7 +680,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                         type="button"
                         onClick={() => startEdit(cmd)}
                         className="text-muted-foreground transition-colors hover:text-foreground"
-                        aria-label="Edit"
+                        aria-label={t.edit}
                       >
                         <Pencil className="size-3.5" />
                       </button>
@@ -683,7 +689,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                         onClick={() => handleDelete(cmd.id, cmd.command)}
                         disabled={pending}
                         className="text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
-                        aria-label="Delete"
+                        aria-label={t.delete}
                       >
                         <Trash2 className="size-3.5" />
                       </button>
@@ -708,7 +714,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
             <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
               <div className="flex flex-col items-center gap-3">
                 <p className="text-[13px] text-muted-foreground">
-                  {search.trim() ? `No results match "${search.trim()}".` : "No commands yet."}
+                  {search.trim() ? interpolate(t.emptySearch, { query: search.trim() }) : t.empty}
                 </p>
                 {!search.trim() && (
                   <button
@@ -717,7 +723,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                     className="flex h-8 items-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-opacity hover:opacity-85"
                   >
                     <Plus className="size-3.5" />
-                    Create your first command
+                    {t.createFirst}
                   </button>
                 )}
               </div>
@@ -765,6 +771,8 @@ function DetailDrawer({
   onToggle: (id: number) => void
   pending: boolean
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.comandos
   const cmd = commands[index]
   const isDynamic = cmd.command_type === "dynamic"
 
@@ -784,24 +792,24 @@ function DetailDrawer({
   }, [index, commands.length, onClose, onNavigate])
 
   const statRows = [
-    { label: "Type", value: cmd.command_type },
-    { label: "Status", value: cmd.enabled ? "Enabled" : "Disabled" },
-    { label: "Permission", value: cmd.permission_level ?? "viewer" },
-    { label: "Requires permission", value: cmd.requires_permission ? "Yes" : "No" },
-    { label: "Cooldown", value: `${cmd.cooldown_seconds}s` },
-    { label: "Auto-send interval", value: cmd.auto_send_interval_seconds > 0 ? `${cmd.auto_send_interval_seconds}s` : "Off" },
-    ...(isDynamic && cmd.dynamic_handler ? [{ label: "Dynamic handler", value: cmd.dynamic_handler }] : []),
-    { label: "Usage count", value: cmd.usage_count.toLocaleString() },
-    { label: "Last used", value: formatRelative(cmd.last_used_at) },
-    { label: "Created", value: formatDateLong(cmd.created_at) },
-    { label: "Updated", value: formatDateLong(cmd.updated_at) },
+    { label: t.drawer.type, value: t.types[cmd.command_type as keyof ComandosDict["types"]] ?? cmd.command_type },
+    { label: t.drawer.status, value: cmd.enabled ? t.status.enabled : t.status.disabled },
+    { label: t.drawer.permission, value: t.permissions[(cmd.permission_level ?? "viewer") as keyof ComandosDict["permissions"]] ?? cmd.permission_level },
+    { label: t.drawer.requiresPermission, value: cmd.requires_permission ? t.yes : t.no },
+    { label: t.drawer.cooldown, value: interpolate(t.drawer.seconds, { n: cmd.cooldown_seconds }) },
+    { label: t.drawer.autoSendInterval, value: cmd.auto_send_interval_seconds > 0 ? interpolate(t.drawer.seconds, { n: cmd.auto_send_interval_seconds }) : t.off },
+    ...(isDynamic && cmd.dynamic_handler ? [{ label: t.drawer.dynamicHandler, value: cmd.dynamic_handler }] : []),
+    { label: t.drawer.usageCount, value: cmd.usage_count.toLocaleString() },
+    { label: t.drawer.lastUsed, value: formatRelative(cmd.last_used_at, t) },
+    { label: t.drawer.created, value: formatDateLong(cmd.created_at) },
+    { label: t.drawer.updated, value: formatDateLong(cmd.updated_at) },
   ]
 
   return (
     <>
       {/* Static metadata sidebar */}
       <aside
-        aria-label={`Command !${cmd.command}`}
+        aria-label={interpolate(t.commandAria, { name: cmd.command })}
         className="fixed inset-y-0 left-0 right-0 z-20 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
       >
         {/* Header — close + prev/next */}
@@ -809,7 +817,7 @@ function DetailDrawer({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t.drawer.close}
             className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
           >
             <X className="size-4" aria-hidden="true" />
@@ -819,7 +827,7 @@ function DetailDrawer({
               type="button"
               onClick={() => index > 0 && onNavigate(index - 1)}
               disabled={index === 0}
-              aria-label="Previous command"
+              aria-label={t.drawer.previous}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
@@ -831,7 +839,7 @@ function DetailDrawer({
               type="button"
               onClick={() => index < commands.length - 1 && onNavigate(index + 1)}
               disabled={index === commands.length - 1}
-              aria-label="Next command"
+              aria-label={t.drawer.next}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
             >
               <ChevronRight className="size-4" aria-hidden="true" />
@@ -848,12 +856,12 @@ function DetailDrawer({
               {cmd.enabled ? (
                 <div className="flex items-center gap-1 text-[12px] font-medium text-gold-bright">
                   <CheckCircle2 className="size-3" aria-hidden="true" />
-                  Enabled
+                  {t.status.enabled}
                 </div>
               ) : (
                 <div className="flex items-center gap-1 text-[12px] font-medium text-muted-foreground">
                   <XCircle className="size-3" aria-hidden="true" />
-                  Disabled
+                  {t.status.disabled}
                 </div>
               )}
               {isDynamic && (
@@ -876,7 +884,7 @@ function DetailDrawer({
           {cmd.aliases && cmd.aliases.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Aliases
+                {t.drawer.aliases}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {cmd.aliases.map((a) => (
@@ -892,7 +900,7 @@ function DetailDrawer({
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               <MessageSquare className="size-3" />
-              Response message
+              {t.drawer.responseMessage}
             </div>
             <div className="rounded-sm border border-border bg-secondary p-3">
               <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">
@@ -904,7 +912,7 @@ function DetailDrawer({
           {/* Key-value stats */}
           <div className="flex flex-col gap-0">
             <span className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Details
+              {t.drawer.details}
             </span>
             {statRows.map((row) => (
               <div key={row.label} className="flex items-baseline justify-between gap-3 border-b border-border/40 py-1.5 last:border-b-0">
@@ -925,7 +933,7 @@ function DetailDrawer({
               className="flex h-9 flex-1 items-center justify-center gap-2 rounded-full border border-border text-[13px] font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
             >
               <Power className="size-3.5" />
-              {cmd.enabled ? "Disable" : "Enable"}
+              {cmd.enabled ? t.disable : t.enable}
             </button>
             <button
               type="button"
@@ -933,14 +941,14 @@ function DetailDrawer({
               className="flex h-9 flex-1 items-center justify-center gap-2 rounded-full bg-foreground text-[13px] font-medium text-background transition-opacity hover:opacity-85"
             >
               <Pencil className="size-3.5" />
-              Edit
+              {t.edit}
             </button>
             <button
               type="button"
               onClick={() => onDelete(cmd)}
               disabled={pending}
               className="flex size-9 shrink-0 items-center justify-center rounded-full border border-destructive/40 text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
-              aria-label="Delete"
+              aria-label={t.delete}
             >
               <Trash2 className="size-3.5" />
             </button>

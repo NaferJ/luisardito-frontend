@@ -30,9 +30,12 @@ import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
 import { Pagination } from "@/components/admin/shared/pagination"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import { DiscordLogo } from "@/components/brand-icons"
 import { CANJES_STATUS_CHANGED } from "@/components/pending-canjes-badge"
-import { updateCanjeEstado, devolverCanje } from "@/app/shop/admin/canjes/actions"
+import { updateCanjeEstado, devolverCanje } from "@/app/[lang]/shop/admin/canjes/actions"
 import type { Canje, Usuario } from "@/types"
 
 // ─── Types ───
@@ -40,29 +43,30 @@ import type { Canje, Usuario } from "@/types"
 type StatusFilter = "all" | "pendiente" | "entregado" | "cancelado" | "devuelto"
 type SortKey = "id" | "usuario" | "producto" | "fecha" | "precio"
 type SortDir = "asc" | "desc"
+type CanjesDict = Dictionary["admin"]["canjes"]
 
 // ─── Constants ───
 
-const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "pendiente", label: "Pending" },
-  { value: "entregado", label: "Delivered" },
-  { value: "cancelado", label: "Cancelled" },
-  { value: "devuelto", label: "Returned" },
+const STATUS_OPTIONS: { value: StatusFilter; label: (t: CanjesDict) => string }[] = [
+  { value: "all", label: (t) => t.estados.all },
+  { value: "pendiente", label: (t) => t.estados.pendiente },
+  { value: "entregado", label: (t) => t.estados.entregado },
+  { value: "cancelado", label: (t) => t.estados.cancelado },
+  { value: "devuelto", label: (t) => t.estados.devuelto },
 ]
 
-const STATUS_STYLES: Record<string, { icon: typeof Clock; className: string; label: string }> = {
-  pendiente: { icon: Clock, className: "text-gold-bright", label: "Pending" },
-  entregado: { icon: CheckCircle2, className: "text-foreground", label: "Delivered" },
-  cancelado: { icon: XCircle, className: "text-destructive", label: "Cancelled" },
-  devuelto: { icon: RotateCcw, className: "text-muted-foreground", label: "Returned" },
+const STATUS_STYLES: Record<string, { icon: typeof Clock; className: string; label: (t: CanjesDict) => string }> = {
+  pendiente: { icon: Clock, className: "text-gold-bright", label: (t) => t.estados.pendiente },
+  entregado: { icon: CheckCircle2, className: "text-foreground", label: (t) => t.estados.entregado },
+  cancelado: { icon: XCircle, className: "text-destructive", label: (t) => t.estados.cancelado },
+  devuelto: { icon: RotateCcw, className: "text-muted-foreground", label: (t) => t.estados.devuelto },
 }
 
-const COLUMNS: { key: SortKey; label: string; className: string }[] = [
-  { key: "usuario", label: "User", className: "min-w-0 flex-1" },
-  { key: "producto", label: "Product", className: "min-w-0 flex-1" },
-  { key: "fecha", label: "Date", className: "w-32 shrink-0" },
-  { key: "precio", label: "Points", className: "w-24 shrink-0 text-right" },
+const COLUMNS: { key: SortKey; label: (t: CanjesDict) => string; className: string }[] = [
+  { key: "usuario", label: (t) => t.columns.usuario, className: "min-w-0 flex-1" },
+  { key: "producto", label: (t) => t.columns.producto, className: "min-w-0 flex-1" },
+  { key: "fecha", label: (t) => t.columns.fecha, className: "w-32 shrink-0" },
+  { key: "precio", label: (t) => t.columns.costo, className: "w-24 shrink-0 text-right" },
 ]
 
 const POLL_INTERVAL = 30_000 // 30 seconds
@@ -89,9 +93,9 @@ function formatDateLong(d: string): string {
   }).format(new Date(d))
 }
 
-function canjeUser(c: Canje): string {
+function canjeUser(c: Canje, fallback?: string): string {
   const u = c.Usuario ?? c.usuario
-  if (!u) return `User #${c.usuario_id}`
+  if (!u) return fallback ?? `User #${c.usuario_id}`
   return u.kick_data?.username ?? u.nickname ?? u.display_name ?? u.nombre ?? u.email
 }
 
@@ -101,8 +105,8 @@ function canjeUserAvatar(c: Canje): string | undefined {
   return u.kick_data?.avatar_url ?? u.kick_avatar ?? u.avatar_url ?? undefined
 }
 
-function canjeProduct(c: Canje): string {
-  return c.Producto?.nombre ?? c.producto?.nombre ?? "Product unavailable"
+function canjeProduct(c: Canje, fallback = "Product unavailable"): string {
+  return c.Producto?.nombre ?? c.producto?.nombre ?? fallback
 }
 
 function canjeProductImage(c: Canje): string | undefined {
@@ -150,14 +154,14 @@ function getDateRange(preset: DatePreset): { start: number | null } {
 }
 
 /** Generate CSV from canjes array and trigger download. */
-function exportCSV(canjes: Canje[]): void {
-  const headers = ["ID", "User", "Discord", "Email", "Product", "Price", "Status", "Date"]
+function exportCSV(canjes: Canje[], t: CanjesDict): void {
+  const headers = ["ID", t.csv.user, t.csv.discord, t.csv.email, t.csv.product, t.csv.cost, t.csv.status, t.csv.date]
   const rows = canjes.map((c) => {
     const u = c.Usuario ?? c.usuario
     return [
       c.id,
       canjeUser(c),
-      discordName(u) ?? "Not linked",
+      discordName(u) ?? t.notLinked,
       u?.email ?? "",
       canjeProduct(c),
       canjePrice(c),
@@ -181,6 +185,8 @@ function SortIcon({
 
 export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Canje[] }>) {
   const router = useRouter()
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.canjes
   const [canjes, setCanjes] = useState<Canje[]>(initialCanjes)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
@@ -349,7 +355,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
   const handleConfirmReturn = () => {
     if (!returnTarget) return
     if (!returnMotivo.trim()) {
-      setReturnError("Please provide a reason for the return.")
+      setReturnError(t.returnModal.reasonRequired)
       return
     }
     const target = returnTarget
@@ -410,50 +416,50 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-2">
-          <h1 className="text-[15px] font-medium text-foreground">Redemptions</h1>
+          <h1 className="text-[15px] font-medium text-foreground">{t.title}</h1>
           <span className="text-[13px] text-muted-foreground">
-            {filtered.length} of {canjes.length}
+            {interpolate(t.countOf, { shown: filtered.length, total: canjes.length })}
           </span>
           {isPolling && (
-            <RefreshCw className="size-3 animate-spin text-muted-foreground" aria-label="Syncing" />
+            <RefreshCw className="size-3 animate-spin text-muted-foreground" aria-label={t.syncing} />
           )}
         </div>
         <div className="flex items-center gap-3">
           <SearchInput
             value={search}
             onChange={onSearchChange}
-            placeholder="Search user, product, ID..."
-            ariaLabel="Search redemptions"
+            placeholder={t.searchPlaceholder}
+            ariaLabel={t.searchAria}
           />
-          <CsvButton onClick={() => exportCSV(filtered)} />
+          <CsvButton onClick={() => exportCSV(filtered, t)} />
         </div>
       </div>
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard icon={<ShoppingBag className="size-3.5" />} label="Total" value={stats.total} />
-        <StatCard icon={<Clock className="size-3.5" />} label="Pending" value={stats.pendientes} valueClass="text-gold-bright" />
-        <StatCard icon={<CheckCircle2 className="size-3.5" />} label="Delivered" value={stats.entregados} valueClass="text-foreground" />
-        <StatCard icon={<XCircle className="size-3.5" />} label="Cancelled" value={stats.cancelados} valueClass="text-destructive" />
-        <StatCard icon={<RotateCcw className="size-3.5" />} label="Returned" value={stats.devueltos} valueClass="text-muted-foreground" />
+        <StatCard icon={<ShoppingBag className="size-3.5" />} label={t.stats.total} value={stats.total} />
+        <StatCard icon={<Clock className="size-3.5" />} label={t.stats.pending} value={stats.pendientes} valueClass="text-gold-bright" />
+        <StatCard icon={<CheckCircle2 className="size-3.5" />} label={t.stats.delivered} value={stats.entregados} valueClass="text-foreground" />
+        <StatCard icon={<XCircle className="size-3.5" />} label={t.stats.cancelled} value={stats.cancelados} valueClass="text-destructive" />
+        <StatCard icon={<RotateCcw className="size-3.5" />} label={t.estados.devuelto} value={stats.devueltos} valueClass="text-muted-foreground" />
       </div>
 
       {/* Filters row: status pills + date range */}
       <FilterPills
-        options={STATUS_OPTIONS}
+        options={STATUS_OPTIONS.map((o) => ({ ...o, label: o.label(t) }))}
         value={statusFilter}
         onChange={onStatusChange}
         datePreset={datePreset}
         onDateChange={onDateChange}
-        dateAriaLabel="Date range"
+        dateAriaLabel={dictionary.adminShared.dateRange}
       />
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-sm border border-gold/40 bg-gold/5 px-4 py-2.5">
           <span className="text-[13px] font-medium text-foreground">
-            {selectedIds.size} selected
-            {selectedPendingCount > 0 && ` · ${selectedPendingCount} pending`}
+            {interpolate(t.selectedCount, { n: selectedIds.size })}
+            {selectedPendingCount > 0 && ` · ${interpolate(t.pendingSuffix, { n: selectedPendingCount })}`}
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -463,7 +469,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
               className="flex h-7 items-center gap-1.5 rounded-full bg-gold px-3 text-[12px] font-medium text-gold-foreground transition-opacity hover:opacity-85 disabled:opacity-50"
             >
               <CheckCircle2 className="size-3" />
-              Deliver all
+              {t.deliverAll}
             </button>
             <button
               type="button"
@@ -472,7 +478,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
               className="flex h-7 items-center gap-1.5 rounded-full border border-destructive/40 px-3 text-[12px] font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
             >
               <XCircle className="size-3" />
-              Cancel all
+              {t.cancelAll}
             </button>
           </div>
           <button
@@ -480,7 +486,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
             onClick={clearSelection}
             className="ml-auto text-[12px] text-muted-foreground hover:text-foreground"
           >
-            Clear selection
+            {t.clearSelection}
           </button>
         </div>
       )}
@@ -495,7 +501,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
               type="button"
               onClick={toggleSelectPage}
               className="flex w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
-              aria-label={paginated.every((c) => selectedIds.has(c.id)) ? "Deselect page" : "Select page"}
+              aria-label={paginated.every((c) => selectedIds.has(c.id)) ? t.deselectPage : t.selectPage}
             >
               {paginated.every((c) => selectedIds.has(c.id)) ? (
                 <CheckSquare className="size-4 text-gold-bright" />
@@ -517,15 +523,15 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                   col.key === "precio" && "justify-end",
                 )}
               >
-                {col.label}
+                {col.label(t)}
                 <SortIcon column={col.key} sortKey={sortKey} sortDir={sortDir} />
               </button>
             ))}
             <span className="w-24 shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Status
+              {t.columns.estado}
             </span>
             <span className="w-36 shrink-0 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Actions
+              {t.actions}
             </span>
           </div>
 
@@ -562,7 +568,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                     type="button"
                     onClick={(e) => { e.stopPropagation(); toggleSelect(canje.id) }}
                     className="flex w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
-                    aria-label={isSelected ? "Deselect" : "Select"}
+                    aria-label={isSelected ? t.deselect : t.select}
                   >
                     {isSelected ? (
                       <CheckSquare className="size-4 text-gold-bright" />
@@ -610,7 +616,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                         ) : (
                           <div className="flex items-center gap-1 text-[11px] text-destructive/70">
                             <AlertTriangle className="size-2.5" />
-                            <span>No Discord</span>
+                            <span>{t.noDiscord}</span>
                           </div>
                         )}
                       </div>
@@ -650,9 +656,9 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                       {formatCompactNumber(canjePrice(canje))}
                     </span>
                     {currentPrice !== undefined && (
-                      <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground" title={`Current price: ${formatCompactNumber(currentPrice)} pts`}>
+                      <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground" title={interpolate(t.currentPriceTitle, { n: formatCompactNumber(currentPrice) })}>
                         <AlertTriangle className="size-2.5" />
-                        now {formatCompactNumber(currentPrice)}
+                        {interpolate(t.now, { n: formatCompactNumber(currentPrice) })}
                       </span>
                     )}
                   </div>
@@ -660,7 +666,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                   {/* Status */}
                   <div className={cn("flex w-24 shrink-0 items-center gap-1 text-[12px] font-medium", status.className)}>
                     <StatusIcon className="size-3 shrink-0" aria-hidden="true" />
-                    {status.label}
+                    {status.label(t)}
                   </div>
 
                   {/* Actions */}
@@ -668,13 +674,13 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                     {canje.estado === "pendiente" && (
                       <>
                         <ActionBtn
-                          label="Deliver"
+                          label={t.deliver}
                           onClick={() => handleUpdate(canje.id, "entregado")}
                           disabled={pending}
                           primary
                         />
                         <ActionBtn
-                          label="Cancel"
+                          label={t.cancel}
                           onClick={() => handleUpdate(canje.id, "cancelado")}
                           disabled={pending}
                           danger
@@ -683,7 +689,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                     )}
                     {canje.estado === "entregado" && (
                       <ActionBtn
-                        label="Return"
+                        label={t.return}
                         onClick={() => openReturnModal(canje)}
                         disabled={pending}
                       />
@@ -710,7 +716,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
       ) : (
         <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
           <p className="text-[13px] text-muted-foreground">
-            {search.trim() ? `No results match "${search.trim()}".` : "No redemptions yet."}
+            {search.trim() ? interpolate(t.emptySearch, { query: search.trim() }) : t.empty}
           </p>
         </div>
       )}
@@ -737,7 +743,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
           >
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-[15px] font-medium text-foreground">Return redemption</span>
+                <span className="text-[15px] font-medium text-foreground">{t.returnModal.title}</span>
                 <span className="text-[12px] text-muted-foreground">#{returnTarget.id}</span>
               </div>
               <button type="button" onClick={closeReturnModal} className="text-muted-foreground hover:text-foreground">
@@ -763,17 +769,19 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
 
             {canjeCurrentPrice(returnTarget) !== undefined && (
               <p className="text-[12px] text-muted-foreground">
-                Price paid at redemption: {formatCompactNumber(canjePrice(returnTarget))} pts.
-                Current product price: {formatCompactNumber(canjeCurrentPrice(returnTarget) ?? 0)} pts.
+                {interpolate(t.returnModal.priceNote, {
+                  paid: formatCompactNumber(canjePrice(returnTarget)),
+                  current: formatCompactNumber(canjeCurrentPrice(returnTarget) ?? 0),
+                })}
               </p>
             )}
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] font-medium text-muted-foreground">Reason for return</span>
+              <span className="text-[12px] font-medium text-muted-foreground">{t.returnModal.reason}</span>
               <textarea
                 value={returnMotivo}
                 onChange={(e) => { setReturnMotivo(e.target.value); setReturnError(null) }}
-                placeholder="e.g. Delivery error, product unavailable, user request..."
+                placeholder={t.returnModal.reasonPlaceholder}
                 rows={3}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
                 autoFocus
@@ -792,7 +800,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                 onClick={closeReturnModal}
                 className="flex h-9 items-center rounded-full border border-border px-5 text-[13px] font-medium text-foreground transition-colors hover:bg-secondary"
               >
-                Cancel
+                {t.returnModal.cancel}
               </button>
               <button
                 type="button"
@@ -801,7 +809,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                 className="flex h-9 items-center gap-2 rounded-full bg-foreground px-5 text-[13px] font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
               >
                 <RotateCcw className="size-3.5" />
-                {pending ? "Returning..." : "Confirm return"}
+                {pending ? t.returnModal.returning : t.returnModal.confirm}
               </button>
             </div>
           </div>
@@ -824,6 +832,8 @@ function DetailDrawer({
   onClose: () => void
   onNavigate: (nextIndex: number) => void
 }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.canjes
   const canje = canjes[index]
   const user = canje.Usuario ?? canje.usuario
   const avatar = canjeUserAvatar(canje)
@@ -848,12 +858,12 @@ function DetailDrawer({
   }, [index, canjes.length, onClose, onNavigate])
 
   const statRows = [
-    { label: "Status", value: status.label },
-    { label: "Price paid", value: `${formatCompactNumber(canjePrice(canje))} pts` },
-    ...(currentPrice !== undefined ? [{ label: "Current price", value: `${formatCompactNumber(currentPrice)} pts` }] : []),
-    { label: "Discord", value: hasDiscord(user) ? (discordName(user) ?? "Linked") : "Not linked" },
-    { label: "Date", value: formatDateLong(canje.fecha) },
-    ...(user ? [{ label: "User points", value: `${formatCompactNumber(user.puntos)} pts` }] : []),
+    { label: t.drawer.status, value: status.label(t) },
+    { label: t.drawer.pricePaid, value: interpolate(t.pts, { n: formatCompactNumber(canjePrice(canje)) }) },
+    ...(currentPrice !== undefined ? [{ label: t.drawer.currentPrice, value: interpolate(t.pts, { n: formatCompactNumber(currentPrice) }) }] : []),
+    { label: t.drawer.discord, value: hasDiscord(user) ? (discordName(user) ?? t.linked) : t.notLinked },
+    { label: t.drawer.date, value: formatDateLong(canje.fecha) },
+    ...(user ? [{ label: t.drawer.userPoints, value: interpolate(t.pts, { n: formatCompactNumber(user.puntos) }) }] : []),
   ]
 
   return (
@@ -863,7 +873,7 @@ function DetailDrawer({
           to the right of it. The "slide-in" illusion is created by the
           table shifting right, not by the panel itself moving. */}
       <aside
-        aria-label={`Redemption #${canje.id}`}
+        aria-label={interpolate(t.drawer.ariaLabel, { id: canje.id })}
         className="fixed inset-y-0 left-0 right-0 z-20 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
       >
         {/* Header — close + prev/next */}
@@ -871,7 +881,7 @@ function DetailDrawer({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t.drawer.close}
             className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
           >
             <X className="size-4" aria-hidden="true" />
@@ -881,7 +891,7 @@ function DetailDrawer({
               type="button"
               onClick={() => index > 0 && onNavigate(index - 1)}
               disabled={index === 0}
-              aria-label="Previous redemption"
+              aria-label={t.drawer.previous}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
@@ -890,7 +900,7 @@ function DetailDrawer({
               type="button"
               onClick={() => index < canjes.length - 1 && onNavigate(index + 1)}
               disabled={index === canjes.length - 1}
-              aria-label="Next redemption"
+              aria-label={t.drawer.next}
               className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
             >
               <ChevronRight className="size-4" aria-hidden="true" />
@@ -904,7 +914,7 @@ function DetailDrawer({
             {/* Product info */}
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <span className="text-[13px] text-muted-foreground">Product</span>
+                <span className="text-[13px] text-muted-foreground">{t.drawer.product}</span>
                 <h2 className="text-[15px] font-medium text-foreground">{canjeProduct(canje)}</h2>
               </div>
               {canjeProductDesc(canje) && (
@@ -915,7 +925,7 @@ function DetailDrawer({
             {/* User info */}
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <span className="text-[13px] text-muted-foreground">User</span>
+                <span className="text-[13px] text-muted-foreground">{t.drawer.user}</span>
                 <div className="flex items-center gap-2.5">
                   <div className="size-9 shrink-0 overflow-hidden rounded-full bg-muted">
                     {avatar ? (
@@ -944,7 +954,7 @@ function DetailDrawer({
                     ) : (
                       <div className="flex items-center gap-1 text-[11px] text-destructive/70">
                         <AlertTriangle className="size-2.5" />
-                        <span>No Discord linked</span>
+                        <span>{t.drawer.noDiscordLinked}</span>
                       </div>
                     )}
                   </div>
@@ -971,7 +981,7 @@ function DetailDrawer({
             {/* Status indicator */}
             <div className={cn("flex items-center gap-2 text-[13px] font-medium", status.className)}>
               <StatusIcon className="size-4" aria-hidden="true" />
-              {status.label}
+              {status.label(t)}
             </div>
           </div>
         </div>

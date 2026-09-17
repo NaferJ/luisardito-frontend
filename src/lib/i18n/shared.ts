@@ -1,0 +1,11 @@
+export type Dictionary = typeof import('./dictionaries/en.json')
+
+export function interpolate(
+  template: string,
+  vars: Record<string, string | number>,
+): string {
+  return template.replace(
+    /\{(\w+)\}/g,
+    (_, key: string) => String(vars[key] ?? `{${key}}`),
+  )
+}

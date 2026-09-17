@@ -3,24 +3,33 @@
 import { useMemo, useState } from "react"
 import { Search, X, Terminal, Zap, Shield } from "lucide-react"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
+import { useI18n } from "@/components/i18n/provider"
+import type { Dictionary } from "@/lib/i18n/shared"
 import type { BotCommand } from "@/lib/comandos"
 
 type FilterType = "all" | "simple" | "dynamic"
+type ComandosDict = Dictionary["comandos"]
 
-const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "simple", label: "Simple" },
-  { value: "dynamic", label: "Dynamic" },
-]
+function filterOptions(t: ComandosDict): { value: FilterType; label: string }[] {
+  return [
+    { value: "all", label: t.filters.all },
+    { value: "simple", label: t.filters.simple },
+    { value: "dynamic", label: t.filters.dynamic },
+  ]
+}
 
-const PERMISSION_LABELS: Record<string, string> = {
-  viewer: "Viewer",
-  vip: "VIP",
-  moderator: "Moderator",
-  broadcaster: "Broadcaster",
+function permissionLabels(t: ComandosDict): Record<string, string> {
+  return {
+    viewer: t.permissions.viewer,
+    vip: t.permissions.vip,
+    moderator: t.permissions.moderator,
+    broadcaster: t.permissions.broadcaster,
+  }
 }
 
 export function ComandosTable({ commands }: Readonly<{ commands: BotCommand[] }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.comandos
   const [search, setSearch] = useState("")
   const [filterType, setFilterType] = useState<FilterType>("all")
 
@@ -47,10 +56,8 @@ export function ComandosTable({ commands }: Readonly<{ commands: BotCommand[] }>
     return (
       <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-border p-8">
         <Terminal className="size-8 text-muted-foreground" aria-hidden="true" />
-        <p className="text-[15px] font-medium text-foreground">No commands available</p>
-        <p className="text-[13px] text-muted-foreground">
-          Bot commands will appear here when configured.
-        </p>
+        <p className="text-[15px] font-medium text-foreground">{t.empty}</p>
+        <p className="text-[13px] text-muted-foreground">{t.emptyHint}</p>
       </div>
     )
   }
@@ -65,15 +72,15 @@ export function ComandosTable({ commands }: Readonly<{ commands: BotCommand[] }>
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search commands..."
-            aria-label="Search commands"
+            placeholder={t.searchPlaceholder}
+            aria-label={t.searchLabel}
             className="h-8 w-full rounded-full border border-border bg-background pl-8 pr-7 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              aria-label="Clear search"
+              aria-label={t.clearSearch}
               className="absolute right-2 flex size-4 items-center justify-center text-muted-foreground hover:text-foreground"
             >
               <X className="size-3" aria-hidden="true" />
@@ -83,7 +90,7 @@ export function ComandosTable({ commands }: Readonly<{ commands: BotCommand[] }>
 
         <div className="flex flex-wrap gap-2">
           <FilterPills
-            options={FILTER_OPTIONS}
+            options={filterOptions(t)}
             value={filterType}
             onChange={setFilterType}
             variant="shop"
@@ -98,7 +105,7 @@ export function ComandosTable({ commands }: Readonly<{ commands: BotCommand[] }>
       {/* Commands list */}
       {filtered.length === 0 ? (
         <div className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-border p-6">
-          <p className="text-[13px] text-muted-foreground">No commands match your search.</p>
+          <p className="text-[13px] text-muted-foreground">{t.noMatch}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -124,7 +131,7 @@ export function ComandosTable({ commands }: Readonly<{ commands: BotCommand[] }>
                     {cmd.requires_permission && (
                       <span className="flex items-center gap-0.5 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-medium text-foreground">
                         <Shield className="size-2.5" aria-hidden="true" />
-                        {PERMISSION_LABELS[cmd.permission_level ?? "viewer"] ?? cmd.permission_level ?? "Viewer"}
+                        {permissionLabels(t)[cmd.permission_level ?? "viewer"] ?? cmd.permission_level ?? t.permissions.viewer}
                       </span>
                     )}
                   </div>
@@ -150,10 +157,10 @@ export function ComandosTable({ commands }: Readonly<{ commands: BotCommand[] }>
               <div className="flex shrink-0 items-center gap-4 text-[12px] text-muted-foreground sm:flex-col sm:items-end sm:gap-0.5">
                 <span>
                   <span className="font-medium text-foreground">{cmd.usage_count.toLocaleString()}</span>{" "}
-                  uses
+                  {t.uses}
                 </span>
                 {cmd.cooldown_seconds > 0 && (
-                  <span>{cmd.cooldown_seconds}s cooldown</span>
+                  <span>{cmd.cooldown_seconds}s {t.cooldown}</span>
                 )}
               </div>
             </div>

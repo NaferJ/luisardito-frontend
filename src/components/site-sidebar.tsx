@@ -3,11 +3,13 @@
 import { useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { LocaleSwitcher } from "@/components/i18n/locale-switcher"
+import { useI18n } from "@/components/i18n/provider"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { browseLinks, accountLinks, adminLinks, avatarColors } from "@/lib/nav-data"
 import { getKickOAuthUrl } from "@/lib/kick-auth"
-import { logout } from "@/app/shop/auth/actions"
+import { logout } from "@/app/[lang]/shop/auth/actions"
 import { useUser } from "@/components/user-provider"
 import { PendingCanjesBadge } from "@/components/pending-canjes-badge"
 import { OnlineStatus } from "@/components/online-status"
@@ -77,6 +79,7 @@ function AccountPill({
   onLogin: () => void
   showPoints?: boolean
 }>) {
+  const { dictionary } = useI18n()
   if (!user) {
     return (
       <button
@@ -85,7 +88,7 @@ function AccountPill({
         disabled={isRedirecting}
         className="h-7 rounded-full bg-secondary px-3 text-[13px] font-medium text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-95 disabled:opacity-50"
       >
-        {isRedirecting ? "..." : "Log in"}
+        {isRedirecting ? dictionary.common.connecting : dictionary.common.login}
       </button>
     )
   }
@@ -128,25 +131,42 @@ function NavSections({
   user: ReturnType<typeof useUser>
   activeHref: string
 }>) {
+  const { dictionary } = useI18n()
+  const labelFor = (href: string, fallback: string) => {
+    const key = href.split('/').pop() ?? ''
+    const labels: Record<string, string> = {
+      shop: dictionary.nav.shop,
+      canjes: dictionary.nav.canjes,
+      promociones: dictionary.nav.promotions,
+      comandos: dictionary.nav.commands,
+      leaderboard: dictionary.nav.leaderboard,
+      historial: dictionary.nav.history,
+      perfil: dictionary.nav.profile,
+      products: dictionary.nav.products,
+      usuarios: dictionary.nav.users,
+      kick: dictionary.nav.kick,
+    }
+    return labels[key] ?? fallback
+  }
   return (
     <nav className="flex flex-col gap-6 text-[13px]">
       <div className="flex flex-col gap-2.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Browse</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{dictionary.common.browse}</span>
         {browseLinks.map((link) => (
-          <NavLink key={link.href} href={link.href} label={link.label} active={link.href === activeHref} />
+          <NavLink key={link.href} href={link.href} label={labelFor(link.href, link.label)} active={link.href === activeHref} />
         ))}
       </div>
       {user && (
         <div className="flex flex-col gap-2.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Account</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{dictionary.common.account}</span>
           {accountLinks.map((link) => (
-            <NavLink key={link.href} href={link.href} label={link.label} active={link.href === activeHref} />
+            <NavLink key={link.href} href={link.href} label={labelFor(link.href, link.label)} active={link.href === activeHref} />
           ))}
         </div>
       )}
       {user && user.rol_id >= 3 && (
         <div className="flex flex-col gap-2.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{dictionary.common.admin}</span>
           {adminLinks.map((link) => (
             <div key={link.href} className="flex items-center">
               <NavLink href={link.href} label={link.label} active={link.href === activeHref} />
@@ -172,23 +192,24 @@ function SidebarFooter({
   onLogin: () => void
   mobile?: boolean
 }>) {
+  const { dictionary } = useI18n()
   return (
     <div className="flex flex-col gap-3">
       <p className="text-[13px] leading-relaxed font-medium text-foreground">
-        The community hub for Luisardito, Luisardium and Luisarvoid.
+        {dictionary.common.communityHub}
       </p>
       {user ? (
         <div className="flex items-center gap-2">
           <div className="flex h-8 items-center gap-1.5 rounded-full bg-secondary px-3 text-[13px] font-medium text-foreground">
             <span className="text-gold-bright">{formatCompactNumber(user.puntos)}</span>
-            <span className="text-muted-foreground">pts</span>
+            <span className="text-muted-foreground">{dictionary.common.points}</span>
           </div>
           <form action={logout}>
             <button
               type="submit"
               className="h-8 rounded-full bg-secondary px-4 text-[13px] font-medium text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-95"
             >
-              Log out
+              {dictionary.common.logout}
             </button>
           </form>
         </div>
@@ -200,7 +221,7 @@ function SidebarFooter({
             disabled={isRedirecting}
             className="h-8 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-[opacity,transform] duration-150 hover:opacity-85 active:scale-95 disabled:opacity-50"
           >
-            {isRedirecting ? "Connecting..." : "Sign up"}
+            {isRedirecting ? dictionary.common.connecting : dictionary.common.signup}
           </button>
           <div className="flex -space-x-2">
             {avatarColors.map((color, i) => (
@@ -232,11 +253,12 @@ function SidebarFooter({
       >
         <span>© 2026</span>
         <Link href="/info" className="hover:text-foreground">
-          Info
+          {dictionary.common.info}
         </Link>
         <Link href="/changelog" className="hover:text-foreground">
-          Changelog
+          {dictionary.common.changelog}
         </Link>
+        <LocaleSwitcher />
       </div>
     </div>
   )
@@ -251,6 +273,7 @@ function MobileDrawer({
   onClose,
   children,
 }: Readonly<{ open: boolean; onClose: () => void; children: ReactNode }>) {
+  const { dictionary } = useI18n()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -270,7 +293,7 @@ function MobileDrawer({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-40 flex flex-col overflow-hidden bg-background p-4 transition-[opacity,transform] duration-200 ease-out lg:hidden",
+        "fixed inset-0 z-40 flex flex-col overflow-hidden bg-background p-4 transition-[opacity,transform] duration-200 ease-out xl:hidden",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
       )}
     >
@@ -279,7 +302,7 @@ function MobileDrawer({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close menu"
+          aria-label={dictionary.common.closeMenu}
           className="flex size-8 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90"
         >
           <X className="size-4" aria-hidden="true" />
@@ -291,6 +314,7 @@ function MobileDrawer({
 }
 
 export function SiteSidebar() {
+  const { dictionary } = useI18n()
   const pathname = usePathname()
   const [isRedirecting, setIsRedirecting] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -330,7 +354,7 @@ export function SiteSidebar() {
           extra row above the page content on small screens). Points are
           surfaced in the account pill so the user always knows their
           balance while browsing, without opening the drawer. */}
-      <div className="sticky top-0 z-20 -mt-4 flex items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-4 pt-4 pb-4 backdrop-blur-sm lg:hidden">
+      <div className="sticky top-0 z-20 -mt-4 flex items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-4 pt-4 pb-4 backdrop-blur-sm xl:hidden">
         <div className="flex min-w-0 items-center gap-3">
           <Logo />
           <OnlineStatus />
@@ -340,7 +364,7 @@ export function SiteSidebar() {
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
+            aria-label={dictionary.common.openMenu}
             className="flex size-8 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90"
           >
             <Menu className="size-4" aria-hidden="true" />
@@ -358,7 +382,7 @@ export function SiteSidebar() {
       </MobileDrawer>
 
       {/* Desktop — static fixed sidebar, unchanged behavior. */}
-      <aside className="z-20 hidden lg:fixed lg:inset-y-0 lg:left-[max(1rem,calc((100vw-1680px)/2+1rem))] lg:flex lg:w-[220px] lg:flex-col lg:justify-between lg:py-8">
+      <aside className="z-20 hidden xl:fixed xl:inset-y-0 xl:left-[max(1rem,calc((100vw-1680px)/2+1rem))] xl:flex xl:w-[220px] xl:flex-col xl:justify-between xl:py-8">
         <div className="flex flex-col gap-8">
           <div className="flex items-center justify-between">
             <Logo />

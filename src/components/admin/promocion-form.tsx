@@ -1,27 +1,32 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useLocalizedRouter } from "@/components/i18n/use-localized-router"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
+import type { Dictionary } from "@/lib/i18n/shared"
 import { cn } from "@/lib/utils"
 import {
   createPromocion,
   updatePromocion,
   type PromocionFormData,
-} from "@/app/shop/admin/promociones/actions"
+} from "@/app/[lang]/shop/admin/promociones/actions"
 import type { Promocion } from "@/types"
 
+type PromoFormDict = Dictionary["admin"]["promocionForm"]
+
 const TIPO_OPTIONS = [
-  { value: "producto", label: "Product" },
-  { value: "categoria", label: "Category" },
-  { value: "global", label: "Global" },
-  { value: "por_cantidad", label: "By quantity" },
+  { value: "producto", label: (t: PromoFormDict) => t.tipos.producto },
+  { value: "categoria", label: (t: PromoFormDict) => t.tipos.categoria },
+  { value: "global", label: (t: PromoFormDict) => t.tipos.global },
+  { value: "por_cantidad", label: (t: PromoFormDict) => t.tipos.por_cantidad },
 ] as const
 
 const DESCUENTO_OPTIONS = [
-  { value: "porcentaje", label: "Percentage" },
-  { value: "fijo", label: "Fixed points" },
-  { value: "2x1", label: "2 for 1" },
-  { value: "3x2", label: "3 for 2" },
+  { value: "porcentaje", label: (t: PromoFormDict) => t.descuentos.porcentaje },
+  { value: "fijo", label: (t: PromoFormDict) => t.descuentos.fijo },
+  { value: "2x1", label: (t: PromoFormDict) => t.descuentos["2x1"] },
+  { value: "3x2", label: (t: PromoFormDict) => t.descuentos["3x2"] },
 ] as const
 
 function toInputDate(dateStr: string): string {
@@ -78,7 +83,9 @@ export function PromocionForm({
   mode: "create" | "edit"
   initialData?: Promocion
 }>) {
-  const router = useRouter()
+  const router = useLocalizedRouter()
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.promocionForm
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState<PromocionFormData>(
@@ -100,14 +107,14 @@ export function PromocionForm({
           await updatePromocion(String(initialData.id), form)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred")
+        setError(err instanceof Error ? err.message : t.errors.generic)
       }
     })
   }
 
-  let saveLabel = "Save changes"
-  if (pending) saveLabel = "Saving..."
-  else if (mode === "create") saveLabel = "Create promotion"
+  let saveLabel = t.actions.save
+  if (pending) saveLabel = t.actions.saving
+  else if (mode === "create") saveLabel = t.actions.create
 
   return (
     <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-5">
@@ -119,7 +126,7 @@ export function PromocionForm({
 
       {/* Nombre + Titulo */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Internal name">
+        <Field label={t.fields.name}>
           <input
             type="text"
             required
@@ -128,7 +135,7 @@ export function PromocionForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Display title">
+        <Field label={t.fields.title}>
           <input
             type="text"
             required
@@ -141,16 +148,16 @@ export function PromocionForm({
 
       {/* Codigo + Descripcion */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Code (optional)">
+        <Field label={interpolate(t.fields.optionalLabel, { label: t.fields.code })}>
           <input
             type="text"
             value={form.codigo ?? ""}
             onChange={(e) => set("codigo", e.target.value || null)}
-            placeholder="SUMMER10"
+            placeholder={t.codePlaceholder}
             className={inputClass}
           />
         </Field>
-        <Field label="Description (optional)">
+        <Field label={interpolate(t.fields.optionalLabel, { label: t.fields.description })}>
           <input
             type="text"
             value={form.descripcion ?? ""}
@@ -162,25 +169,25 @@ export function PromocionForm({
 
       {/* Tipo + Descuento */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Type">
+        <Field label={t.fields.type}>
           <select
             value={form.tipo}
             onChange={(e) => set("tipo", e.target.value as PromocionFormData["tipo"])}
             className={inputClass}
           >
             {TIPO_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>{o.label(t)}</option>
             ))}
           </select>
         </Field>
-        <Field label="Discount type">
+        <Field label={t.fields.discountType}>
           <select
             value={form.tipo_descuento}
             onChange={(e) => set("tipo_descuento", e.target.value as PromocionFormData["tipo_descuento"])}
             className={inputClass}
           >
             {DESCUENTO_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>{o.label(t)}</option>
             ))}
           </select>
         </Field>
@@ -188,7 +195,7 @@ export function PromocionForm({
 
       {/* Valor + Max descuento */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Discount value">
+        <Field label={t.fields.value}>
           <input
             type="number"
             required
@@ -198,7 +205,7 @@ export function PromocionForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Max discount (optional)">
+        <Field label={interpolate(t.fields.optionalLabel, { label: t.fields.maxDiscount })}>
           <input
             type="number"
             min={0}
@@ -211,7 +218,7 @@ export function PromocionForm({
 
       {/* Fechas */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Start date">
+        <Field label={t.fields.start}>
           <input
             type="date"
             required
@@ -220,7 +227,7 @@ export function PromocionForm({
             className={inputClass}
           />
         </Field>
-        <Field label="End date">
+        <Field label={t.fields.end}>
           <input
             type="date"
             required
@@ -233,7 +240,7 @@ export function PromocionForm({
 
       {/* Usos + Minimo */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Field label="Max total uses (optional)">
+        <Field label={interpolate(t.fields.optionalLabel, { label: t.fields.maxUses })}>
           <input
             type="number"
             min={0}
@@ -242,7 +249,7 @@ export function PromocionForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Uses per user">
+        <Field label={t.fields.usesPerUser}>
           <input
             type="number"
             required
@@ -252,7 +259,7 @@ export function PromocionForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Min points">
+        <Field label={t.fields.minPoints}>
           <input
             type="number"
             required
@@ -266,7 +273,7 @@ export function PromocionForm({
 
       {/* Prioridad + Toggles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Priority">
+        <Field label={t.fields.priority}>
           <input
             type="number"
             required
@@ -278,12 +285,12 @@ export function PromocionForm({
         </Field>
         <div className="flex flex-col gap-3 pt-5">
           <Toggle
-            label="Requires code"
+            label={t.fields.requiresCode}
             checked={form.requiere_codigo}
             onChange={(v) => set("requiere_codigo", v)}
           />
           <Toggle
-            label="Allows stacking"
+            label={t.fields.allowsStacking}
             checked={form.aplica_acumulacion}
             onChange={(v) => set("aplica_acumulacion", v)}
           />
@@ -304,7 +311,7 @@ export function PromocionForm({
           onClick={() => router.push("/shop/admin/promociones")}
           className="flex h-9 items-center rounded-full border border-border px-5 text-[13px] font-medium text-foreground transition-colors hover:bg-secondary"
         >
-          Cancel
+          {t.actions.cancel}
         </button>
       </div>
     </form>

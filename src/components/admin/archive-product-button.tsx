@@ -1,10 +1,14 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { archiveProduct } from "@/app/shop/admin/products/actions"
+import { archiveProduct } from "@/app/[lang]/shop/admin/products/actions"
+import { useI18n } from "@/components/i18n/provider"
+import { interpolate } from "@/lib/i18n/shared"
 import { cn } from "@/lib/utils"
 
 export function ArchiveProductButton({ id, name }: Readonly<{ id: string; name: string }>) {
+  const { dictionary } = useI18n()
+  const t = dictionary.admin.archive
   const [isPending, startTransition] = useTransition()
   const [confirming, setConfirming] = useState(false)
 
@@ -16,14 +20,14 @@ export function ArchiveProductButton({ id, name }: Readonly<{ id: string; name: 
         disabled={isPending}
         className="text-[13px] text-muted-foreground transition-colors hover:text-destructive"
       >
-        Archive
+        {t.archive}
       </button>
     )
   }
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[13px] text-muted-foreground">Archive {name}?</span>
+      <span className="text-[13px] text-muted-foreground">{interpolate(t.confirm, { name })}</span>
       <button
         type="button"
         onClick={() => {
@@ -40,7 +44,7 @@ export function ArchiveProductButton({ id, name }: Readonly<{ id: string; name: 
           "text-[13px] font-medium text-destructive transition-opacity hover:opacity-70 disabled:opacity-50",
         )}
       >
-        {isPending ? "Archiving..." : "Confirm"}
+        {isPending ? t.archiving : t.confirmButton}
       </button>
       <button
         type="button"
@@ -48,7 +52,7 @@ export function ArchiveProductButton({ id, name }: Readonly<{ id: string; name: 
         disabled={isPending}
         className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
       >
-        Cancel
+        {dictionary.common.cancel}
       </button>
     </div>
   )

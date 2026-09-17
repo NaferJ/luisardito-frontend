@@ -1,6 +1,7 @@
 "use client"
 
 import { Search, Download } from "lucide-react"
+import { useI18n } from "@/components/i18n/provider"
 import { cn } from "@/lib/utils"
 
 interface SearchInputProps {
@@ -44,13 +45,15 @@ interface CsvButtonProps {
 
 /** Shared CSV export button used by all admin list headers. */
 export function CsvButton({ onClick }: CsvButtonProps) {
+  const { dictionary } = useI18n()
+  const t = dictionary.adminShared
   return (
     <button
       type="button"
       onClick={onClick}
       className="flex h-8 items-center gap-1.5 rounded-full border border-border px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-secondary"
-      aria-label="Export CSV"
-      title="Export filtered results as CSV"
+      aria-label={t.exportCsv}
+      title={t.exportCsvTitle}
     >
       <Download className="size-3.5" />
       <span className="hidden sm:inline">CSV</span>
