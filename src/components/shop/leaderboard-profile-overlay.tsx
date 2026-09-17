@@ -115,11 +115,10 @@ export function LeaderboardProfileOverlay({
 
   return (
     <>
-      <aside
-        role="dialog"
-        aria-modal="true"
+      <dialog
+        open
         aria-labelledby="leaderboard-profile-title"
-        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
+        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 m-0 flex flex-col overflow-hidden border-0 bg-background p-0 lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
       >
         <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
           <button type="button" onClick={onClose} aria-label="Close" className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90">
@@ -147,7 +146,7 @@ export function LeaderboardProfileOverlay({
             </div>
           </div>
         </div>
-      </aside>
+      </dialog>
 
       <div className="pointer-events-none fixed inset-y-0 left-0 right-0 z-40 hidden flex-row overflow-hidden lg:flex lg:left-[max(252px,calc(50vw-588px))] lg:right-[120px]">
         <div className="w-[292px] shrink-0" />

@@ -122,20 +122,12 @@ function LeaderboardRow({
   const name = entryName(entry)
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       aria-label={`View ${name}'s leaderboard profile`}
       onClick={onOpen}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault()
-          onOpen()
-        }
-      }}
       className={cn(
-        "flex cursor-pointer items-center gap-3 border-b border-border/20 px-4 py-3.5 transition-colors last:border-b-0 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold",
+        "flex w-full cursor-pointer appearance-none items-center gap-3 border-0 border-b border-border/20 bg-transparent px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold",
         index % 2 === 1 ? "bg-card/90" : "bg-background/70",
         isMe && "ring-1 ring-inset ring-gold/40",
       )}
@@ -203,7 +195,7 @@ function LeaderboardRow({
           <ChangeIndicator entry={entry} />
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
