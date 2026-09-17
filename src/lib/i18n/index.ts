@@ -2,7 +2,7 @@ import 'server-only'
 
 import { lang } from 'next/root-params'
 import { notFound } from 'next/navigation'
-import { hasLocale, localeFromAcceptLanguage } from './locales'
+import { hasLocale } from './locales'
 import type { Locale } from './locales'
 import type { Dictionary } from './shared'
 import en from './dictionaries/en.json'
@@ -20,4 +20,4 @@ export async function getDictionary(): Promise<Dictionary> {
 }
 
 export { getRequestLocale } from './request-locale'
-export { localeFromAcceptLanguage }
+export { localeFromAcceptLanguage } from './locales'

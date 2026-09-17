@@ -18,8 +18,10 @@ export function LocaleSwitcher() {
     const segments = pathname.split("/")
     if (hasLocale(segments[1])) segments[1] = nextLocale
     else segments.splice(1, 0, nextLocale)
+    const path = segments.join("/") || `/${nextLocale}`
     const query = searchParams.toString()
-    router.push(`${segments.join("/") || `/${nextLocale}`}${query ? `?${query}` : ""}`)
+    const querySuffix = query ? `?${query}` : ""
+    router.push(`${path}${querySuffix}`)
   }
 
   return (

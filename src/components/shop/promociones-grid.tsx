@@ -36,6 +36,12 @@ function daysLeft(fechaFin: string): number {
   return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 }
 
+function usageLabel(usageLeft: number | null, usesExhausted: string, usesLeftOne: string, usesLeftMany: string): string {
+  if (usageLeft !== null && usageLeft <= 0) return usesExhausted
+  if (usageLeft === 1) return usesLeftOne
+  return interpolate(usesLeftMany, { n: usageLeft ?? 0 })
+}
+
 export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promocion[] }>) {
   const { dictionary } = useI18n()
   const locale = useLocale()
@@ -62,12 +68,7 @@ export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promoci
           promo.cantidad_usos_maximos !== null
             ? promo.cantidad_usos_maximos - promo.cantidad_usos_actuales
             : null
-        const usageExhausted = usageLeft !== null && usageLeft <= 0
-        const usageLabel = usageExhausted
-          ? t.usesExhausted
-          : usageLeft === 1
-            ? t.usesLeftOne
-            : interpolate(t.usesLeftMany, { n: usageLeft ?? 0 })
+        const currentUsageLabel = usageLabel(usageLeft, t.usesExhausted, t.usesLeftOne, t.usesLeftMany)
 
         return (
           <div
@@ -129,7 +130,7 @@ export function PromocionesGrid({ promociones }: Readonly<{ promociones: Promoci
                 )}
                 {usageLeft !== null && (
                   <span className="text-muted-foreground">
-                    {usageLabel}
+                    {currentUsageLabel}
                   </span>
                 )}
                 {promo.requiere_codigo && (

@@ -73,7 +73,7 @@ export function LeaderboardProfileOverlay({
 }>) {
   const { dictionary } = useI18n()
   const t = dictionary.leaderboard
-  const panelRef = useRef<HTMLElement>(null)
+  const panelRef = useRef<HTMLDialogElement>(null)
   const indexRef = useRef(index)
   const entriesLengthRef = useRef(entries.length)
   const onCloseRef = useRef(onClose)
@@ -117,17 +117,15 @@ export function LeaderboardProfileOverlay({
       const focusable = [...panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)]
       if (focusable.length === 0) return
       const first = focusable[0]
-      const last = focusable[focusable.length - 1]
+      const last = focusable.at(-1)
+      if (!first || !last) return
       const active = document.activeElement
-      if (!panelRef.current.contains(active)) {
+      const outsidePanel = !panelRef.current.contains(active)
+      const atBoundary = (event.shiftKey && active === first) || (!event.shiftKey && active === last)
+      if (outsidePanel || atBoundary) {
         event.preventDefault()
-        first.focus()
-      } else if (event.shiftKey && active === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault()
-        first.focus()
+        if (outsidePanel || (!event.shiftKey && active === last)) first.focus()
+        else last.focus()
       }
     }
 
@@ -169,13 +167,17 @@ export function LeaderboardProfileOverlay({
 
   return (
     <>
-      <aside
+      <dialog
         ref={panelRef}
         tabIndex={-1}
-        role="dialog"
+        open
         aria-modal="true"
         aria-labelledby="leaderboard-profile-title"
-        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
+        onCancel={(event) => {
+          event.preventDefault()
+          onClose()
+        }}
+        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 m-0! max-w-none! border-0! p-0! flex! flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
       >
         <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
           <button type="button" onClick={onClose} aria-label={t.close} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90">
@@ -203,7 +205,7 @@ export function LeaderboardProfileOverlay({
             </div>
           </div>
         </div>
-      </aside>
+      </dialog>
 
       <div className="pointer-events-none fixed inset-y-0 left-0 right-0 z-40 hidden flex-row overflow-hidden xl:flex xl:left-[max(252px,calc(50vw-588px))]">
         <div aria-hidden="true" className="pointer-events-auto absolute inset-0 bg-background/75 backdrop-blur-[8px]" />

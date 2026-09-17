@@ -118,6 +118,18 @@ function ensureContrast(color: string, background: string, isDark: boolean): str
 
 const TRANSITION_MS = 1200
 
+function defaultColor(pathname: string, isDark: boolean): string {
+  const pathSegments = pathname.split("/").filter(Boolean)
+  const isLanding = pathSegments.length === 0 || (pathSegments.length === 1 && hasLocale(pathSegments[0]))
+  if (isLanding) return isDark ? "#588C23" : "#05401A"
+  return isDark ? "#D49A22" : "#8F5E0A"
+}
+
+function targetColorFor(pathname: string, isDark: boolean, colorBack: string, overlayColors: string[] | null): string {
+  const overlayColor = overlayColors?.length ? ensureContrast(overlayColors[0], colorBack, isDark) : null
+  return overlayColor ?? defaultColor(pathname, isDark)
+}
+
 export function SideDecor({ side }: SideDecorProps) {
   const pathname = usePathname()
   const [isDark, setIsDark] = useState(false)
@@ -164,21 +176,7 @@ export function SideDecor({ side }: SideDecorProps) {
   // saturation — just enough to stay visible. The original product color is
   // kept rather than swapped for a different candidate.
   const overlayColors = useOverlayColors()
-  const pathSegments = pathname.split("/").filter(Boolean)
-  const isLanding =
-    pathSegments.length === 0 || (pathSegments.length === 1 && hasLocale(pathSegments[0]))
-  const defaultColor = isLanding
-    ? isDark
-      ? "#588C23"
-      : "#05401A"
-    : isDark
-      ? "#D49A22"
-      : "#8F5E0A"
-  const overlayColor =
-    overlayColors && overlayColors.length > 0
-      ? ensureContrast(overlayColors[0], colorBack, isDark)
-      : null
-  const targetColor = overlayColor ?? defaultColor
+  const targetColor = targetColorFor(pathname, isDark, colorBack, overlayColors)
 
   // Smoothly animate colorFront toward the target whenever it changes
   const [displayColor, setDisplayColor] = useState(targetColor)

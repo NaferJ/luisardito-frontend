@@ -16,7 +16,10 @@ export async function GET(request: Request): Promise<Response> {
   const state = searchParams.get('state')
   const oauthError = searchParams.get('error')
   const locale = await getRequestLocale()
-  const shopUrl = (error?: string) => `/${locale}/shop${error ? `?error=${encodeURIComponent(error)}` : ''}`
+  const shopUrl = (error?: string) => {
+    const query = error ? `?error=${encodeURIComponent(error)}` : ''
+    return `/${locale}/shop${query}`
+  }
 
   if (oauthError) {
     redirect(shopUrl(oauthError))

@@ -63,7 +63,10 @@ function localeRedirect(request: NextRequest, locale: string) {
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
-  if (pathname.startsWith('/_next') || pathname === '/favicon.ico' || /\.[^/]+$/.test(pathname)) return NextResponse.next()
+  const lastSegment = pathname.slice(pathname.lastIndexOf('/') + 1)
+  const lastDot = lastSegment.lastIndexOf('.')
+  const hasFileExtension = lastDot !== -1 && lastDot < lastSegment.length - 1
+  if (pathname.startsWith('/_next') || pathname === '/favicon.ico' || hasFileExtension) return NextResponse.next()
   if (pathname.startsWith('/shop/api/') || pathname.startsWith('/shop/auth/')) return NextResponse.next()
 
   const firstSegment = pathname.split('/')[1]
