@@ -23,7 +23,7 @@ export interface BotCommand {
 export async function getPublicBotCommands(): Promise<BotCommand[]> {
   try {
     const response = await apiFetch<{ data: BotCommand[] } | BotCommand[]>(
-      '/api/kick-admin/bot-commands/public',
+      '/api/kick-admin/bot-commands/public?enabled=true&limit=100',
       { skipAuth: true },
     )
     return Array.isArray(response) ? response : (response.data ?? [])

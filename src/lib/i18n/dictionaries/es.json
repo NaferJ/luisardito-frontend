@@ -421,7 +421,7 @@
         "hoursAgo": "hace {n}h",
         "daysAgo": "hace {n}d",
         "weeksAgo": "hace {n}sem",
-        "monthsAgo": "hace {n}meses"
+        "monthsAgo": "hace {n} meses"
       },
       "statsLoadFailed": "No se pudieron cargar las estadísticas del producto.",
       "emptyHint": "Los productos que crees aparecerán aquí."
