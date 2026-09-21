@@ -417,11 +417,11 @@
       },
       "time": {
         "justNow": "ahora mismo",
-        "minutesAgo": "hace {n}m",
-        "hoursAgo": "hace {n}h",
-        "daysAgo": "hace {n}d",
-        "weeksAgo": "hace {n}sem",
-        "monthsAgo": "hace {n}meses"
+        "minutesAgo": "hace {n} minutos",
+        "hoursAgo": "hace {n} horas",
+        "daysAgo": "hace {n} días",
+        "weeksAgo": "hace {n} semanas",
+        "monthsAgo": "hace {n} meses"
       },
       "statsLoadFailed": "No se pudieron cargar las estadísticas del producto.",
       "emptyHint": "Los productos que crees aparecerán aquí."
@@ -487,9 +487,9 @@
       "unknown": "Desconocido",
       "time": {
         "today": "hoy",
-        "daysAgo": "hace {n}d",
-        "monthsAgo": "hace {n}m",
-        "yearsAgo": "hace {n}a"
+        "daysAgo": "hace {n} días",
+        "monthsAgo": "hace {n} meses",
+        "yearsAgo": "hace {n} años"
       },
       "drawer": {
         "user": "Usuario",
@@ -914,9 +914,9 @@
       "time": {
         "never": "Nunca",
         "justNow": "Ahora mismo",
-        "minutesAgo": "hace {n}m",
-        "hoursAgo": "hace {n}h",
-        "daysAgo": "hace {n}d"
+        "minutesAgo": "hace {n} minutos",
+        "hoursAgo": "hace {n} horas",
+        "daysAgo": "hace {n} días"
       },
       "drawer": {
         "type": "Tipo",

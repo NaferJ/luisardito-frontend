@@ -25,6 +25,7 @@ import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS, getDateRangeStart } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
 import { OverlayDrawer } from "@/components/overlay-drawer"
+import { useOverlayImageColors } from "@/lib/overlay-color-store"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
@@ -837,6 +838,7 @@ function DetailDrawer({
   const user = canje.Usuario ?? canje.usuario
   const avatar = canjeUserAvatar(canje)
   const productImg = canjeProductImage(canje)
+  useOverlayImageColors(productImg ?? null)
   const status = STATUS_STYLES[canje.estado] ?? STATUS_STYLES.pendiente
   const StatusIcon = status.icon
   const currentPrice = canjeCurrentPrice(canje)

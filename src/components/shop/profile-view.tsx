@@ -4,8 +4,6 @@ import { useState } from "react"
 import {
   LogOut,
   RefreshCw,
-  Crown,
-  Star,
   ExternalLink,
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
@@ -84,22 +82,8 @@ export function ProfileView({
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="truncate text-[18px] font-semibold text-foreground">{name}</span>
-            {isVip && (
-              <span className="flex items-center gap-1 rounded-full bg-gold/20 px-2 py-0.5 text-[11px] font-bold text-gold-bright">
-                <Crown className="size-3" aria-hidden="true" />
-                VIP
-              </span>
-            )}
-            {isSubscriber && (
-              subDuration != null ? (
-                <SubscriberBadge durationMonths={subDuration} size={18} />
-              ) : (
-                <span className="flex items-center gap-1 rounded-full bg-foreground/10 px-2 py-0.5 text-[11px] font-bold text-foreground">
-                  <Star className="size-3" aria-hidden="true" />
-                  SUB
-                </span>
-              )
-            )}
+            {isVip && <VipBadge size={18} />}
+            {isSubscriber && <SubscriberBadge durationMonths={subDuration ?? 1} size={18} />}
             {isAdmin && (
               <span className="rounded-full bg-gold px-2 py-0.5 text-[11px] font-bold text-gold-foreground">
                 ADMIN

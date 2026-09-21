@@ -10,8 +10,7 @@ import { interpolate, type Dictionary } from "@/lib/i18n/shared"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { productToCard } from "@/lib/product-mapper"
 import { DesignCard } from "@/components/design-card"
-import { extractDominantColors } from "@/lib/extract-color"
-import { setOverlayColors } from "@/lib/overlay-color-store"
+import { useOverlayImageColors } from "@/lib/overlay-color-store"
 import { OverlayNavHeader, OverlayTitleBar } from "@/components/overlay-nav"
 import { useCollapsingOverlayHeader, useOverlayKeyboardNav } from "@/lib/overlay-hooks"
 
@@ -87,30 +86,6 @@ function renderRedeemButtonContent(redeeming: boolean, cooldown: number, t: Prod
       {t.redeem}
     </>
   )
-}
-
-// Drive the side shader's color from the dominant colors of the currently
-// open product image. Skips the local placeholder (no useful color to
-// sample). Stale results from rapid arrow navigation are ignored via the
-// cancelled flag; the store is cleared once when the overlay unmounts.
-// SideDecor picks the candidate with the best contrast against the current
-// background, so a dark image won't produce an invisible dark shader color.
-function useOverlayColors(product: Producto | undefined) {
-  const imageSrc = product?.imagen || product?.imagen_url || null
-  useEffect(() => {
-    if (!imageSrc) return
-    let cancelled = false
-    extractDominantColors(imageSrc).then((colors) => {
-      if (!cancelled) setOverlayColors(colors.length > 0 ? colors : null)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [imageSrc])
-
-  useEffect(() => {
-    return () => setOverlayColors(null)
-  }, [])
 }
 
 /** Encapsulates redemption state, the cooldown timer, and the redeem action. */
@@ -206,7 +181,7 @@ export function ProductDetailOverlay({
   const product = products[index]
 
   useOverlayKeyboardNav(index, products.length, onClose, onNavigate)
-  useOverlayColors(product)
+  useOverlayImageColors(product ? product.imagen || product.imagen_url || null : null)
 
   const { redeeming, cooldown, result, handleRedeem } = useRedeemProduct(
     product,
@@ -246,6 +221,7 @@ export function ProductDetailOverlay({
             alt=""
             fill
             sizes="100vw"
+            quality={50}
             className="object-cover blur-3xl opacity-40"
             priority
           />
@@ -486,6 +462,7 @@ function MobileImageHeader({
           alt={product.nombre}
           fill
           sizes="(max-width: 640px) 90vw, 384px"
+          quality={90}
           className="object-cover"
           priority
         />
@@ -570,21 +547,48 @@ function MoreProducts({
   t: ProductDict
 }>) {
   const { dictionary } = useI18n()
+  const [imageAspects, setImageAspects] = useState<Record<string, number>>({})
+  const columns: ReactNode[][] = [[], []]
+  const heights = [0, 0]
+
+  products.forEach((product, index) => {
+    if (index === currentIndex) return
+    const baseCard = productToCard(product, index, dictionary.card)
+    const measuredAspect = imageAspects[baseCard.id]
+    const card = measuredAspect
+      ? { ...baseCard, aspectStyle: { aspectRatio: String(measuredAspect) }, useNaturalAspect: false }
+      : baseCard
+    const columnIndex = heights.indexOf(Math.min(...heights))
+    const aspectRatio = measuredAspect ?? (
+      product.imagen_width && product.imagen_height
+        ? product.imagen_width / product.imagen_height
+        : 1
+    )
+
+    columns[columnIndex].push(
+      <DesignCard
+        key={card.id}
+        card={card}
+        onOpen={() => onSelect(index)}
+        onAspectRatio={(ratio) => {
+          setImageAspects((current) => current[card.id] === ratio
+            ? current
+            : { ...current, [card.id]: ratio })
+        }}
+      />,
+    )
+    heights[columnIndex] += 1 / aspectRatio
+  })
+
   return (
     <div className="flex flex-col gap-3 pt-4">
       <h3 className="text-[13px] font-medium text-muted-foreground">{t.moreProducts}</h3>
-      <div className="grid grid-cols-2 gap-3 [&_article]:mb-0">
-        {products.map((p, i) => {
-          if (i === currentIndex) return null
-          const card = productToCard(p, i, dictionary.card)
-          return (
-            <DesignCard
-              key={card.id}
-              card={card}
-              onOpen={() => onSelect(i)}
-            />
-          )
-        })}
+      <div className="flex items-start gap-3 [&_article]:mb-3">
+        {columns.map((column, index) => (
+          <div key={index} className="min-w-0 flex-1">
+            {column}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -617,6 +621,7 @@ function ProductLightbox({ product }: Readonly<{ product: Producto }>) {
             alt={product.nombre}
             fill
             sizes="672px"
+            quality={90}
             className="object-cover"
             priority
           />

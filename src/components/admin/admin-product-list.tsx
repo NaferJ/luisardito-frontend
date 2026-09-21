@@ -215,8 +215,9 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
             sortDir={sortDir}
             onSort={toggleSort}
             leadingLabel={t.imageLabel}
-            leadingClassName="w-10 shrink-0"
+            leadingClassName="w-20 shrink-0"
             trailingLabel={t.actions}
+            trailingClassName="w-28 shrink-0 text-right"
           />
 
           {/* Rows */}
@@ -236,17 +237,19 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
                 className="flex min-w-[960px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
               >
                 {/* Image */}
-                <div className="size-10 shrink-0 overflow-hidden rounded-sm bg-secondary">
-                  {(p.imagen || p.imagen_url) && (
-                    <Image
-                      src={p.imagen ?? p.imagen_url ?? ""}
-                      alt={p.nombre}
-                      width={40}
-                      height={40}
-                      className="size-full object-cover"
-                      unoptimized
-                    />
-                  )}
+                <div className="flex h-10 w-20 shrink-0">
+                  <div className="size-10 overflow-hidden rounded-sm bg-secondary">
+                    {(p.imagen || p.imagen_url) && (
+                      <Image
+                        src={p.imagen ?? p.imagen_url ?? ""}
+                        alt={p.nombre}
+                        width={40}
+                        height={40}
+                        className="size-full object-cover"
+                        unoptimized
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {/* Name + slug */}
@@ -283,7 +286,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
                 </span>
 
                 {/* Actions (stopPropagation so row click doesn't fire) */}
-                <div className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <div className="flex w-28 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-[11px] font-medium",

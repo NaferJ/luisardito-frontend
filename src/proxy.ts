@@ -74,6 +74,13 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   const locale = firstSegment
   const normalizedPath = pathname.slice(`/${locale}`.length) || '/'
+  if (normalizedPath === '/auth/callback') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/shop/auth/callback'
+    const response = NextResponse.redirect(url)
+    response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
+    return response
+  }
   if (!normalizedPath.startsWith('/shop')) {
     const response = NextResponse.next()
     response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
