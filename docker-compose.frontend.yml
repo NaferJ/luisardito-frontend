@@ -1,6 +1,6 @@
 services:
   frontend:
-    container_name: luisardito-frontend
+    container_name: luisardito-web
     image: luisardito-frontend:production
     restart: unless-stopped
     ports:

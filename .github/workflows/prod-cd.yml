@@ -8,16 +8,20 @@ concurrency:
   group: production-deployment
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: [self-hosted, linux]
+    timeout-minutes: 20
     env:
       IMAGE_NAME: luisardito-frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Validate deployment inputs
         env:
           API_URL: ${{ secrets.FRONTEND_API_URL_PROD }}
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME_PROD }}
@@ -26,72 +30,85 @@ jobs:
           test -n "${API_URL}"
           test -n "${CLOUDINARY_CLOUD_NAME}"
           test -n "${CLOUDINARY_UPLOAD_PRESET}"
+          docker version
+          docker compose version
+
+      - name: Build Docker image
+        env:
+          API_URL: ${{ secrets.FRONTEND_API_URL_PROD }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME_PROD }}
+          CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_PROD }}
+        run: |
           docker build \
             --build-arg "NEXT_PUBLIC_API_URL=${API_URL}" \
             --build-arg "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}" \
             --build-arg "NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=${CLOUDINARY_UPLOAD_PRESET}" \
             --tag "${IMAGE_NAME}:${GITHUB_SHA}" .
-          docker save "${IMAGE_NAME}:${GITHUB_SHA}" -o app-image.tar
+
+      - name: Deploy on production VPS
+        env:
+          API_URL: ${{ secrets.FRONTEND_API_URL_PROD }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME_PROD }}
+          CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_PROD }}
+        run: |
+          set -eu
+          DEPLOY_DIR="$HOME/apps/luisardito-frontend"
+          COMPOSE_FILE="$DEPLOY_DIR/docker-compose.frontend.yml"
+          COMPOSE_ROLLBACK_FILE="$DEPLOY_DIR/docker-compose.frontend.rollback.yml"
+          LEGACY_COMPOSE_FILE="$HOME/apps/luisardito-shop-frontend/docker-compose.frontend.yml"
+          ENV_FILE="$HOME/.env.luisardito-frontend.production"
+          ENV_ROLLBACK_FILE="$HOME/.env.luisardito-frontend.rollback"
+          STABLE_IMAGE="$IMAGE_NAME:production"
+          ROLLBACK_IMAGE="$IMAGE_NAME:rollback"
+
+          mkdir -p "$DEPLOY_DIR"
+          if [ -f "$COMPOSE_FILE" ]; then
+            cp -p "$COMPOSE_FILE" "$COMPOSE_ROLLBACK_FILE"
+          fi
+          if [ -f "$ENV_FILE" ]; then
+            cp -p "$ENV_FILE" "$ENV_ROLLBACK_FILE"
+          fi
+          install -m 644 docker-compose.frontend.yml "$COMPOSE_FILE"
           printf '%s\n' \
             'NODE_ENV=production' \
             'PORT=3000' \
             "NEXT_PUBLIC_API_URL=${API_URL}" \
             "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}" \
             "NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=${CLOUDINARY_UPLOAD_PRESET}" \
-            > .env.luisardito-frontend.production
-          # scp-action tars these files inside a container that cannot read
-          # owner-only files; they only contain non-secret values. The remote
-          # deploy step restores 600 on the env file after transfer.
-          chmod 644 app-image.tar .env.luisardito-frontend.production
+            > "$ENV_FILE"
+          chmod 600 "$ENV_FILE"
+          docker compose -f "$COMPOSE_FILE" config --quiet
 
-      - name: Copy deployment files to production VPS
-        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634
-        with:
-          host: ${{ secrets.PROD_SSH_HOST }}
-          port: ${{ secrets.PROD_SSH_PORT }}
-          username: ${{ secrets.PROD_SSH_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          passphrase: ${{ secrets.PROD_SSH_PASSPHRASE }}
-          source: "app-image.tar,docker-compose.frontend.yml,.env.luisardito-frontend.production"
-          target: "~/"
+          if docker image inspect "$STABLE_IMAGE" >/dev/null 2>&1; then
+            docker tag "$STABLE_IMAGE" "$ROLLBACK_IMAGE"
+          fi
+          docker tag "$IMAGE_NAME:${GITHUB_SHA}" "$STABLE_IMAGE"
 
-      - name: Deploy on production via SSH
-        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17
-        with:
-          host: ${{ secrets.PROD_SSH_HOST }}
-          port: ${{ secrets.PROD_SSH_PORT }}
-          username: ${{ secrets.PROD_SSH_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          passphrase: ${{ secrets.PROD_SSH_PASSPHRASE }}
-          script: |
-            set -eu
-            IMAGE_NAME=luisardito-frontend
-            DEPLOY_DIR=~/apps/luisardito-frontend
-            COMPOSE_FILE="$DEPLOY_DIR/docker-compose.frontend.yml"
-            LEGACY_COMPOSE_FILE=~/apps/luisardito-shop-frontend/docker-compose.frontend.yml
-            STABLE_IMAGE="$IMAGE_NAME:production"
-            ROLLBACK_IMAGE="$IMAGE_NAME:rollback"
-            mkdir -p "$DEPLOY_DIR"
-            mv -f ~/docker-compose.frontend.yml "$COMPOSE_FILE"
-            chmod 600 ~/.env.luisardito-frontend.production
-            docker load -i ~/app-image.tar
-            rm -f ~/app-image.tar
-            if docker image inspect "$STABLE_IMAGE" >/dev/null 2>&1; then
-              docker tag "$STABLE_IMAGE" "$ROLLBACK_IMAGE"
-            fi
-            docker tag "$IMAGE_NAME:${{ github.sha }}" "$STABLE_IMAGE"
-            if [ -f "$LEGACY_COMPOSE_FILE" ]; then
-              docker compose -f "$LEGACY_COMPOSE_FILE" down --remove-orphans || true
-            fi
-            docker rm -f app-prod luisardito-shop-frontend 2>/dev/null || true
-            if ! docker compose -f "$COMPOSE_FILE" up -d --force-recreate --wait --wait-timeout 90; then
-              docker compose -f "$COMPOSE_FILE" logs --tail=100
-              docker compose -f "$COMPOSE_FILE" down || true
-              if docker image inspect "$ROLLBACK_IMAGE" >/dev/null 2>&1; then
-                docker tag "$ROLLBACK_IMAGE" "$STABLE_IMAGE"
-                docker compose -f "$COMPOSE_FILE" up -d --force-recreate --wait --wait-timeout 90
-              elif [ -f "$LEGACY_COMPOSE_FILE" ]; then
-                docker compose -f "$LEGACY_COMPOSE_FILE" up -d
+          if [ -f "$LEGACY_COMPOSE_FILE" ]; then
+            docker compose -f "$LEGACY_COMPOSE_FILE" down --remove-orphans || true
+          fi
+          docker rm -f app-prod luisardito-shop-frontend luisardito-frontend 2>/dev/null || true
+
+          if ! docker compose -f "$COMPOSE_FILE" up -d --force-recreate --wait --wait-timeout 90; then
+            docker compose -f "$COMPOSE_FILE" logs --tail=100
+            docker compose -f "$COMPOSE_FILE" down || true
+            if docker image inspect "$ROLLBACK_IMAGE" >/dev/null 2>&1; then
+              docker tag "$ROLLBACK_IMAGE" "$STABLE_IMAGE"
+              if [ -f "$COMPOSE_ROLLBACK_FILE" ]; then
+                cp -p "$COMPOSE_ROLLBACK_FILE" "$COMPOSE_FILE"
               fi
-              exit 1
+              if [ -f "$ENV_ROLLBACK_FILE" ]; then
+                cp -p "$ENV_ROLLBACK_FILE" "$ENV_FILE"
+              fi
+              docker compose -f "$COMPOSE_FILE" up -d --force-recreate --wait --wait-timeout 90
+            elif [ -f "$LEGACY_COMPOSE_FILE" ]; then
+              docker compose -f "$LEGACY_COMPOSE_FILE" up -d
             fi
+            exit 1
+          fi
+
+          docker compose -f "$COMPOSE_FILE" ps
+
+      - name: Clean deployment image tag
+        if: always()
+        run: docker image rm "${IMAGE_NAME}:${GITHUB_SHA}" 2>/dev/null || true
