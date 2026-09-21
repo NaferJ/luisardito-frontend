@@ -1,6 +1,6 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import Image from "next/image"
 import { ArrowUpRight, Star } from "lucide-react"
 import { useI18n } from "@/components/i18n/provider"
@@ -15,6 +15,7 @@ export type DesignCardData = {
   readonly aspect: string
   /** Inline aspect-ratio style from real image dimensions. Takes precedence over `aspect`. */
   readonly aspectStyle?: { aspectRatio: string }
+  readonly useNaturalAspect?: boolean
   readonly avatarColor: string
   readonly badge?: "star" | number
   readonly tag: string
@@ -38,12 +39,16 @@ export type DesignCardData = {
 export function DesignCard({
   card,
   onOpen,
+  onAspectRatio,
 }: Readonly<{
   card: DesignCardData
   onOpen: () => void
+  onAspectRatio?: (ratio: number) => void
 }>) {
   const { dictionary } = useI18n()
   const t = dictionary.card
+  const [naturalAspect, setNaturalAspect] = useState<string>()
+  const aspectStyle = card.aspectStyle ?? (naturalAspect ? { aspectRatio: naturalAspect } : undefined)
   let avatarElement: ReactNode
   if (card.lastRedeemer?.avatar) {
     avatarElement = (
@@ -81,9 +86,9 @@ export function DesignCard({
         className={cn(
           "group relative overflow-hidden rounded-sm bg-secondary",
           // Only apply the Tailwind aspect class when there's no inline style.
-          card.aspectStyle ? undefined : card.aspect,
+          aspectStyle ? undefined : card.aspect,
         )}
-        style={card.aspectStyle}
+        style={aspectStyle}
       >
         <Image
           src={card.image || "/placeholder.svg"}
@@ -91,6 +96,14 @@ export function DesignCard({
           fill
           sizes="(min-width: 2560px) 11vw, (min-width: 1920px) 12vw, (min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover"
+          onLoad={(event) => {
+            if (!card.useNaturalAspect || card.aspectStyle) return
+            const { naturalWidth, naturalHeight } = event.currentTarget
+            if (naturalWidth > 0 && naturalHeight > 0) {
+              setNaturalAspect(`${naturalWidth} / ${naturalHeight}`)
+              onAspectRatio?.(naturalWidth / naturalHeight)
+            }
+          }}
         />
 
         {/* Main click target — absolute overlay so sibling buttons don't nest */}

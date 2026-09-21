@@ -570,21 +570,48 @@ function MoreProducts({
   t: ProductDict
 }>) {
   const { dictionary } = useI18n()
+  const [imageAspects, setImageAspects] = useState<Record<string, number>>({})
+  const columns: ReactNode[][] = [[], []]
+  const heights = [0, 0]
+
+  products.forEach((product, index) => {
+    if (index === currentIndex) return
+    const baseCard = productToCard(product, index, dictionary.card)
+    const measuredAspect = imageAspects[baseCard.id]
+    const card = measuredAspect
+      ? { ...baseCard, aspectStyle: { aspectRatio: String(measuredAspect) }, useNaturalAspect: false }
+      : baseCard
+    const columnIndex = heights.indexOf(Math.min(...heights))
+    const aspectRatio = measuredAspect ?? (
+      product.imagen_width && product.imagen_height
+        ? product.imagen_width / product.imagen_height
+        : 1
+    )
+
+    columns[columnIndex].push(
+      <DesignCard
+        key={card.id}
+        card={card}
+        onOpen={() => onSelect(index)}
+        onAspectRatio={(ratio) => {
+          setImageAspects((current) => current[card.id] === ratio
+            ? current
+            : { ...current, [card.id]: ratio })
+        }}
+      />,
+    )
+    heights[columnIndex] += 1 / aspectRatio
+  })
+
   return (
     <div className="flex flex-col gap-3 pt-4">
       <h3 className="text-[13px] font-medium text-muted-foreground">{t.moreProducts}</h3>
-      <div className="grid grid-cols-2 gap-3 [&_article]:mb-0">
-        {products.map((p, i) => {
-          if (i === currentIndex) return null
-          const card = productToCard(p, i, dictionary.card)
-          return (
-            <DesignCard
-              key={card.id}
-              card={card}
-              onOpen={() => onSelect(i)}
-            />
-          )
-        })}
+      <div className="flex items-start gap-3 [&_article]:mb-3">
+        {columns.map((column, index) => (
+          <div key={index} className="min-w-0 flex-1">
+            {column}
+          </div>
+        ))}
       </div>
     </div>
   )

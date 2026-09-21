@@ -42,12 +42,11 @@ function productSlug(product: Producto): string {
 }
 
 /**
- * Distributes items row-major across N columns (item 0 → col 0, item 1 → col 1,
- * ... item N → col 0, item N+1 → col 1...). This guarantees every column is
- * populated, unlike CSS multi-column which flows top-to-bottom and can leave
- * trailing columns empty when there are few items.
+ * Distributes cards into the currently shortest column using their image
+ * aspect ratios, matching the height-balanced masonry strategy used by the
+ * reference feed while preserving each column's independent vertical flow.
  *
- * The leaderboard widget is injected into the first column after the second
+ * The leaderboard widget is injected into the first column after its first
  * card, matching the reference feed pattern.
  */
 function distributeColumns(
@@ -55,19 +54,37 @@ function distributeColumns(
   columnCount: number,
   leaderboard: LeaderboardEntry[],
   onOpen: (i: number) => void,
+  onAspectRatio: (id: string, ratio: number) => void,
 ) {
   const columns: React.ReactNode[][] = Array.from({ length: columnCount }, () => [])
+  const heights = Array.from({ length: columnCount }, () => 0)
+
   cards.forEach((card, i) => {
-    columns[i % columnCount].push(
-      <DesignCard key={card.id} card={card} onOpen={() => onOpen(i)} />,
+    const columnIndex = heights.indexOf(Math.min(...heights))
+    const dimensions = card.aspectStyle?.aspectRatio.split("/").map(Number)
+    const aspectRatio = dimensions?.length === 2 && dimensions[0] > 0 && dimensions[1] > 0
+      ? dimensions[0] / dimensions[1]
+      : 1
+
+    columns[columnIndex].push(
+      <DesignCard
+        key={card.id}
+        card={card}
+        onOpen={() => onOpen(i)}
+        onAspectRatio={(ratio) => onAspectRatio(card.id, ratio)}
+      />,
     )
-    // Insert leaderboard into the first column after the second card.
-    if (i === 1 && leaderboard.length > 0) {
-      columns[0].push(
-        <LeaderboardAside key="leaderboard-aside" entries={leaderboard} />,
-      )
-    }
+    heights[columnIndex] += 1 / aspectRatio
   })
+
+  if (leaderboard.length > 0) {
+    columns[0].splice(
+      Math.min(1, columns[0].length),
+      0,
+      <LeaderboardAside key="leaderboard-aside" entries={leaderboard} />,
+    )
+  }
+
   return columns
 }
 
@@ -81,6 +98,7 @@ export function ProductFeed({
 }: ProductFeedProps) {
   const { dictionary } = useI18n()
   const [openIndex, setOpenIndex] = useState<number | null>(initialOpenIndex)
+  const [imageAspects, setImageAspects] = useState<Record<string, number>>({})
   // Adjust state during render when the prop changes (React-recommended
   // pattern, avoids setState-in-effect). This keeps the overlay in sync with
   // URL-driven navigation without cascading renders.
@@ -90,7 +108,17 @@ export function ProductFeed({
     setOpenIndex(initialOpenIndex)
   }
 
-  const cards = products.map((p, i) => productToCard(p, i, dictionary.card))
+  const cards = products.map((product, index) => {
+    const card = productToCard(product, index, dictionary.card)
+    const measuredAspect = imageAspects[card.id]
+    return measuredAspect
+      ? { ...card, aspectStyle: { aspectRatio: String(measuredAspect) }, useNaturalAspect: false }
+      : card
+  })
+
+  const handleAspectRatio = (id: string, ratio: number) => {
+    setImageAspects((current) => current[id] === ratio ? current : { ...current, [id]: ratio })
+  }
 
   const handleClose = () => {
     if (onOverlayClose) {
@@ -112,9 +140,9 @@ export function ProductFeed({
 
   // Pre-compute column distributions for each responsive breakpoint.
   // The reference uses a flex row of columns with min-w-0 flex-1 children.
-  const cols2 = distributeColumns(cards, 2, leaderboard, handleOpen)
-  const cols3 = distributeColumns(cards, 3, leaderboard, handleOpen)
-  const cols4 = distributeColumns(cards, 4, leaderboard, handleOpen)
+  const cols2 = distributeColumns(cards, 2, leaderboard, handleOpen, handleAspectRatio)
+  const cols3 = distributeColumns(cards, 3, leaderboard, handleOpen, handleAspectRatio)
+  const cols4 = distributeColumns(cards, 4, leaderboard, handleOpen, handleAspectRatio)
 
   return (
     <>
