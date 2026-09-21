@@ -39,7 +39,10 @@ jobs:
             "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}" \
             "NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=${CLOUDINARY_UPLOAD_PRESET}" \
             > .env.luisardito-frontend.production
-          chmod 600 .env.luisardito-frontend.production
+          # scp-action tars these files inside a container that cannot read
+          # owner-only files; they only contain non-secret values. The remote
+          # deploy step restores 600 on the env file after transfer.
+          chmod 644 app-image.tar .env.luisardito-frontend.production
 
       - name: Copy deployment files to production VPS
         uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634
