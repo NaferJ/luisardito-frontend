@@ -28,8 +28,8 @@ export function Pagination({
   if (totalPages <= 1) return null
 
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
-      <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+    <div className="flex flex-col gap-3 border-t border-border px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] text-muted-foreground sm:justify-start">
         <span>
           {interpolate(shared.rangeOf, {
             start: (currentPage - 1) * pageSize + 1,
@@ -48,7 +48,7 @@ export function Pagination({
           ))}
         </select>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center justify-between gap-1 sm:justify-end">
         <button
           type="button"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}

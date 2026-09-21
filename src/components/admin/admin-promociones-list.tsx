@@ -12,9 +12,6 @@ import {
   XCircle,
   Pause,
   CalendarClock,
-  X,
-  ChevronLeft,
-  ChevronRight,
   Users,
   TrendingUp,
   Percent,
@@ -24,6 +21,7 @@ import { cn, formatCompactNumber } from "@/lib/utils"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS, formatDate, getDateRangeStart } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
+import { DrawerBackdrop, OverlayDrawer } from "@/components/overlay-drawer"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
@@ -236,7 +234,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
       <div
         className={cn(
           "flex flex-col gap-6 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-          drawerIndex !== null && "lg:translate-x-[292px]",
+          drawerIndex !== null && "2xl:translate-x-[292px]",
         )}
       >
         {/* Header */}
@@ -247,13 +245,13 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
               {interpolate(t.countOf, { shown: filtered.length, total: promociones.length })}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
             <SearchInput
               value={search}
               onChange={onSearchChange}
               placeholder={t.searchPlaceholder}
               ariaLabel={t.searchAria}
-              widthClassName="w-44 focus:w-56"
+              widthClassName="sm:w-44 sm:focus:w-56"
             />
             <CsvButton onClick={() => exportCSV(filtered, t)} />
             <button
@@ -288,7 +286,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
 
         {/* Table */}
         {paginated.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-border">
+          <section className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" aria-label={t.title}>
             {/* Column headers */}
             <SortHeader
               columns={COLUMNS.map((c) => ({ ...c, label: c.label(t), alignRight: c.key === "descuento" || c.key === "usos" }))}
@@ -316,7 +314,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                     key={p.id}
                     role="button"
                     tabIndex={0}
-                    className="flex cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
+                    className="flex min-w-[960px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
                     onClick={() => setDrawerIndex(filtered.indexOf(p))}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrawerIndex(filtered.indexOf(p)) } }}
                   >
@@ -425,7 +423,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
               onPageChange={setCurrentPage}
               onPageSizeChange={onPageSizeChange}
             />
-          </div>
+          </section>
         ) : (
           <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
             <div className="flex flex-col items-center gap-3">
@@ -527,21 +525,6 @@ function DetailDrawer({
     return () => { cancelled = true }
   }, [promocion.id])
 
-  // Keyboard: Escape to close, arrows to navigate
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < promociones.length - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, promociones.length, onClose, onNavigate])
-
   const maxUsesSuffix = promocion.cantidad_usos_maximos
     ? ` / ${promocion.cantidad_usos_maximos.toLocaleString()}`
     : ""
@@ -562,48 +545,34 @@ function DetailDrawer({
 
   return (
     <>
-      {/* Static metadata sidebar */}
-      <aside
-        aria-label={interpolate(t.drawer.promotionAria, { id: promocion.id })}
-        className="fixed inset-y-0 left-0 right-0 z-20 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
-      >
-        {/* Header — close + prev/next */}
-        <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t.drawer.close}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </button>
-          <div className="flex items-center gap-2">
+      {/* Static metadata sidebar — always opaque, sits at z-50 above the
+          backdrop so it can never be tinted by it. The "slide-in" illusion is
+          created by the table shifting right. Matches ProductDetailOverlay's
+          layering. */}
+      <OverlayDrawer
+        ariaLabel={interpolate(t.drawer.promotionAria, { id: promocion.id })}
+        index={index}
+        count={promociones.length}
+        onClose={onClose}
+        onNavigate={onNavigate}
+        labels={{ close: t.drawer.close, previous: t.drawer.previousPromotion, next: t.drawer.nextPromotion }}
+        showCounter
+        footer={
+          /* Footer — edit button */
+          <div className="shrink-0 border-t border-border px-4 py-3 lg:px-5">
             <button
               type="button"
-              onClick={() => index > 0 && onNavigate(index - 1)}
-              disabled={index === 0}
-              aria-label={t.drawer.previousPromotion}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
+              onClick={() => onEdit(promocion.id)}
+              className="flex h-9 w-full items-center justify-center gap-2 rounded-full bg-foreground text-[13px] font-medium text-background transition-opacity hover:opacity-85"
             >
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-            <span className="text-[12px] tabular-nums text-muted-foreground">
-              {index + 1} / {promociones.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => index < promociones.length - 1 && onNavigate(index + 1)}
-              disabled={index === promociones.length - 1}
-              aria-label={t.drawer.nextPromotion}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
-            >
-              <ChevronRight className="size-4" aria-hidden="true" />
+              <Pencil className="size-3.5" />
+              {t.drawer.editPromotion}
             </button>
           </div>
-        </div>
-
+        }
+      >
         {/* Scrollable content */}
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 pb-6 lg:px-5">
+        <div key={promocion.id} className="overlay-content flex flex-1 flex-col gap-5 overflow-y-auto px-4 pb-6 lg:px-5">
           {/* Title + status */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -747,26 +716,9 @@ function DetailDrawer({
             </div>
           )}
         </div>
+      </OverlayDrawer>
 
-        {/* Footer — edit button */}
-        <div className="shrink-0 border-t border-border px-4 py-3 lg:px-5">
-          <button
-            type="button"
-            onClick={() => onEdit(promocion.id)}
-            className="flex h-9 w-full items-center justify-center gap-2 rounded-full bg-foreground text-[13px] font-medium text-background transition-opacity hover:opacity-85"
-          >
-            <Pencil className="size-3.5" />
-            {t.drawer.editPromotion}
-          </button>
-        </div>
-      </aside>
-
-      {/* Click-outside backdrop */}
-      <div
-        className="fixed inset-0 z-10 bg-black/40 lg:left-[max(252px,calc(50vw-588px)+292px)]"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <DrawerBackdrop onClose={onClose} />
     </>
   )
 }

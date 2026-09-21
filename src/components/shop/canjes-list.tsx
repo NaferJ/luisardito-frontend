@@ -101,7 +101,7 @@ function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
   const content = (
     <>
       {/* Thumbnail */}
-      <div className="size-20 shrink-0 overflow-hidden rounded-sm bg-muted sm:size-24">
+      <div className="size-16 shrink-0 overflow-hidden rounded-sm bg-muted sm:size-24">
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={img} alt={canjeName(canje, t)} className="size-full object-cover" />
@@ -114,14 +114,14 @@ function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
 
       {/* Info */}
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 py-0.5">
-        <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
           <div className="min-w-0">
             <p className="truncate text-[14px] font-medium text-foreground">
               {canjeName(canje, t)}
             </p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">{interpolate(t.redemptionId, { id: canje.id })}</p>
           </div>
-          <div className="shrink-0 text-right">
+          <div className="shrink-0 text-left sm:text-right">
             <span className="text-[16px] font-semibold tabular-nums text-gold-bright">
               {formatCompactNumber(canjePrice(canje))}
             </span>
@@ -129,7 +129,7 @@ function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
             <Calendar className="size-3.5 shrink-0" aria-hidden="true" />
             {formatDate(canje.fecha)}
@@ -148,7 +148,7 @@ function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
 
       {href && (
         <ArrowUpRight
-          className="mt-1 size-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
+          className="mt-1 hidden size-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground sm:block"
           aria-hidden="true"
         />
       )}
@@ -156,7 +156,7 @@ function RedemptionCard({ canje }: Readonly<{ canje: Canje }>) {
   )
 
   const className = cn(
-    "group flex min-w-0 gap-3 rounded-sm border bg-card p-3 transition-colors",
+    "group flex min-w-0 gap-2.5 rounded-sm border bg-card p-3 transition-colors sm:gap-3",
     status.cardClassName,
     href && "hover:border-gold/50 hover:bg-secondary/60",
   )
@@ -259,19 +259,19 @@ export function CanjesList({
 
       {/* Filter bar */}
       <div className="rounded-sm border border-border bg-secondary p-3">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="text-[12px] font-medium text-foreground">{t.history}</p>
             <p className="text-[11px] text-muted-foreground">
               {interpolate(t.matching, { n: pagination.total })}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
             <select
               value={sortMode}
               onChange={(e) => updateQuery({ sort: e.target.value === "date-desc" ? null : e.target.value, page: null })}
               aria-label={t.sortLabel}
-              className="h-8 max-w-[132px] rounded-full border border-border bg-background px-3 text-[12px] text-foreground focus:border-gold focus:outline-none"
+              className="h-8 min-w-0 flex-1 rounded-full border border-border bg-background px-3 text-[12px] text-foreground focus:border-gold focus:outline-none sm:max-w-[132px]"
             >
               <option value="date-desc">{t.newestFirst}</option>
               <option value="date-asc">{t.oldestFirst}</option>

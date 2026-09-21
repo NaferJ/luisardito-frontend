@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react"
+import { useEffect, useState, type ReactNode, type RefObject } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, X, Gift, Package, Tag, Users, type LucideIcon } from "lucide-react"
+import { Gift, Package, Tag, Users, type LucideIcon } from "lucide-react"
 import type { Producto } from "@/types"
 import { useUser, useUpdateUser } from "@/components/user-provider"
 import { useI18n } from "@/components/i18n/provider"
@@ -12,6 +12,8 @@ import { productToCard } from "@/lib/product-mapper"
 import { DesignCard } from "@/components/design-card"
 import { extractDominantColors } from "@/lib/extract-color"
 import { setOverlayColors } from "@/lib/overlay-color-store"
+import { OverlayNavHeader, OverlayTitleBar } from "@/components/overlay-nav"
+import { useCollapsingOverlayHeader, useOverlayKeyboardNav } from "@/lib/overlay-hooks"
 
 type ProductDict = Dictionary["product"]
 
@@ -85,28 +87,6 @@ function renderRedeemButtonContent(redeeming: boolean, cooldown: number, t: Prod
       {t.redeem}
     </>
   )
-}
-
-/** Keyboard navigation + body-scroll lock while the overlay is open. */
-function useKeyboardNavigation(
-  index: number,
-  productsLength: number,
-  onClose: () => void,
-  onNavigate: (nextIndex: number) => void,
-) {
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < productsLength - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, productsLength, onClose, onNavigate])
 }
 
 // Drive the side shader's color from the dominant colors of the currently
@@ -225,7 +205,7 @@ export function ProductDetailOverlay({
   const updateUser = useUpdateUser()
   const product = products[index]
 
-  useKeyboardNavigation(index, products.length, onClose, onNavigate)
+  useOverlayKeyboardNav(index, products.length, onClose, onNavigate)
   useOverlayColors(product)
 
   const { redeeming, cooldown, result, handleRedeem } = useRedeemProduct(
@@ -235,62 +215,7 @@ export function ProductDetailOverlay({
     t,
   )
 
-  const overlayRef = useRef<HTMLDivElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
-  const titleRef = useRef<HTMLDivElement>(null)
-  const titleTextRef = useRef<HTMLDivElement>(null)
-  const initialHeaderHeightRef = useRef(0)
-
-  useEffect(() => {
-    const overlay = overlayRef.current
-    const header = headerRef.current
-    const title = titleRef.current
-    const titleText = titleTextRef.current
-    if (!overlay || !header || !title || !titleText) return
-
-    let raf = 0
-    const update = () => {
-      raf = 0
-      const scrollY = overlay.scrollTop
-      const initialHeight = initialHeaderHeightRef.current
-      const titleThreshold = Math.max(0, initialHeight - 80)
-
-      const newHeight = Math.max(80, initialHeight - scrollY * 0.6)
-      header.style.height = `${newHeight}px`
-      header.style.minHeight = "0px"
-
-      const titleProgress = Math.min(1, Math.max(0, (scrollY - titleThreshold) / 80))
-
-      title.classList.toggle("bg-background/95", titleProgress > 0.01)
-      title.classList.toggle("backdrop-blur-sm", titleProgress > 0.01)
-      titleText.style.opacity = String(titleProgress)
-    }
-
-    const onScroll = () => {
-      if (raf === 0) {
-        raf = requestAnimationFrame(update)
-      }
-    }
-
-    const reset = () => {
-      overlay.scrollTop = 0
-      header.style.height = ""
-      header.style.minHeight = ""
-      initialHeaderHeightRef.current = header.clientHeight
-      header.style.height = `${initialHeaderHeightRef.current}px`
-      header.style.minHeight = "0px"
-      titleText.style.opacity = "0"
-      title.classList.remove("bg-background/95", "backdrop-blur-sm")
-    }
-
-    reset()
-    overlay.addEventListener("scroll", onScroll, { passive: true })
-    onScroll()
-    return () => {
-      overlay.removeEventListener("scroll", onScroll)
-      if (raf) cancelAnimationFrame(raf)
-    }
-  }, [product.id])
+  const { overlayRef, headerRef, titleRef, titleTextRef } = useCollapsingOverlayHeader(product?.id)
 
   if (!product) return null
 
@@ -301,8 +226,6 @@ export function ProductDetailOverlay({
   const canRedeem = canRedeemProduct(user, product, price)
   const statRows = buildStatRows(product, Boolean(hasDiscount), t)
   const redeemButtonContent = renderRedeemButtonContent(redeeming, cooldown, t)
-  const canGoPrev = index > 0
-  const canGoNext = index < products.length - 1
 
   return (
     <>
@@ -329,16 +252,15 @@ export function ProductDetailOverlay({
         </div>
         <div className="absolute inset-0 -z-10 bg-background/80" aria-hidden="true" />
 
-        <ProductTitleBar
+        <OverlayTitleBar
           titleRef={titleRef}
           titleTextRef={titleTextRef}
-          product={product}
-          canGoPrev={canGoPrev}
-          canGoNext={canGoNext}
+          title={product.nombre}
+          index={index}
+          count={products.length}
           onClose={onClose}
-          onPrev={() => canGoPrev && onNavigate(index - 1)}
-          onNext={() => canGoNext && onNavigate(index + 1)}
-          t={t}
+          onNavigate={onNavigate}
+          labels={{ close: t.close, previous: t.previousProduct, next: t.nextProduct }}
         />
         <MobileImageHeader
           key={product.id}
@@ -392,36 +314,13 @@ export function ProductDetailOverlay({
         aria-label={product.nombre}
         className="overlay-enter fixed inset-y-0 left-[max(252px,calc(50vw-588px))] z-50 hidden w-[292px] flex-col overflow-hidden bg-background xl:flex"
       >
-        <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t.close}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => canGoPrev && onNavigate(index - 1)}
-              disabled={!canGoPrev}
-              aria-label={t.previousProduct}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary"
-            >
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => canGoNext && onNavigate(index + 1)}
-              disabled={!canGoNext}
-              aria-label={t.nextProduct}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary"
-            >
-              <ChevronRight className="size-4" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
+        <OverlayNavHeader
+          index={index}
+          count={products.length}
+          onClose={onClose}
+          onNavigate={onNavigate}
+          labels={{ close: t.close, previous: t.previousProduct, next: t.nextProduct }}
+        />
 
         <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
           <div key={product.id} className="overlay-content flex flex-col gap-6">
@@ -535,73 +434,6 @@ function ProductInfo({
         </div>
       )}
     </>
-  )
-}
-
-/** Sticky mobile title bar. Background and product name fade in as the user
- * scrolls past the product image, so the user always knows which product they
- * are viewing without the image taking up screen space. */
-function ProductTitleBar({
-  titleRef,
-  titleTextRef,
-  product,
-  canGoPrev,
-  canGoNext,
-  onClose,
-  onPrev,
-  onNext,
-  t,
-}: Readonly<{
-  titleRef: RefObject<HTMLDivElement | null>
-  titleTextRef: RefObject<HTMLDivElement | null>
-  product: Producto
-  canGoPrev: boolean
-  canGoNext: boolean
-  onClose: () => void
-  onPrev: () => void
-  onNext: () => void
-  t: ProductDict
-}>) {
-  return (
-    <div
-      ref={titleRef}
-      className="sticky top-0 z-40 flex items-center justify-between gap-2 px-4 py-3 bg-transparent transition-colors duration-200"
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label={t.close}
-        className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90"
-      >
-        <X className="size-4" aria-hidden="true" />
-      </button>
-      <div
-        ref={titleTextRef}
-        className="min-w-0 flex-1 px-8 text-center text-[15px] font-medium text-foreground opacity-0 transition-opacity duration-200"
-      >
-        {product.nombre}
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onPrev}
-          disabled={!canGoPrev}
-          aria-label={t.previousProduct}
-          className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90 disabled:opacity-40 disabled:hover:bg-background/80"
-        >
-          <ChevronLeft className="size-4" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          disabled={!canGoNext}
-          aria-label={t.nextProduct}
-          className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90 disabled:opacity-40 disabled:hover:bg-background/80"
-        >
-          <ChevronRight className="size-4" aria-hidden="true" />
-        </button>
-      </div>
-    </div>
   )
 }
 
@@ -750,7 +582,6 @@ function MoreProducts({
               key={card.id}
               card={card}
               onOpen={() => onSelect(i)}
-              hideBookmark
             />
           )
         })}

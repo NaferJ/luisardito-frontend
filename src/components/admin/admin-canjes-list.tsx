@@ -14,8 +14,6 @@ import {
   ArrowUp,
   ArrowDown,
   X,
-  ChevronLeft,
-  ChevronRight,
   AlertTriangle,
   RefreshCw,
   CheckSquare,
@@ -26,6 +24,7 @@ import { VipBadge } from "@/components/vip-badge"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS, getDateRangeStart } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
+import { OverlayDrawer } from "@/components/overlay-drawer"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
@@ -410,7 +409,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
     <div
       className={cn(
         "flex flex-col gap-6 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-        drawerIndex !== null && "lg:translate-x-[292px]",
+        drawerIndex !== null && "2xl:translate-x-[292px]",
       )}
     >
       {/* Header */}
@@ -424,7 +423,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
             <RefreshCw className="size-3 animate-spin text-muted-foreground" aria-label={t.syncing} />
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
           <SearchInput
             value={search}
             onChange={onSearchChange}
@@ -493,9 +492,9 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
 
       {/* Table */}
       {paginated.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border border-border">
+        <section className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" aria-label={t.title}>
           {/* Column headers */}
-          <div className="flex items-center gap-4 border-b border-border bg-secondary/50 px-4 py-2.5">
+          <div className="flex min-w-[1120px] items-center gap-4 border-b border-border bg-secondary/50 px-4 py-2.5">
             {/* Bulk select checkbox */}
             <button
               type="button"
@@ -557,7 +556,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "flex cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30",
+                    "flex min-w-[1120px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30",
                     isSelected && "bg-gold/5",
                   )}
                   onClick={() => setDrawerIndex(filtered.indexOf(canje))}
@@ -712,7 +711,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
             onPageChange={setCurrentPage}
             onPageSizeChange={onPageSizeChange}
           />
-        </div>
+        </section>
       ) : (
         <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
           <p className="text-[13px] text-muted-foreground">
@@ -842,21 +841,6 @@ function DetailDrawer({
   const StatusIcon = status.icon
   const currentPrice = canjeCurrentPrice(canje)
 
-  // Keyboard: Escape to close, arrows to navigate
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < canjes.length - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, canjes.length, onClose, onNavigate])
-
   const statRows = [
     { label: t.drawer.status, value: status.label(t) },
     { label: t.drawer.pricePaid, value: interpolate(t.pts, { n: formatCompactNumber(canjePrice(canje)) }) },
@@ -868,49 +852,21 @@ function DetailDrawer({
 
   return (
     <>
-      {/* Static metadata sidebar — always opaque, never animated.
-          Sits at z-20 so the lightbox (z-50) and its blur layer only paint
-          to the right of it. The "slide-in" illusion is created by the
-          table shifting right, not by the panel itself moving. */}
-      <aside
-        aria-label={interpolate(t.drawer.ariaLabel, { id: canje.id })}
-        className="fixed inset-y-0 left-0 right-0 z-20 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
+      {/* Static metadata sidebar — always opaque, sits at z-50 above the
+          lightbox (z-40) so the blur layer can never tint it. The "slide-in"
+          illusion is created by the table shifting right, not by the panel
+          itself moving. Matches ProductDetailOverlay's layering. */}
+      <OverlayDrawer
+        ariaLabel={interpolate(t.drawer.ariaLabel, { id: canje.id })}
+        index={index}
+        count={canjes.length}
+        onClose={onClose}
+        onNavigate={onNavigate}
+        labels={{ close: t.drawer.close, previous: t.drawer.previous, next: t.drawer.next }}
       >
-        {/* Header — close + prev/next */}
-        <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t.drawer.close}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => index > 0 && onNavigate(index - 1)}
-              disabled={index === 0}
-              aria-label={t.drawer.previous}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-            >
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => index < canjes.length - 1 && onNavigate(index + 1)}
-              disabled={index === canjes.length - 1}
-              aria-label={t.drawer.next}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-            >
-              <ChevronRight className="size-4" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-
         {/* Scrollable content */}
         <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
-          <div className="flex flex-col gap-6">
+          <div key={canje.id} className="overlay-content flex flex-col gap-6">
             {/* Product info */}
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
@@ -985,28 +941,30 @@ function DetailDrawer({
             </div>
           </div>
         </div>
-      </aside>
+      </OverlayDrawer>
 
-      {/* Lightbox: covers the overlay area but the blur + media are offset
-          right by a 292px spacer so they never paint behind the sidebar.
-          Only shown on lg+ when there's a product image. */}
+      {/* Lightbox: sits at z-40 below the sidebar (z-50) and spans to the
+          right edge so the blur layer leaves no uncovered strip. The media is
+          offset right by a 292px spacer so it never paints behind the sidebar.
+          The backdrop is pointer-events-auto so clicks can't fall through to
+          the table behind it. Only shown on xl+ when there's a product image. */}
       {productImg && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label={canjeProduct(canje)}
-          className="fixed inset-y-0 left-0 right-0 z-50 hidden flex-row overflow-hidden pointer-events-none lg:flex lg:left-[max(252px,calc(50vw-588px))] lg:right-[120px]"
+          className="fixed inset-y-0 left-0 right-0 z-40 hidden flex-row overflow-hidden pointer-events-none xl:flex xl:left-[max(252px,calc(50vw-588px))]"
         >
-          {/* Spacer — reserves the sidebar area so blur/media don't paint there */}
-          <div className="hidden lg:block lg:w-[292px] lg:shrink-0" />
+          <div
+            aria-hidden="true"
+            className="pointer-events-auto absolute inset-0 bg-background/70 backdrop-blur-[8px]"
+          />
+          {/* Spacer — reserves the sidebar area so media doesn't paint there */}
+          <div className="relative z-10 hidden xl:block xl:w-[292px] xl:shrink-0" />
 
-          {/* Media + blur area. Blur lives on its own static layer so it always
+          {/* Media area. Blur lives on its own static layer so it always
               paints correctly; only the image content fades + scales in on top. */}
-          <div className="relative flex min-w-0 flex-1 items-center justify-center">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-background/70 backdrop-blur-[8px]"
-            />
+          <div className="relative z-10 flex min-w-0 flex-1 items-center justify-center">
             <div className="overlay-media relative w-full max-w-2xl overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={productImg} alt={canjeProduct(canje)} className="w-full object-cover" />

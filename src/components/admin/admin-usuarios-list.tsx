@@ -1,23 +1,22 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useLocalizedRouter } from "@/components/i18n/use-localized-router"
 import {
   Crown,
   Star,
   ChevronRight,
-  ChevronLeft,
   Users,
   Crown as CrownIcon,
   Star as StarIcon,
   Shield,
   AlertTriangle,
-  X,
   ShoppingBag,
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { VipBadge } from "@/components/vip-badge"
 import { SubscriberBadge } from "@/components/subscriber-badge"
+import { OverlayDrawer } from "@/components/overlay-drawer"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
@@ -221,7 +220,7 @@ export function AdminUsuariosList({
       <div
         className={cn(
           "flex flex-col gap-6 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-          drawerIndex !== null && "lg:translate-x-[292px]",
+          drawerIndex !== null && "2xl:translate-x-[292px]",
         )}
       >
         {/* Header */}
@@ -232,7 +231,7 @@ export function AdminUsuariosList({
               {interpolate(t.countOf, { shown: filtered.length, total: usuarios.length })}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
             <SearchInput
               value={search}
               onChange={onSearchChange}
@@ -264,7 +263,7 @@ export function AdminUsuariosList({
 
         {/* Table */}
         {paginated.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-border">
+          <section className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" aria-label={t.title}>
             {/* Column headers */}
             <SortHeader
               columns={COLUMNS.map((c) => ({ ...c, label: c.label(t), alignRight: c.key === "canjes" || c.key === "puntos" || c.key === "creado" }))}
@@ -297,7 +296,7 @@ export function AdminUsuariosList({
                         setDrawerIndex(idx)
                       }
                     }}
-                    className="flex cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
+                    className="flex min-w-[960px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
                   >
                     {/* Avatar */}
                     <div className="size-10 shrink-0 overflow-hidden rounded-full bg-secondary">
@@ -371,7 +370,7 @@ export function AdminUsuariosList({
               onPageChange={setCurrentPage}
               onPageSizeChange={onPageSizeChange}
             />
-          </div>
+          </section>
         ) : (
           <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
             <p className="text-[13px] text-muted-foreground">
@@ -427,21 +426,6 @@ function UserDetailDrawer({
   const userCanjes = canjesByUser?.[u.id] ?? []
   const recentCanjes = userCanjes.slice(0, 5)
 
-  // Keyboard: Escape to close, arrows to navigate
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < usuarios.length - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, usuarios.length, onClose, onNavigate])
-
   const statRows = [
     { label: t.drawer.points, value: interpolate(t.pts, { n: formatCompactNumber(u.puntos) }) },
     { label: t.drawer.totalCanjes, value: String(u.total_canjes ?? 0) },
@@ -452,45 +436,17 @@ function UserDetailDrawer({
   ]
 
   return (
-    <aside
-      aria-label={userName(u)}
-      className="fixed inset-y-0 left-0 right-0 z-20 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
+    <OverlayDrawer
+      ariaLabel={userName(u)}
+      index={index}
+      count={usuarios.length}
+      onClose={onClose}
+      onNavigate={onNavigate}
+      labels={{ close: t.close, previous: t.previousUser, next: t.nextUser }}
     >
-      {/* Header — close + prev/next */}
-      <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t.close}
-          className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
-        >
-          <X className="size-4" aria-hidden="true" />
-        </button>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => index > 0 && onNavigate(index - 1)}
-            disabled={index === 0}
-            aria-label={t.previousUser}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-          >
-            <ChevronLeft className="size-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => index < usuarios.length - 1 && onNavigate(index + 1)}
-            disabled={index === usuarios.length - 1}
-            aria-label={t.nextUser}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-          >
-            <ChevronRight className="size-4" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-
       {/* Scrollable content */}
       <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
-        <div className="flex flex-col gap-6">
+        <div key={u.id} className="overlay-content flex flex-col gap-6">
           {/* User identity */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
@@ -592,6 +548,6 @@ function UserDetailDrawer({
           </button>
         </div>
       </div>
-    </aside>
+    </OverlayDrawer>
   )
 }

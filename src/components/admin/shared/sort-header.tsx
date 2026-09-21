@@ -36,7 +36,7 @@ export function SortHeader<T extends string>({
   trailingClassName = "w-24 shrink-0 text-right",
 }: SortHeaderProps<T>) {
   return (
-    <div className="flex items-center gap-4 border-b border-border bg-secondary/50 px-4 py-2.5">
+    <div className="flex min-w-[960px] items-center gap-4 border-b border-border bg-secondary/50 px-4 py-2.5">
       {leadingLabel && (
         <span className={cn("text-[11px] font-medium uppercase tracking-wide text-muted-foreground", leadingClassName)}>
           {leadingLabel}

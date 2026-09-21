@@ -27,7 +27,7 @@ export function OnlineStatus({ base = 28 }: Readonly<{ base?: number }>) {
   }, [base])
 
   return (
-    <div className="flex items-center gap-1.5 font-mono text-[13px] text-muted-foreground">
+    <div className="hidden items-center gap-1.5 font-mono text-[13px] text-muted-foreground">
       <span className="relative flex size-1.5">
         <span aria-hidden="true" className="absolute inset-0 animate-ping rounded-full opacity-60" style={{ backgroundColor: dotColor }} />
         <span aria-hidden="true" className="relative size-1.5 rounded-full" style={{ backgroundColor: dotColor }} />

@@ -19,10 +19,10 @@ export function SearchInput({
   onChange,
   placeholder,
   ariaLabel,
-  widthClassName = "w-52 focus:w-64",
+  widthClassName = "sm:w-52 sm:focus:w-64",
 }: SearchInputProps) {
   return (
-    <div className="relative flex h-8 items-center">
+    <div className="relative flex h-8 w-full items-center sm:w-auto">
       <Search className="pointer-events-none absolute left-3 size-3.5 text-muted-foreground" />
       <input
         type="search"
@@ -31,7 +31,7 @@ export function SearchInput({
         placeholder={placeholder}
         aria-label={ariaLabel}
         className={cn(
-          "h-8 rounded-full border border-border bg-secondary pl-8 pr-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none transition-all",
+          "h-8 w-full rounded-full border border-border bg-secondary pl-8 pr-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none transition-all",
           widthClassName,
         )}
       />

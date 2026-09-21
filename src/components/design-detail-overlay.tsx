@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { Bookmark, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Bookmark } from "lucide-react"
 import type { DesignCardData } from "@/components/design-card"
+import { OverlayDrawer } from "@/components/overlay-drawer"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/components/i18n/provider"
 import type { Dictionary } from "@/lib/i18n/shared"
@@ -44,20 +45,6 @@ export function DesignDetailOverlay({
     setSaved(false)
   }
 
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < cards.length - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, cards.length, onClose, onNavigate])
-
   // Drive the side shader's color from the dominant colors of the currently
   // open design image. Stale results from rapid arrow navigation are ignored
   // via the cancelled flag; the store is cleared once when the overlay
@@ -87,43 +74,16 @@ export function DesignDetailOverlay({
       {/* Static metadata sidebar above the full overlay backdrop. The panel
           never moves or becomes transparent; the feed creates the slide-in
           illusion by shifting right. */}
-      <aside
-        aria-label={card.title}
-        className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
+      <OverlayDrawer
+        ariaLabel={card.title}
+        index={index}
+        count={cards.length}
+        onClose={onClose}
+        onNavigate={onNavigate}
+        labels={{ close: t.close, previous: t.previousDesign, next: t.nextDesign }}
       >
-        <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t.close}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => index > 0 && onNavigate(index - 1)}
-              disabled={index === 0}
-              aria-label={t.previousDesign}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-            >
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => index < cards.length - 1 && onNavigate(index + 1)}
-              disabled={index === cards.length - 1}
-              aria-label={t.nextDesign}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-            >
-              <ChevronRight className="size-4" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-
         <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
-          <div className="flex flex-col gap-6">
+          <div key={card.id} className="overlay-content flex flex-col gap-6">
             <div className="flex flex-col gap-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-1">
@@ -167,7 +127,7 @@ export function DesignDetailOverlay({
             </div>
           </div>
         </div>
-      </aside>
+      </OverlayDrawer>
 
       <div
         role="dialog"
