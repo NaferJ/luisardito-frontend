@@ -492,7 +492,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
 
       {/* Table */}
       {paginated.length > 0 ? (
-        <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" role="region" aria-label={t.title} tabIndex={0}>
+        <section className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" aria-label={t.title}>
           {/* Column headers */}
           <div className="flex min-w-[1120px] items-center gap-4 border-b border-border bg-secondary/50 px-4 py-2.5">
             {/* Bulk select checkbox */}
@@ -711,7 +711,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
             onPageChange={setCurrentPage}
             onPageSizeChange={onPageSizeChange}
           />
-        </div>
+        </section>
       ) : (
         <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
           <p className="text-[13px] text-muted-foreground">

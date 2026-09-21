@@ -568,7 +568,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
 
         {/* Table */}
         {paginated.length > 0 ? (
-          <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" role="region" aria-label={t.title} tabIndex={0}>
+          <section className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" aria-label={t.title}>
             {/* Column headers */}
             <SortHeader
               columns={COLUMNS.map((c) => ({ ...c, label: c.label(t) }))}
@@ -707,7 +707,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
               onPageChange={setCurrentPage}
               onPageSizeChange={onPageSizeChange}
             />
-          </div>
+          </section>
         ) : (
           !isEditing && (
             <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">

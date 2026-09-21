@@ -263,7 +263,7 @@ export function AdminUsuariosList({
 
         {/* Table */}
         {paginated.length > 0 ? (
-          <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" role="region" aria-label={t.title} tabIndex={0}>
+          <section className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" aria-label={t.title}>
             {/* Column headers */}
             <SortHeader
               columns={COLUMNS.map((c) => ({ ...c, label: c.label(t), alignRight: c.key === "canjes" || c.key === "puntos" || c.key === "creado" }))}
@@ -370,7 +370,7 @@ export function AdminUsuariosList({
               onPageChange={setCurrentPage}
               onPageSizeChange={onPageSizeChange}
             />
-          </div>
+          </section>
         ) : (
           <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border p-8">
             <p className="text-[13px] text-muted-foreground">
