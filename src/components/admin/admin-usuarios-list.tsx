@@ -221,7 +221,7 @@ export function AdminUsuariosList({
       <div
         className={cn(
           "flex flex-col gap-6 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-          drawerIndex !== null && "lg:translate-x-[292px]",
+          drawerIndex !== null && "2xl:translate-x-[292px]",
         )}
       >
         {/* Header */}
@@ -232,7 +232,7 @@ export function AdminUsuariosList({
               {interpolate(t.countOf, { shown: filtered.length, total: usuarios.length })}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
             <SearchInput
               value={search}
               onChange={onSearchChange}
@@ -264,7 +264,7 @@ export function AdminUsuariosList({
 
         {/* Table */}
         {paginated.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-border">
+          <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" role="region" aria-label={t.title} tabIndex={0}>
             {/* Column headers */}
             <SortHeader
               columns={COLUMNS.map((c) => ({ ...c, label: c.label(t), alignRight: c.key === "canjes" || c.key === "puntos" || c.key === "creado" }))}
@@ -297,7 +297,7 @@ export function AdminUsuariosList({
                         setDrawerIndex(idx)
                       }
                     }}
-                    className="flex cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
+                    className="flex min-w-[960px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
                   >
                     {/* Avatar */}
                     <div className="size-10 shrink-0 overflow-hidden rounded-full bg-secondary">
@@ -452,9 +452,12 @@ function UserDetailDrawer({
   ]
 
   return (
+    /* Static metadata sidebar — always opaque, sits at z-50 above the page.
+       The "slide-in" illusion is created by the table shifting right.
+       Matches ProductDetailOverlay's layering. */
     <aside
       aria-label={userName(u)}
-      className="fixed inset-y-0 left-0 right-0 z-20 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
+      className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
     >
       {/* Header — close + prev/next */}
       <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
@@ -490,7 +493,7 @@ function UserDetailDrawer({
 
       {/* Scrollable content */}
       <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
-        <div className="flex flex-col gap-6">
+        <div key={u.id} className="overlay-content flex flex-col gap-6">
           {/* User identity */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">

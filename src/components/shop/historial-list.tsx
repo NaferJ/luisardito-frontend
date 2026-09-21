@@ -215,7 +215,7 @@ export function HistorialList({
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           {FILTER_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -223,7 +223,7 @@ export function HistorialList({
               onClick={() => setFilterType(opt.value)}
               aria-pressed={filterType === opt.value}
               className={cn(
-                "h-7 rounded-full px-3 text-[12px] font-medium transition-colors",
+                "h-7 shrink-0 rounded-full px-3 text-[12px] font-medium transition-colors",
                 filterType === opt.value
                   ? "bg-gold text-gold-foreground"
                   : "bg-background text-muted-foreground hover:text-foreground",
@@ -234,7 +234,7 @@ export function HistorialList({
           ))}
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:flex-1 sm:justify-end">
           <select
             value={sortMode}
             onChange={(e) => setSortMode(e.target.value as SortMode)}
@@ -281,10 +281,10 @@ export function HistorialList({
             return (
               <div
                 key={item.id}
-                className="flex gap-3 rounded-sm border border-border bg-secondary p-3 transition-colors hover:border-gold/50"
+                className="flex gap-2.5 rounded-sm border border-border bg-secondary p-3 transition-colors hover:border-gold/50 sm:gap-3"
               >
                 {/* Icon */}
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-muted">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-muted sm:size-9">
                   <EventIcon className="size-4 text-muted-foreground" aria-hidden="true" />
                 </div>
 

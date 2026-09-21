@@ -89,7 +89,7 @@ export function DesignDetailOverlay({
           illusion by shifting right. */}
       <aside
         aria-label={card.title}
-        className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
+        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
       >
         <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
           <button
@@ -123,7 +123,7 @@ export function DesignDetailOverlay({
         </div>
 
         <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
-          <div className="flex flex-col gap-6">
+          <div key={card.id} className="overlay-content flex flex-col gap-6">
             <div className="flex flex-col gap-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-1">

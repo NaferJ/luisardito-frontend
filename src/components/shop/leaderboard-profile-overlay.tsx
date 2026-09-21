@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, type RefObject } from "react"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { SubscriberBadge } from "@/components/subscriber-badge"
 import { VipBadge } from "@/components/vip-badge"
@@ -39,6 +39,9 @@ function movementText(entry: LeaderboardEntry, t: LeaderboardDict): string {
   return `${direction} ${entry.position_change} ${unit}`
 }
 
+/** Desktop lightbox avatar — same card treatment as the product image
+ *  (bg-card + ring + shadow) so it reads as a framed image instead of
+ *  floating bare on the blurred backdrop. */
 function ProfileImage({
   name,
   avatar,
@@ -47,7 +50,7 @@ function ProfileImage({
   avatar?: string
 }>) {
   return (
-    <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-sm">
+    <div className="overlay-media pointer-events-auto relative flex aspect-[4/3] w-full max-w-2xl items-center justify-center overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border">
       {avatar ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={avatar} alt={name} className="size-full object-contain" />
@@ -56,6 +59,104 @@ function ProfileImage({
           {name.charAt(0).toUpperCase()}
         </span>
       )}
+    </div>
+  )
+}
+
+/** Sticky mobile title bar — same pattern as ProductTitleBar: the bar
+ *  background and the user name fade in once the avatar header has mostly
+ *  scrolled away, so the controls always stay reachable. */
+function ProfileTitleBar({
+  titleRef,
+  titleTextRef,
+  name,
+  canGoPrev,
+  canGoNext,
+  onClose,
+  onPrev,
+  onNext,
+  t,
+}: Readonly<{
+  titleRef: RefObject<HTMLDivElement | null>
+  titleTextRef: RefObject<HTMLDivElement | null>
+  name: string
+  canGoPrev: boolean
+  canGoNext: boolean
+  onClose: () => void
+  onPrev: () => void
+  onNext: () => void
+  t: LeaderboardDict
+}>) {
+  return (
+    <div
+      ref={titleRef}
+      className="sticky top-0 z-40 flex items-center justify-between gap-2 px-4 py-3 bg-transparent transition-colors duration-200"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label={t.close}
+        className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90"
+      >
+        <X className="size-4" aria-hidden="true" />
+      </button>
+      <div
+        ref={titleTextRef}
+        className="min-w-0 flex-1 px-8 text-center text-[15px] font-medium text-foreground opacity-0 transition-opacity duration-200"
+      >
+        {name}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          disabled={!canGoPrev}
+          aria-label={t.previousUser}
+          className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90 disabled:opacity-40 disabled:hover:bg-background/80"
+        >
+          <ChevronLeft className="size-4" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={!canGoNext}
+          aria-label={t.nextUser}
+          className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90 disabled:opacity-40 disabled:hover:bg-background/80"
+        >
+          <ChevronRight className="size-4" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** Mobile avatar header — mirrors MobileImageHeader: the avatar sits in a
+ *  card whose height shrinks as the user scrolls, so the image and its
+ *  container move together. Avatars are square, so the card is too. */
+function MobileAvatarHeader({
+  name,
+  avatar,
+  headerRef,
+}: Readonly<{
+  name: string
+  avatar?: string
+  headerRef: RefObject<HTMLDivElement | null>
+}>) {
+  return (
+    <div
+      ref={headerRef}
+      className="relative z-0 flex h-[40vh] min-h-[240px] max-h-[340px] items-center justify-center overflow-hidden px-6 py-4"
+    >
+      <div className="overlay-media relative aspect-square h-full overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-border/50">
+        {avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatar} alt={name} className="size-full object-cover" />
+        ) : (
+          <span className="flex size-full items-center justify-center text-7xl font-semibold text-foreground">
+            {name.charAt(0).toUpperCase()}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -80,6 +181,14 @@ export function LeaderboardProfileOverlay({
   const onNavigateRef = useRef(onNavigate)
   const entry = entries[index]
 
+  // Scroll-driven avatar-header shrink + sticky title bar fade — the same
+  // effect ProductDetailOverlay uses on mobile, so both overlays feel identical.
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+  const titleRef = useRef<HTMLDivElement>(null)
+  const titleTextRef = useRef<HTMLDivElement>(null)
+  const initialHeaderHeightRef = useRef(0)
+
   useEffect(() => {
     indexRef.current = index
     entriesLengthRef.current = entries.length
@@ -88,6 +197,57 @@ export function LeaderboardProfileOverlay({
   }, [entries.length, index, onClose, onNavigate])
 
   useEffect(() => lockBodyScroll(), [])
+
+  useEffect(() => {
+    const overlay = overlayRef.current
+    const header = headerRef.current
+    const title = titleRef.current
+    const titleText = titleTextRef.current
+    if (!overlay || !header || !title || !titleText) return
+
+    let raf = 0
+    const update = () => {
+      raf = 0
+      const scrollY = overlay.scrollTop
+      const initialHeight = initialHeaderHeightRef.current
+      const titleThreshold = Math.max(0, initialHeight - 80)
+
+      const newHeight = Math.max(80, initialHeight - scrollY * 0.6)
+      header.style.height = `${newHeight}px`
+      header.style.minHeight = "0px"
+
+      const titleProgress = Math.min(1, Math.max(0, (scrollY - titleThreshold) / 80))
+
+      title.classList.toggle("bg-background/95", titleProgress > 0.01)
+      title.classList.toggle("backdrop-blur-sm", titleProgress > 0.01)
+      titleText.style.opacity = String(titleProgress)
+    }
+
+    const onScroll = () => {
+      if (raf === 0) {
+        raf = requestAnimationFrame(update)
+      }
+    }
+
+    const reset = () => {
+      overlay.scrollTop = 0
+      header.style.height = ""
+      header.style.minHeight = ""
+      initialHeaderHeightRef.current = header.clientHeight
+      header.style.height = `${initialHeaderHeightRef.current}px`
+      header.style.minHeight = "0px"
+      titleText.style.opacity = "0"
+      title.classList.remove("bg-background/95", "backdrop-blur-sm")
+    }
+
+    reset()
+    overlay.addEventListener("scroll", onScroll, { passive: true })
+    onScroll()
+    return () => {
+      overlay.removeEventListener("scroll", onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [entry?.usuario_id])
 
   useEffect(() => {
     const restoreFocusTo = document.activeElement as HTMLElement | null
@@ -114,7 +274,10 @@ export function LeaderboardProfileOverlay({
         return
       }
       if (event.key !== "Tab" || !panelRef.current) return
+      // offsetParent is null for elements inside the hidden branch
+      // (mobile layout on xl, sidebar layout below xl) — skip those.
       const focusable = [...panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)]
+        .filter((el) => el.offsetParent !== null)
       if (focusable.length === 0) return
       const first = focusable[0]
       const last = focusable.at(-1)
@@ -149,11 +312,11 @@ export function LeaderboardProfileOverlay({
     { label: t.stats.previousPoints, value: entry.previous_points == null ? "—" : formatCompactNumber(entry.previous_points) },
   ]
 
-  const identity = (
+  const identity = (titleId?: string) => (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
         <span className="text-[13px] text-muted-foreground">{interpolate(t.stats.rank, { position: entry.position })}</span>
-        <h2 id="leaderboard-profile-title" className="text-[17px] font-medium text-foreground">{name}</h2>
+        <h2 id={titleId} className="text-[17px] font-medium text-foreground">{name}</h2>
         {entry.display_name && entry.display_name !== name && (
           <span className="text-[12px] text-muted-foreground">{entry.display_name}</span>
         )}
@@ -162,6 +325,17 @@ export function LeaderboardProfileOverlay({
         {entry.is_subscriber && <SubscriberBadge durationMonths={entry.subscription_duration_months} size={25} />}
         {Boolean(entry.is_vip) && <VipBadge size={25} />}
       </div>
+    </div>
+  )
+
+  const statList = (
+    <div className="flex flex-col">
+      {statRows.map((row, rowIndex) => (
+        <div key={row.label} className={cn("flex items-start justify-between gap-3 py-2", rowIndex > 0 && "border-t border-border/30")}>
+          <span className="shrink-0 text-[12px] text-muted-foreground">{row.label}</span>
+          <span className="text-right text-[12px] font-medium text-foreground">{row.value}</span>
+        </div>
+      ))}
     </div>
   )
 
@@ -177,31 +351,73 @@ export function LeaderboardProfileOverlay({
           event.preventDefault()
           onClose()
         }}
-        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 m-0! max-w-none! border-0! p-0! flex! flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
+        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 m-0! h-dvh! w-full! max-h-none! xl:h-screen! max-w-none! border-0! p-0! flex! flex-col overflow-hidden bg-transparent xl:bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]!"
       >
-        <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-          <button type="button" onClick={onClose} aria-label={t.close} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90">
-            <X className="size-4" aria-hidden="true" />
-          </button>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => canGoPrevious && onNavigate(index - 1)} disabled={!canGoPrevious} aria-label={t.previousUser} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary">
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-            <button type="button" onClick={() => canGoNext && onNavigate(index + 1)} disabled={!canGoNext} aria-label={t.nextUser} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary">
-              <ChevronRight className="size-4" aria-hidden="true" />
-            </button>
+        {/* Mobile / tablet — profile detail as a page over a blurred version of
+            the avatar, matching the shop product overlay: the avatar header
+            shrinks on scroll and the glass card scrolls over it. */}
+        <div
+          ref={overlayRef}
+          className="relative min-h-0 flex-1 overflow-y-auto xl:hidden"
+        >
+          {/* Blurred avatar fills the background so the page subtly takes on
+              its colors, same as the product overlay's image bleed. */}
+          <div className="absolute inset-0 -z-20 bg-background" aria-hidden="true">
+            {avatar && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatar} alt="" className="size-full object-cover blur-3xl opacity-40" />
+            )}
+          </div>
+          <div className="absolute inset-0 -z-10 bg-background/80" aria-hidden="true" />
+
+          <ProfileTitleBar
+            titleRef={titleRef}
+            titleTextRef={titleTextRef}
+            name={name}
+            canGoPrev={canGoPrevious}
+            canGoNext={canGoNext}
+            onClose={onClose}
+            onPrev={() => canGoPrevious && onNavigate(index - 1)}
+            onNext={() => canGoNext && onNavigate(index + 1)}
+            t={t}
+          />
+          <MobileAvatarHeader
+            key={entry.usuario_id}
+            name={name}
+            avatar={avatar}
+            headerRef={headerRef}
+          />
+          <div className="relative z-10 flex min-h-[calc(100vh-240px)] flex-col rounded-t-3xl bg-background/75 ring-1 ring-border/20 backdrop-blur-[14px]">
+            <div
+              key={entry.usuario_id}
+              className="overlay-content flex min-h-0 flex-1 flex-col gap-6 px-5 pt-6 pb-10"
+            >
+              {identity()}
+              {statList}
+            </div>
           </div>
         </div>
-        <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
-          <div key={entry.usuario_id} className="overlay-content flex flex-col gap-6">
-            {identity}
-            <div className="flex flex-col">
-              {statRows.map((row, rowIndex) => (
-                <div key={row.label} className={cn("flex items-start justify-between gap-3 py-2", rowIndex > 0 && "border-t border-border/30")}>
-                  <span className="shrink-0 text-[12px] text-muted-foreground">{row.label}</span>
-                  <span className="text-right text-[12px] font-medium text-foreground">{row.value}</span>
-                </div>
-              ))}
+
+        {/* Desktop — static metadata sidebar above the lightbox backdrop,
+            same as the shop product overlay. */}
+        <div className="hidden min-h-0 flex-1 flex-col xl:flex">
+          <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
+            <button type="button" onClick={onClose} aria-label={t.close} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90">
+              <X className="size-4" aria-hidden="true" />
+            </button>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => canGoPrevious && onNavigate(index - 1)} disabled={!canGoPrevious} aria-label={t.previousUser} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary">
+                <ChevronLeft className="size-4" aria-hidden="true" />
+              </button>
+              <button type="button" onClick={() => canGoNext && onNavigate(index + 1)} disabled={!canGoNext} aria-label={t.nextUser} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary">
+                <ChevronRight className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
+            <div key={entry.usuario_id} className="overlay-content flex flex-col gap-6">
+              {identity("leaderboard-profile-title")}
+              {statList}
             </div>
           </div>
         </div>
@@ -211,9 +427,7 @@ export function LeaderboardProfileOverlay({
         <div aria-hidden="true" className="pointer-events-auto absolute inset-0 bg-background/75 backdrop-blur-[8px]" />
         <div className="relative z-10 w-[292px] shrink-0" />
         <div className="relative z-10 flex min-w-0 flex-1 items-center justify-center p-8">
-          <div className="overlay-media pointer-events-auto relative w-full max-w-3xl">
-            <ProfileImage name={name} avatar={avatar} />
-          </div>
+          <ProfileImage name={name} avatar={avatar} />
         </div>
       </div>
     </>

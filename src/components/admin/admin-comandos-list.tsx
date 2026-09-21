@@ -344,7 +344,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
       <div
         className={cn(
           "flex flex-col gap-6 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-          drawerIndex !== null && "lg:translate-x-[292px]",
+          drawerIndex !== null && "2xl:translate-x-[292px]",
         )}
       >
         {/* Header */}
@@ -355,13 +355,13 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
               {interpolate(t.countOf, { shown: filtered.length, total: commands.length })}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
             <SearchInput
               value={search}
               onChange={onSearchChange}
               placeholder={t.searchPlaceholder}
               ariaLabel={t.searchAria}
-              widthClassName="w-44 focus:w-56"
+              widthClassName="sm:w-44 sm:focus:w-56"
             />
             <CsvButton onClick={() => exportCSV(filtered, t)} />
             {!isEditing && (
@@ -569,7 +569,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
 
         {/* Table */}
         {paginated.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-border">
+          <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" role="region" aria-label={t.title} tabIndex={0}>
             {/* Column headers */}
             <SortHeader
               columns={COLUMNS.map((c) => ({ ...c, label: c.label(t) }))}
@@ -590,7 +590,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                     role="button"
                     tabIndex={0}
                     className={cn(
-                      "flex cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30",
+                      "flex min-w-[960px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30",
                       !cmd.enabled && "opacity-50",
                     )}
                     onClick={() => setDrawerIndex(filtered.indexOf(cmd))}
@@ -807,10 +807,13 @@ function DetailDrawer({
 
   return (
     <>
-      {/* Static metadata sidebar */}
+      {/* Static metadata sidebar — always opaque, sits at z-50 above the
+          backdrop so it can never be tinted by it. The "slide-in" illusion is
+          created by the table shifting right. Matches ProductDetailOverlay's
+          layering. */}
       <aside
         aria-label={interpolate(t.commandAria, { name: cmd.command })}
-        className="fixed inset-y-0 left-0 right-0 z-20 flex flex-col overflow-hidden bg-background lg:left-[max(252px,calc(50vw-588px))] lg:right-auto lg:w-[292px]"
+        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
       >
         {/* Header — close + prev/next */}
         <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
@@ -848,7 +851,7 @@ function DetailDrawer({
         </div>
 
         {/* Scrollable content */}
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 pb-6 lg:px-5">
+        <div key={cmd.id} className="overlay-content flex flex-1 flex-col gap-5 overflow-y-auto px-4 pb-6 lg:px-5">
           {/* Title + status */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -956,9 +959,10 @@ function DetailDrawer({
         </div>
       </aside>
 
-      {/* Click-outside backdrop */}
+      {/* Click-outside backdrop — covers the table right of the drawer so
+          clicks can't fall through to it. */}
       <div
-        className="fixed inset-0 z-10 bg-black/40 lg:left-[max(252px,calc(50vw-588px)+292px)]"
+        className="fixed inset-0 z-40 bg-black/40 xl:left-[max(252px,calc(50vw-588px)+292px)]"
         onClick={onClose}
         aria-hidden="true"
       />

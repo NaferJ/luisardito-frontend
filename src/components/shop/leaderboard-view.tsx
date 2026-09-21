@@ -134,15 +134,15 @@ function LeaderboardRow({
       aria-label={interpolate(t.viewProfile, { name })}
       onClick={onOpen}
       className={cn(
-        "flex w-full cursor-pointer appearance-none items-center gap-3 border-0 border-b border-border/20 bg-transparent px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold",
-        index % 2 === 1 ? "bg-card/90" : "bg-background/70",
+        "flex w-full cursor-pointer appearance-none items-center gap-3 border-0 border-b border-border/20 bg-transparent px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold sm:py-3.5",
+        index % 2 === 1 ? "sm:bg-card/90" : "sm:bg-background/70",
         isMe && "ring-1 ring-inset ring-gold/40",
       )}
     >
       {/* Position */}
       <span
         className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-md text-[13px] font-bold tabular-nums",
+          "flex size-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold tabular-nums",
           isTop3
             ? "bg-gold/20 text-gold-bright"
             : "bg-muted text-muted-foreground",
@@ -157,12 +157,12 @@ function LeaderboardRow({
         <img
           src={avatar}
           alt={name}
-          className="size-9 shrink-0 rounded-lg object-cover"
+          className="size-9 shrink-0 rounded-full object-cover"
         />
       ) : (
         <span
           aria-hidden="true"
-          className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-[13px] font-semibold text-foreground"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-foreground"
         >
           {name.charAt(0).toUpperCase()}
         </span>
@@ -170,22 +170,32 @@ function LeaderboardRow({
 
       {/* Name + badges */}
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="truncate text-[14px] font-medium text-foreground">{name}</span>
-        {isMe && (
-          <span className="shrink-0 rounded-full bg-gold px-2 py-0.5 text-[10px] font-bold text-gold-foreground">
-            {t.you}
-          </span>
-        )}
-        {entry.is_subscriber && (
-          <SubscriberBadge
-            durationMonths={entry.subscription_duration_months}
-            size={25}
-            className="shrink-0"
-          />
-        )}
-        {Boolean(entry.is_vip) && (
-          <VipBadge size={25} className="shrink-0" />
-        )}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-[13px] font-medium text-foreground sm:text-[14px]">{name}</span>
+          <div className="flex items-center gap-1.5 sm:hidden">
+            <span className="text-[13px] font-medium tabular-nums text-gold-bright">
+              {formatCompactNumber(entry.puntos)}
+            </span>
+            <ChangeIndicator entry={entry} t={t} />
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {isMe && (
+            <span className="rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-gold-foreground sm:px-2 sm:text-[10px]">
+              {t.you}
+            </span>
+          )}
+          {entry.is_subscriber && (
+            <SubscriberBadge
+              durationMonths={entry.subscription_duration_months}
+              size={20}
+              className="shrink-0"
+            />
+          )}
+          {Boolean(entry.is_vip) && (
+            <VipBadge size={20} className="shrink-0" />
+          )}
+        </div>
       </div>
 
       <div className="hidden w-[11rem] shrink-0 grid-cols-2 gap-3 lg:grid">
@@ -194,11 +204,11 @@ function LeaderboardRow({
       </div>
 
       {/* Points + change */}
-      <div className="flex shrink-0 items-center gap-2.5">
-        <span className="w-16 text-right text-[14px] font-semibold tabular-nums text-gold-bright">
+      <div className="hidden shrink-0 items-center gap-2.5 sm:flex">
+        <span className="min-w-12 text-right text-[13px] font-semibold tabular-nums text-gold-bright sm:w-16 sm:text-[14px]">
           {formatCompactNumber(entry.puntos)}
         </span>
-        <div className="w-10 text-right">
+        <div className="w-5 text-right sm:w-10">
           <ChangeIndicator entry={entry} t={t} />
         </div>
       </div>
@@ -309,8 +319,8 @@ export function LeaderboardView({
   return (
     <div className="flex flex-col gap-4">
       {stats && (
-        <div className="flex items-baseline gap-2 border-b border-border/40 pb-3">
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{t.totalPoints}</span>
+        <div className="flex items-center justify-between rounded-sm bg-secondary px-4 py-3">
+          <span className="text-[12px] text-muted-foreground">{t.totalPoints}</span>
           <strong className="text-[15px] font-semibold tabular-nums text-gold-bright">{formatCompactNumber(stats.total_points)}</strong>
         </div>
       )}
@@ -356,7 +366,7 @@ export function LeaderboardView({
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           {sortOptions(t).map((opt) => (
             <button
               key={opt.mode}
@@ -364,7 +374,7 @@ export function LeaderboardView({
               onClick={() => setSortMode(opt.mode)}
               aria-pressed={sortMode === opt.mode}
               className={cn(
-                "h-8 rounded-full px-3 text-[12px] font-medium transition-colors",
+                "h-8 shrink-0 rounded-full px-3 text-[12px] font-medium transition-colors",
                 sortMode === opt.mode
                   ? "bg-gold text-gold-foreground"
                   : "bg-card text-muted-foreground hover:text-foreground",
@@ -375,7 +385,7 @@ export function LeaderboardView({
           ))}
         </div>
 
-        <span className="shrink-0 text-[12px] text-muted-foreground sm:ml-auto">
+        <span className="hidden shrink-0 text-[12px] text-muted-foreground sm:ml-auto sm:inline">
           {filtered.length}/{meta?.total ?? allEntries.length}
         </span>
       </div>
@@ -386,7 +396,7 @@ export function LeaderboardView({
           <p className="text-[13px] text-muted-foreground">{t.noMatch}</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-sm border border-border/60 bg-background/50 shadow-sm">
+        <div className="overflow-hidden rounded-sm bg-secondary shadow-sm sm:border sm:border-border/60 sm:bg-background/50">
           {filtered.map((entry, i) => (
             <LeaderboardRow
               key={entry.usuario_id}

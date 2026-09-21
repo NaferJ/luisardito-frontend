@@ -165,7 +165,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
           {/* Search */}
           <SearchInput
             value={search}
@@ -207,7 +207,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
 
       {/* Table */}
       {paginated.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border border-border">
+        <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" role="region" aria-label={t.title} tabIndex={0}>
           {/* Column headers */}
           <SortHeader
             columns={COLUMNS.map((c) => ({ ...c, label: c.label(t), alignRight: c.key === "precio" || c.key === "stock" || c.key === "canjes_count" || c.key === "actualizado" }))}
@@ -233,7 +233,7 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
                     router.push(`/shop/admin/products/${p.id}/edit`)
                   }
                 }}
-                className="flex cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
+                className="flex min-w-[960px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
               >
                 {/* Image */}
                 <div className="size-10 shrink-0 overflow-hidden rounded-sm bg-secondary">

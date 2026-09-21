@@ -38,7 +38,7 @@ export function FilterPills<T extends string>({
     : "bg-secondary text-muted-foreground hover:text-foreground"
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
       {options.map((opt) => (
         <button
           key={opt.value}
@@ -46,7 +46,7 @@ export function FilterPills<T extends string>({
           onClick={() => onChange(opt.value)}
           aria-pressed={value === opt.value}
           className={cn(
-            "h-7 rounded-full px-3 text-[12px] font-medium transition-colors",
+            "h-7 shrink-0 rounded-full px-3 text-[12px] font-medium transition-colors",
             value === opt.value
               ? "bg-gold text-gold-foreground"
               : inactiveClass,
@@ -56,7 +56,7 @@ export function FilterPills<T extends string>({
         </button>
       ))}
       {onDateChange && datePreset !== undefined && (
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-0 flex shrink-0 items-center gap-1.5 sm:ml-auto">
           <Calendar className="size-3.5 text-muted-foreground" />
           <select
             value={datePreset}
