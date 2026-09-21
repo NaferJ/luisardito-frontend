@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { Bookmark } from "lucide-react"
 import type { DesignCardData } from "@/components/design-card"
@@ -8,8 +8,7 @@ import { OverlayDrawer } from "@/components/overlay-drawer"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/components/i18n/provider"
 import type { Dictionary } from "@/lib/i18n/shared"
-import { extractDominantColors } from "@/lib/extract-color"
-import { setOverlayColors } from "@/lib/overlay-color-store"
+import { useOverlayImageColors } from "@/lib/overlay-color-store"
 
 const statRows = (card: DesignCardData, t: Dictionary["card"]) => [
   { label: t.stats.impressions, value: card.impressions },
@@ -45,27 +44,7 @@ export function DesignDetailOverlay({
     setSaved(false)
   }
 
-  // Drive the side shader's color from the dominant colors of the currently
-  // open design image. Stale results from rapid arrow navigation are ignored
-  // via the cancelled flag; the store is cleared once when the overlay
-  // unmounts. SideDecor picks the candidate with the best contrast against
-  // the current background, so a dark image won't produce an invisible dark
-  // shader color.
-  const imageSrc = card?.image || null
-  useEffect(() => {
-    if (!imageSrc) return
-    let cancelled = false
-    extractDominantColors(imageSrc).then((colors) => {
-      if (!cancelled) setOverlayColors(colors.length > 0 ? colors : null)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [imageSrc])
-
-  useEffect(() => {
-    return () => setOverlayColors(null)
-  }, [])
+  useOverlayImageColors(card?.image || null)
 
   if (!card) return null
 

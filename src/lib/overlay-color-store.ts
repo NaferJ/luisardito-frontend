@@ -1,6 +1,7 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
+import { useEffect, useSyncExternalStore } from "react"
+import { extractDominantColors } from "@/lib/extract-color"
 
 /**
  * Tiny external store for the dominant colors of the currently-open overlay's
@@ -35,4 +36,30 @@ function getSnapshot(): string[] | null {
 
 export function useOverlayColors(): string[] | null {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
+/**
+ * Publish the dominant colors for the currently-open overlay image. Stale
+ * extraction results are ignored during overlay navigation, and the store is
+ * cleared when the overlay unmounts or the image disappears.
+ */
+export function useOverlayImageColors(imageSrc: string | null): void {
+  useEffect(() => {
+    if (!imageSrc) {
+      setOverlayColors(null)
+      return
+    }
+
+    let cancelled = false
+    extractDominantColors(imageSrc).then((colors) => {
+      if (!cancelled) setOverlayColors(colors.length > 0 ? colors : null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [imageSrc])
+
+  useEffect(() => {
+    return () => setOverlayColors(null)
+  }, [])
 }

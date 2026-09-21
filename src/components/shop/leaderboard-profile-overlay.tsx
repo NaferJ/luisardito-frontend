@@ -6,6 +6,7 @@ import { VipBadge } from "@/components/vip-badge"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
 import { cn, formatCompactNumber, safeImageUrl } from "@/lib/utils"
 import { lockBodyScroll } from "@/lib/scroll-lock"
+import { useOverlayImageColors } from "@/lib/overlay-color-store"
 import { useI18n } from "@/components/i18n/provider"
 import { interpolate, type Dictionary } from "@/lib/i18n/shared"
 import { OverlayNavHeader, OverlayTitleBar } from "@/components/overlay-nav"
@@ -51,7 +52,7 @@ function ProfileImage({
   avatar?: string
 }>) {
   return (
-    <div className="overlay-media pointer-events-auto relative flex aspect-[4/3] w-full max-w-2xl items-center justify-center overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border">
+    <div className="overlay-media pointer-events-auto relative flex aspect-square w-full max-w-64 items-center justify-center overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border">
       {avatar ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={avatar} alt={name} className="size-full object-contain" />
@@ -81,7 +82,7 @@ function MobileAvatarHeader({
       ref={headerRef}
       className="relative z-0 flex h-[40vh] min-h-[240px] max-h-[340px] items-center justify-center overflow-hidden px-6 py-4"
     >
-      <div className="overlay-media relative aspect-square h-full overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-border/50">
+      <div className="overlay-media relative aspect-square h-44 overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-border/50">
         {avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={avatar} alt={name} className="size-full object-cover" />
@@ -114,6 +115,8 @@ export function LeaderboardProfileOverlay({
   const onCloseRef = useRef(onClose)
   const onNavigateRef = useRef(onNavigate)
   const entry = entries[index]
+  const avatar = entry ? entryAvatar(entry) : undefined
+  useOverlayImageColors(avatar ?? null)
 
   // Scroll-driven avatar-header shrink + sticky title bar fade — the same
   // effect ProductDetailOverlay uses on mobile, so both overlays feel identical.
@@ -178,7 +181,6 @@ export function LeaderboardProfileOverlay({
   if (!entry) return null
 
   const name = entryName(entry, t)
-  const avatar = entryAvatar(entry)
   const statRows = [
     { label: t.stats.position, value: `#${entry.position}` },
     { label: t.stats.points, value: formatCompactNumber(entry.puntos) },

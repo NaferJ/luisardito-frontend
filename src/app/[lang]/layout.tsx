@@ -43,15 +43,7 @@ export default async function RootLayout({ children, params }: Readonly<{ childr
   const user = await getCurrentUser()
   return (
     <html lang={lang} className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
-      <body className="font-sans antialiased">
-        <I18nProvider locale={lang} dictionary={dictionaries[lang]}>
-          <UserProvider user={user}>
-            <SideDecor side="left" />
-            <SideDecor side="right" />
-            {children}
-          </UserProvider>
-        </I18nProvider>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+      <head>
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-41BXX3T8F1" strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
@@ -61,6 +53,16 @@ export default async function RootLayout({ children, params }: Readonly<{ childr
             gtag('config', 'G-41BXX3T8F1');
           `}
         </Script>
+      </head>
+      <body className="font-sans antialiased">
+        <I18nProvider locale={lang} dictionary={dictionaries[lang]}>
+          <UserProvider user={user}>
+            <SideDecor side="left" />
+            <SideDecor side="right" />
+            {children}
+          </UserProvider>
+        </I18nProvider>
+        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )

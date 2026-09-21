@@ -69,15 +69,7 @@ export function DesignCard({
       />
     )
   } else {
-    avatarElement = (
-      <span
-        aria-hidden="true"
-        className={cn(
-          "block size-7 rounded-full ring-1 ring-background/80",
-          card.avatarColor,
-        )}
-      />
-    )
+    avatarElement = null
   }
 
   return (
@@ -94,7 +86,8 @@ export function DesignCard({
           src={card.image || "/placeholder.svg"}
           alt={card.alt}
           fill
-          sizes="(min-width: 2560px) 11vw, (min-width: 1920px) 12vw, (min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+          quality={90}
           className="object-cover"
           onLoad={(event) => {
             if (!card.useNaturalAspect || card.aspectStyle) return
@@ -129,11 +122,12 @@ export function DesignCard({
           </span>
         )}
 
-        {/* Avatar — bottom-left, always visible.
-            Shows last redeemer (shop) or author (landing) avatar. */}
-        <div className="absolute bottom-2.5 left-2.5 z-10">
-          {avatarElement}
-        </div>
+        {/* Avatar — bottom-left, shown only when a real user/author avatar exists. */}
+        {avatarElement && (
+          <div className="absolute bottom-2.5 left-2.5 z-10">
+            {avatarElement}
+          </div>
+        )}
 
         {/* Open arrow — bottom-right, always visible */}
         <span className="absolute bottom-2.5 right-2.5 z-10 flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm">
