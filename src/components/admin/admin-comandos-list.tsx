@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
+import { useCallback, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import {
   Plus,
@@ -11,13 +11,12 @@ import {
   X,
   Save,
   Power,
-  ChevronLeft,
-  ChevronRight,
   CheckCircle2,
   XCircle,
   MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { DrawerBackdrop, OverlayDrawer } from "@/components/overlay-drawer"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
@@ -776,21 +775,6 @@ function DetailDrawer({
   const cmd = commands[index]
   const isDynamic = cmd.command_type === "dynamic"
 
-  // Keyboard: Escape to close, arrows to navigate
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < commands.length - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, commands.length, onClose, onNavigate])
-
   const statRows = [
     { label: t.drawer.type, value: t.types[cmd.command_type as keyof ComandosDict["types"]] ?? cmd.command_type },
     { label: t.drawer.status, value: cmd.enabled ? t.status.enabled : t.status.disabled },
@@ -811,45 +795,48 @@ function DetailDrawer({
           backdrop so it can never be tinted by it. The "slide-in" illusion is
           created by the table shifting right. Matches ProductDetailOverlay's
           layering. */}
-      <aside
-        aria-label={interpolate(t.commandAria, { name: cmd.command })}
-        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
-      >
-        {/* Header — close + prev/next */}
-        <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t.drawer.close}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => index > 0 && onNavigate(index - 1)}
-              disabled={index === 0}
-              aria-label={t.drawer.previous}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
-            >
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-            <span className="text-[12px] tabular-nums text-muted-foreground">
-              {index + 1} / {commands.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => index < commands.length - 1 && onNavigate(index + 1)}
-              disabled={index === commands.length - 1}
-              aria-label={t.drawer.next}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
-            >
-              <ChevronRight className="size-4" aria-hidden="true" />
-            </button>
+      <OverlayDrawer
+        ariaLabel={interpolate(t.commandAria, { name: cmd.command })}
+        index={index}
+        count={commands.length}
+        onClose={onClose}
+        onNavigate={onNavigate}
+        labels={{ close: t.drawer.close, previous: t.drawer.previous, next: t.drawer.next }}
+        showCounter
+        footer={
+          /* Footer — toggle + edit + delete */
+          <div className="shrink-0 border-t border-border px-4 py-3 lg:px-5">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onToggle(cmd.id)}
+                disabled={pending}
+                className="flex h-9 flex-1 items-center justify-center gap-2 rounded-full border border-border text-[13px] font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
+              >
+                <Power className="size-3.5" />
+                {cmd.enabled ? t.disable : t.enable}
+              </button>
+              <button
+                type="button"
+                onClick={() => onEdit(cmd)}
+                className="flex h-9 flex-1 items-center justify-center gap-2 rounded-full bg-foreground text-[13px] font-medium text-background transition-opacity hover:opacity-85"
+              >
+                <Pencil className="size-3.5" />
+                {t.edit}
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(cmd)}
+                disabled={pending}
+                className="flex size-9 shrink-0 items-center justify-center rounded-full border border-destructive/40 text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+                aria-label={t.delete}
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
           </div>
-        </div>
-
+        }
+      >
         {/* Scrollable content */}
         <div key={cmd.id} className="overlay-content flex flex-1 flex-col gap-5 overflow-y-auto px-4 pb-6 lg:px-5">
           {/* Title + status */}
@@ -925,47 +912,9 @@ function DetailDrawer({
             ))}
           </div>
         </div>
+      </OverlayDrawer>
 
-        {/* Footer — toggle + edit + delete */}
-        <div className="shrink-0 border-t border-border px-4 py-3 lg:px-5">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onToggle(cmd.id)}
-              disabled={pending}
-              className="flex h-9 flex-1 items-center justify-center gap-2 rounded-full border border-border text-[13px] font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
-            >
-              <Power className="size-3.5" />
-              {cmd.enabled ? t.disable : t.enable}
-            </button>
-            <button
-              type="button"
-              onClick={() => onEdit(cmd)}
-              className="flex h-9 flex-1 items-center justify-center gap-2 rounded-full bg-foreground text-[13px] font-medium text-background transition-opacity hover:opacity-85"
-            >
-              <Pencil className="size-3.5" />
-              {t.edit}
-            </button>
-            <button
-              type="button"
-              onClick={() => onDelete(cmd)}
-              disabled={pending}
-              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-destructive/40 text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
-              aria-label={t.delete}
-            >
-              <Trash2 className="size-3.5" />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Click-outside backdrop — covers the table right of the drawer so
-          clicks can't fall through to it. */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40 xl:left-[max(252px,calc(50vw-588px)+292px)]"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <DrawerBackdrop onClose={onClose} />
     </>
   )
 }

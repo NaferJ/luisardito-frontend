@@ -12,9 +12,6 @@ import {
   XCircle,
   Pause,
   CalendarClock,
-  X,
-  ChevronLeft,
-  ChevronRight,
   Users,
   TrendingUp,
   Percent,
@@ -24,6 +21,7 @@ import { cn, formatCompactNumber } from "@/lib/utils"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS, formatDate, getDateRangeStart } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
+import { DrawerBackdrop, OverlayDrawer } from "@/components/overlay-drawer"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
@@ -527,21 +525,6 @@ function DetailDrawer({
     return () => { cancelled = true }
   }, [promocion.id])
 
-  // Keyboard: Escape to close, arrows to navigate
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < promociones.length - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, promociones.length, onClose, onNavigate])
-
   const maxUsesSuffix = promocion.cantidad_usos_maximos
     ? ` / ${promocion.cantidad_usos_maximos.toLocaleString()}`
     : ""
@@ -566,45 +549,28 @@ function DetailDrawer({
           backdrop so it can never be tinted by it. The "slide-in" illusion is
           created by the table shifting right. Matches ProductDetailOverlay's
           layering. */}
-      <aside
-        aria-label={interpolate(t.drawer.promotionAria, { id: promocion.id })}
-        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
-      >
-        {/* Header — close + prev/next */}
-        <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t.drawer.close}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </button>
-          <div className="flex items-center gap-2">
+      <OverlayDrawer
+        ariaLabel={interpolate(t.drawer.promotionAria, { id: promocion.id })}
+        index={index}
+        count={promociones.length}
+        onClose={onClose}
+        onNavigate={onNavigate}
+        labels={{ close: t.drawer.close, previous: t.drawer.previousPromotion, next: t.drawer.nextPromotion }}
+        showCounter
+        footer={
+          /* Footer — edit button */
+          <div className="shrink-0 border-t border-border px-4 py-3 lg:px-5">
             <button
               type="button"
-              onClick={() => index > 0 && onNavigate(index - 1)}
-              disabled={index === 0}
-              aria-label={t.drawer.previousPromotion}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
+              onClick={() => onEdit(promocion.id)}
+              className="flex h-9 w-full items-center justify-center gap-2 rounded-full bg-foreground text-[13px] font-medium text-background transition-opacity hover:opacity-85"
             >
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-            <span className="text-[12px] tabular-nums text-muted-foreground">
-              {index + 1} / {promociones.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => index < promociones.length - 1 && onNavigate(index + 1)}
-              disabled={index === promociones.length - 1}
-              aria-label={t.drawer.nextPromotion}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-30"
-            >
-              <ChevronRight className="size-4" aria-hidden="true" />
+              <Pencil className="size-3.5" />
+              {t.drawer.editPromotion}
             </button>
           </div>
-        </div>
-
+        }
+      >
         {/* Scrollable content */}
         <div key={promocion.id} className="overlay-content flex flex-1 flex-col gap-5 overflow-y-auto px-4 pb-6 lg:px-5">
           {/* Title + status */}
@@ -750,27 +716,9 @@ function DetailDrawer({
             </div>
           )}
         </div>
+      </OverlayDrawer>
 
-        {/* Footer — edit button */}
-        <div className="shrink-0 border-t border-border px-4 py-3 lg:px-5">
-          <button
-            type="button"
-            onClick={() => onEdit(promocion.id)}
-            className="flex h-9 w-full items-center justify-center gap-2 rounded-full bg-foreground text-[13px] font-medium text-background transition-opacity hover:opacity-85"
-          >
-            <Pencil className="size-3.5" />
-            {t.drawer.editPromotion}
-          </button>
-        </div>
-      </aside>
-
-      {/* Click-outside backdrop — covers the table right of the drawer so
-          clicks can't fall through to it. */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40 xl:left-[max(252px,calc(50vw-588px)+292px)]"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <DrawerBackdrop onClose={onClose} />
     </>
   )
 }

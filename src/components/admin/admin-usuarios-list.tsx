@@ -1,23 +1,22 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useLocalizedRouter } from "@/components/i18n/use-localized-router"
 import {
   Crown,
   Star,
   ChevronRight,
-  ChevronLeft,
   Users,
   Crown as CrownIcon,
   Star as StarIcon,
   Shield,
   AlertTriangle,
-  X,
   ShoppingBag,
 } from "lucide-react"
 import { cn, formatCompactNumber } from "@/lib/utils"
 import { VipBadge } from "@/components/vip-badge"
 import { SubscriberBadge } from "@/components/subscriber-badge"
+import { OverlayDrawer } from "@/components/overlay-drawer"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
@@ -427,21 +426,6 @@ function UserDetailDrawer({
   const userCanjes = canjesByUser?.[u.id] ?? []
   const recentCanjes = userCanjes.slice(0, 5)
 
-  // Keyboard: Escape to close, arrows to navigate
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < usuarios.length - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, usuarios.length, onClose, onNavigate])
-
   const statRows = [
     { label: t.drawer.points, value: interpolate(t.pts, { n: formatCompactNumber(u.puntos) }) },
     { label: t.drawer.totalCanjes, value: String(u.total_canjes ?? 0) },
@@ -452,45 +436,14 @@ function UserDetailDrawer({
   ]
 
   return (
-    /* Static metadata sidebar — always opaque, sits at z-50 above the page.
-       The "slide-in" illusion is created by the table shifting right.
-       Matches ProductDetailOverlay's layering. */
-    <aside
-      aria-label={userName(u)}
-      className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
+    <OverlayDrawer
+      ariaLabel={userName(u)}
+      index={index}
+      count={usuarios.length}
+      onClose={onClose}
+      onNavigate={onNavigate}
+      labels={{ close: t.close, previous: t.previousUser, next: t.nextUser }}
     >
-      {/* Header — close + prev/next */}
-      <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t.close}
-          className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
-        >
-          <X className="size-4" aria-hidden="true" />
-        </button>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => index > 0 && onNavigate(index - 1)}
-            disabled={index === 0}
-            aria-label={t.previousUser}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-          >
-            <ChevronLeft className="size-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => index < usuarios.length - 1 && onNavigate(index + 1)}
-            disabled={index === usuarios.length - 1}
-            aria-label={t.nextUser}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-          >
-            <ChevronRight className="size-4" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-
       {/* Scrollable content */}
       <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
         <div key={u.id} className="overlay-content flex flex-col gap-6">
@@ -595,6 +548,6 @@ function UserDetailDrawer({
           </button>
         </div>
       </div>
-    </aside>
+    </OverlayDrawer>
   )
 }

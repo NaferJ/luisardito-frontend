@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 import Image from "next/image"
-import { ArrowUpRight, Bookmark, Star } from "lucide-react"
+import { ArrowUpRight, Star } from "lucide-react"
 import { useI18n } from "@/components/i18n/provider"
 import { interpolate } from "@/lib/i18n/shared"
 import { cn } from "@/lib/utils"
@@ -38,11 +38,9 @@ export type DesignCardData = {
 export function DesignCard({
   card,
   onOpen,
-  hideBookmark = false,
 }: Readonly<{
   card: DesignCardData
   onOpen: () => void
-  hideBookmark?: boolean
 }>) {
   const { dictionary } = useI18n()
   const t = dictionary.card
@@ -116,18 +114,6 @@ export function DesignCard({
           <span className="absolute top-2.5 right-2.5 z-20 flex size-6 items-center justify-center rounded-full bg-foreground text-[12px] font-medium text-background">
             {card.badge}
           </span>
-        )}
-
-        {/* Bookmark button — top-right, hover/focus only */}
-        {!hideBookmark && (
-          <button
-            type="button"
-            aria-label={t.save}
-            onClick={(e) => e.stopPropagation()}
-            className="absolute top-2.5 right-2.5 z-30 flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition-[opacity,transform] duration-200 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold active:scale-90"
-          >
-            <Bookmark className="size-3.5" aria-hidden="true" />
-          </button>
         )}
 
         {/* Avatar — bottom-left, always visible.

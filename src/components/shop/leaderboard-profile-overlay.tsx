@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, type RefObject } from "react"
-import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { SubscriberBadge } from "@/components/subscriber-badge"
 import { VipBadge } from "@/components/vip-badge"
 import type { LeaderboardEntry } from "@/lib/leaderboard"
@@ -9,6 +8,8 @@ import { cn, formatCompactNumber, safeImageUrl } from "@/lib/utils"
 import { lockBodyScroll } from "@/lib/scroll-lock"
 import { useI18n } from "@/components/i18n/provider"
 import { interpolate, type Dictionary } from "@/lib/i18n/shared"
+import { OverlayNavHeader, OverlayTitleBar } from "@/components/overlay-nav"
+import { useCollapsingOverlayHeader } from "@/lib/overlay-hooks"
 
 type LeaderboardDict = Dictionary["leaderboard"]
 
@@ -59,73 +60,6 @@ function ProfileImage({
           {name.charAt(0).toUpperCase()}
         </span>
       )}
-    </div>
-  )
-}
-
-/** Sticky mobile title bar — same pattern as ProductTitleBar: the bar
- *  background and the user name fade in once the avatar header has mostly
- *  scrolled away, so the controls always stay reachable. */
-function ProfileTitleBar({
-  titleRef,
-  titleTextRef,
-  name,
-  canGoPrev,
-  canGoNext,
-  onClose,
-  onPrev,
-  onNext,
-  t,
-}: Readonly<{
-  titleRef: RefObject<HTMLDivElement | null>
-  titleTextRef: RefObject<HTMLDivElement | null>
-  name: string
-  canGoPrev: boolean
-  canGoNext: boolean
-  onClose: () => void
-  onPrev: () => void
-  onNext: () => void
-  t: LeaderboardDict
-}>) {
-  return (
-    <div
-      ref={titleRef}
-      className="sticky top-0 z-40 flex items-center justify-between gap-2 px-4 py-3 bg-transparent transition-colors duration-200"
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label={t.close}
-        className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90"
-      >
-        <X className="size-4" aria-hidden="true" />
-      </button>
-      <div
-        ref={titleTextRef}
-        className="min-w-0 flex-1 px-8 text-center text-[15px] font-medium text-foreground opacity-0 transition-opacity duration-200"
-      >
-        {name}
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onPrev}
-          disabled={!canGoPrev}
-          aria-label={t.previousUser}
-          className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90 disabled:opacity-40 disabled:hover:bg-background/80"
-        >
-          <ChevronLeft className="size-4" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          disabled={!canGoNext}
-          aria-label={t.nextUser}
-          className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90 disabled:opacity-40 disabled:hover:bg-background/80"
-        >
-          <ChevronRight className="size-4" aria-hidden="true" />
-        </button>
-      </div>
     </div>
   )
 }
@@ -183,11 +117,7 @@ export function LeaderboardProfileOverlay({
 
   // Scroll-driven avatar-header shrink + sticky title bar fade — the same
   // effect ProductDetailOverlay uses on mobile, so both overlays feel identical.
-  const overlayRef = useRef<HTMLDivElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
-  const titleRef = useRef<HTMLDivElement>(null)
-  const titleTextRef = useRef<HTMLDivElement>(null)
-  const initialHeaderHeightRef = useRef(0)
+  const { overlayRef, headerRef, titleRef, titleTextRef } = useCollapsingOverlayHeader(entry?.usuario_id)
 
   useEffect(() => {
     indexRef.current = index
@@ -197,57 +127,6 @@ export function LeaderboardProfileOverlay({
   }, [entries.length, index, onClose, onNavigate])
 
   useEffect(() => lockBodyScroll(), [])
-
-  useEffect(() => {
-    const overlay = overlayRef.current
-    const header = headerRef.current
-    const title = titleRef.current
-    const titleText = titleTextRef.current
-    if (!overlay || !header || !title || !titleText) return
-
-    let raf = 0
-    const update = () => {
-      raf = 0
-      const scrollY = overlay.scrollTop
-      const initialHeight = initialHeaderHeightRef.current
-      const titleThreshold = Math.max(0, initialHeight - 80)
-
-      const newHeight = Math.max(80, initialHeight - scrollY * 0.6)
-      header.style.height = `${newHeight}px`
-      header.style.minHeight = "0px"
-
-      const titleProgress = Math.min(1, Math.max(0, (scrollY - titleThreshold) / 80))
-
-      title.classList.toggle("bg-background/95", titleProgress > 0.01)
-      title.classList.toggle("backdrop-blur-sm", titleProgress > 0.01)
-      titleText.style.opacity = String(titleProgress)
-    }
-
-    const onScroll = () => {
-      if (raf === 0) {
-        raf = requestAnimationFrame(update)
-      }
-    }
-
-    const reset = () => {
-      overlay.scrollTop = 0
-      header.style.height = ""
-      header.style.minHeight = ""
-      initialHeaderHeightRef.current = header.clientHeight
-      header.style.height = `${initialHeaderHeightRef.current}px`
-      header.style.minHeight = "0px"
-      titleText.style.opacity = "0"
-      title.classList.remove("bg-background/95", "backdrop-blur-sm")
-    }
-
-    reset()
-    overlay.addEventListener("scroll", onScroll, { passive: true })
-    onScroll()
-    return () => {
-      overlay.removeEventListener("scroll", onScroll)
-      if (raf) cancelAnimationFrame(raf)
-    }
-  }, [entry?.usuario_id])
 
   useEffect(() => {
     const restoreFocusTo = document.activeElement as HTMLElement | null
@@ -300,8 +179,6 @@ export function LeaderboardProfileOverlay({
 
   const name = entryName(entry, t)
   const avatar = entryAvatar(entry)
-  const canGoPrevious = index > 0
-  const canGoNext = index < entries.length - 1
   const statRows = [
     { label: t.stats.position, value: `#${entry.position}` },
     { label: t.stats.points, value: formatCompactNumber(entry.puntos) },
@@ -370,16 +247,15 @@ export function LeaderboardProfileOverlay({
           </div>
           <div className="absolute inset-0 -z-10 bg-background/80" aria-hidden="true" />
 
-          <ProfileTitleBar
+          <OverlayTitleBar
             titleRef={titleRef}
             titleTextRef={titleTextRef}
-            name={name}
-            canGoPrev={canGoPrevious}
-            canGoNext={canGoNext}
+            title={name}
+            index={index}
+            count={entries.length}
             onClose={onClose}
-            onPrev={() => canGoPrevious && onNavigate(index - 1)}
-            onNext={() => canGoNext && onNavigate(index + 1)}
-            t={t}
+            onNavigate={onNavigate}
+            labels={{ close: t.close, previous: t.previousUser, next: t.nextUser }}
           />
           <MobileAvatarHeader
             key={entry.usuario_id}
@@ -401,19 +277,13 @@ export function LeaderboardProfileOverlay({
         {/* Desktop — static metadata sidebar above the lightbox backdrop,
             same as the shop product overlay. */}
         <div className="hidden min-h-0 flex-1 flex-col xl:flex">
-          <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-            <button type="button" onClick={onClose} aria-label={t.close} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90">
-              <X className="size-4" aria-hidden="true" />
-            </button>
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={() => canGoPrevious && onNavigate(index - 1)} disabled={!canGoPrevious} aria-label={t.previousUser} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary">
-                <ChevronLeft className="size-4" aria-hidden="true" />
-              </button>
-              <button type="button" onClick={() => canGoNext && onNavigate(index + 1)} disabled={!canGoNext} aria-label={t.nextUser} className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary">
-                <ChevronRight className="size-4" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
+          <OverlayNavHeader
+            index={index}
+            count={entries.length}
+            onClose={onClose}
+            onNavigate={onNavigate}
+            labels={{ close: t.close, previous: t.previousUser, next: t.nextUser }}
+          />
           <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
             <div key={entry.usuario_id} className="overlay-content flex flex-col gap-6">
               {identity("leaderboard-profile-title")}

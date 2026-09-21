@@ -14,8 +14,6 @@ import {
   ArrowUp,
   ArrowDown,
   X,
-  ChevronLeft,
-  ChevronRight,
   AlertTriangle,
   RefreshCw,
   CheckSquare,
@@ -26,6 +24,7 @@ import { VipBadge } from "@/components/vip-badge"
 import { downloadCSV } from "@/lib/admin-csv"
 import { PAGE_SIZE_OPTIONS, getDateRangeStart } from "@/lib/admin-utils"
 import type { DatePreset } from "@/lib/admin-utils"
+import { OverlayDrawer } from "@/components/overlay-drawer"
 import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
@@ -842,21 +841,6 @@ function DetailDrawer({
   const StatusIcon = status.icon
   const currentPrice = canjeCurrentPrice(canje)
 
-  // Keyboard: Escape to close, arrows to navigate
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
-      if (e.key === "ArrowRight" && index < canjes.length - 1) onNavigate(index + 1)
-    }
-    document.addEventListener("keydown", handleKey)
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.body.style.overflow = ""
-    }
-  }, [index, canjes.length, onClose, onNavigate])
-
   const statRows = [
     { label: t.drawer.status, value: status.label(t) },
     { label: t.drawer.pricePaid, value: interpolate(t.pts, { n: formatCompactNumber(canjePrice(canje)) }) },
@@ -872,42 +856,14 @@ function DetailDrawer({
           lightbox (z-40) so the blur layer can never tint it. The "slide-in"
           illusion is created by the table shifting right, not by the panel
           itself moving. Matches ProductDetailOverlay's layering. */}
-      <aside
-        aria-label={interpolate(t.drawer.ariaLabel, { id: canje.id })}
-        className="overlay-enter fixed inset-y-0 left-0 right-0 z-50 flex flex-col overflow-hidden bg-background xl:left-[max(252px,calc(50vw-588px))] xl:right-auto xl:w-[292px]"
+      <OverlayDrawer
+        ariaLabel={interpolate(t.drawer.ariaLabel, { id: canje.id })}
+        index={index}
+        count={canjes.length}
+        onClose={onClose}
+        onNavigate={onNavigate}
+        labels={{ close: t.drawer.close, previous: t.drawer.previous, next: t.drawer.next }}
       >
-        {/* Header — close + prev/next */}
-        <div className="flex shrink-0 items-center justify-between px-4 pb-4 pt-4 lg:px-5">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t.drawer.close}
-            className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => index > 0 && onNavigate(index - 1)}
-              disabled={index === 0}
-              aria-label={t.drawer.previous}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-            >
-              <ChevronLeft className="size-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => index < canjes.length - 1 && onNavigate(index + 1)}
-              disabled={index === canjes.length - 1}
-              aria-label={t.drawer.next}
-              className="flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-accent disabled:opacity-40 disabled:hover:bg-secondary"
-            >
-              <ChevronRight className="size-4" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-
         {/* Scrollable content */}
         <div className="relative min-h-0 flex-1 overflow-y-auto px-4 pb-5 lg:px-5">
           <div key={canje.id} className="overlay-content flex flex-col gap-6">
@@ -985,7 +941,7 @@ function DetailDrawer({
             </div>
           </div>
         </div>
-      </aside>
+      </OverlayDrawer>
 
       {/* Lightbox: sits at z-40 below the sidebar (z-50) and spans to the
           right edge so the blur layer leaves no uncovered strip. The media is
