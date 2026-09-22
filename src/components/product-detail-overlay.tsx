@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type ReactNode, type RefObject } from "react"
+import { useEffect, useState, type ReactNode, type RefObject, type SyntheticEvent } from "react"
 import Image from "next/image"
 import { Gift, Package, Tag, Users, type LucideIcon } from "lucide-react"
 import type { Producto } from "@/types"
@@ -86,6 +86,34 @@ function renderRedeemButtonContent(redeeming: boolean, cooldown: number, t: Prod
       {t.redeem}
     </>
   )
+}
+
+function productImageSrc(product: Producto): string {
+  const rawSrc = product.imagen || product.imagen_url || "/placeholder.svg"
+  // Cloudinary's `e_trim` removes transparent PNG padding. JPEGs have no alpha
+  // channel and would fail with this transform, so it is limited to PNG URLs.
+  return rawSrc.includes("res.cloudinary.com") && rawSrc.toLowerCase().endsWith(".png")
+    ? rawSrc.replace("/image/upload/", "/image/upload/e_trim/")
+    : rawSrc
+}
+
+function useProductImageSize(product: Producto) {
+  const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null)
+
+  const onImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth, naturalHeight } = event.currentTarget
+    if (naturalWidth > 0 && naturalHeight > 0) {
+      setNaturalSize((current) => current?.width === naturalWidth && current.height === naturalHeight
+        ? current
+        : { width: naturalWidth, height: naturalHeight })
+    }
+  }
+
+  return {
+    width: naturalSize?.width ?? product.imagen_width ?? 4,
+    height: naturalSize?.height ?? product.imagen_height ?? 3,
+    onImageLoad,
+  }
 }
 
 /** Encapsulates redemption state, the cooldown timer, and the redeem action. */
@@ -221,9 +249,8 @@ export function ProductDetailOverlay({
             alt=""
             fill
             sizes="100vw"
-            quality={50}
+            quality={30}
             className="object-cover blur-3xl opacity-40"
-            priority
           />
         </div>
         <div className="absolute inset-0 -z-10 bg-background/80" aria-hidden="true" />
@@ -429,19 +456,8 @@ function MobileImageHeader({
   product: Producto
   headerRef: RefObject<HTMLDivElement | null>
 }>) {
-  const imgW = product.imagen_width || 800
-  const imgH = product.imagen_height || 600
-
-  // Cloudinary's `e_trim` auto-crops transparent borders from PNGs. Only
-  // applied to PNGs because JPGs have no alpha channel — Cloudinary returns
-  // 400 if `e_trim` is used on a JPEG. This fixes transparent PNGs that have
-  // padding around the actual content (which made them look smaller than
-  // other products) without affecting JPGs or adding processing overhead.
-  const rawSrc = product.imagen || product.imagen_url || "/placeholder.svg"
-  const imageSrc =
-    rawSrc.includes("res.cloudinary.com") && rawSrc.toLowerCase().endsWith(".png")
-      ? rawSrc.replace("/image/upload/", "/image/upload/e_trim/")
-      : rawSrc
+  const imageSrc = productImageSrc(product)
+  const { width: imgW, height: imgH, onImageLoad } = useProductImageSize(product)
 
   // Width = the smaller of (max width) and (the width that would make the
   // height equal the available header height at this aspect ratio). This
@@ -463,8 +479,9 @@ function MobileImageHeader({
           fill
           sizes="(max-width: 640px) 90vw, 384px"
           quality={90}
-          className="object-cover"
+          className="object-contain"
           priority
+          onLoad={onImageLoad}
         />
       </div>
     </div>
@@ -595,6 +612,10 @@ function MoreProducts({
 }
 
 function ProductLightbox({ product }: Readonly<{ product: Producto }>) {
+  const imageSrc = productImageSrc(product)
+  const { width: imgW, height: imgH, onImageLoad } = useProductImageSize(product)
+  const width = `min(42rem, 100%, calc((100vh - 4rem) * ${imgW} / ${imgH}))`
+
   return (
     <div
       role="dialog"
@@ -607,23 +628,20 @@ function ProductLightbox({ product }: Readonly<{ product: Producto }>) {
         className="pointer-events-auto absolute inset-0 bg-background/70 backdrop-blur-[8px]"
       />
       <div className="relative z-10 hidden xl:block xl:w-[292px] xl:shrink-0" />
-      <div className="relative z-10 flex min-w-0 flex-1 items-center justify-center">
+      <div className="relative z-10 flex min-w-0 flex-1 items-center justify-center px-6 py-8">
         <div
-          className="overlay-media relative w-full max-w-2xl overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border"
-          style={
-            product.imagen_width && product.imagen_height
-              ? { aspectRatio: `${product.imagen_width} / ${product.imagen_height}` }
-              : { aspectRatio: "4 / 3" }
-          }
+          className="overlay-media relative overflow-hidden rounded-sm bg-card shadow-2xl ring-1 ring-border"
+          style={{ aspectRatio: `${imgW} / ${imgH}`, width }}
         >
           <Image
-            src={product.imagen || product.imagen_url || "/placeholder.svg"}
+            src={imageSrc}
             alt={product.nombre}
             fill
             sizes="672px"
             quality={90}
-            className="object-cover"
+            className="object-contain"
             priority
+            onLoad={onImageLoad}
           />
         </div>
       </div>

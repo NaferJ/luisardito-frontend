@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { DesignCard } from "@/components/design-card"
 import { ProductDetailOverlay } from "@/components/product-detail-overlay"
 import { LeaderboardAside } from "@/components/leaderboard-aside"
@@ -39,6 +39,24 @@ type ProductFeedProps = {
 /** URL-safe identifier for a product: slug if available, otherwise ID. */
 function productSlug(product: Producto): string {
   return product.slug || String(product.id)
+}
+
+const DESKTOP_FEED_QUERY = "(min-width: 1024px)"
+const TABLET_FEED_QUERY = "(min-width: 640px)"
+
+function subscribeFeedColumns(callback: () => void): () => void {
+  const queries = [DESKTOP_FEED_QUERY, TABLET_FEED_QUERY].map((query) => window.matchMedia(query))
+  queries.forEach((query) => query.addEventListener("change", callback))
+  return () => queries.forEach((query) => query.removeEventListener("change", callback))
+}
+
+function getFeedColumnCount(): number {
+  if (window.matchMedia(DESKTOP_FEED_QUERY).matches) return 4
+  return window.matchMedia(TABLET_FEED_QUERY).matches ? 3 : 2
+}
+
+function useFeedColumnCount(): number {
+  return useSyncExternalStore(subscribeFeedColumns, getFeedColumnCount, () => 2)
 }
 
 /**
@@ -138,11 +156,10 @@ export function ProductFeed({
     onCardOpen?.(productSlug(products[i]))
   }
 
-  // Pre-compute column distributions for each responsive breakpoint.
-  // The reference uses a flex row of columns with min-w-0 flex-1 children.
-  const cols2 = distributeColumns(cards, 2, leaderboard, handleOpen, handleAspectRatio)
-  const cols3 = distributeColumns(cards, 3, leaderboard, handleOpen, handleAspectRatio)
-  const cols4 = distributeColumns(cards, 4, leaderboard, handleOpen, handleAspectRatio)
+  // Render only the active masonry variant. Mounting separate 2/3/4-column
+  // trees would triple every product card and image even when CSS hid two of them.
+  const columnCount = useFeedColumnCount()
+  const columns = distributeColumns(cards, columnCount, leaderboard, handleOpen, handleAspectRatio)
 
   return (
     <>
@@ -155,26 +172,9 @@ export function ProductFeed({
           openIndex !== null && "2xl:translate-x-[292px]",
         )}
       >
-        {/* 2 columns on mobile */}
-        <div className="flex items-start gap-3 sm:hidden">
-          {cols2.map((col, i) => (
-            <div key={`col2-${i}`} className="min-w-0 flex-1">
-              {col}
-            </div>
-          ))}
-        </div>
-        {/* 3 columns on sm-md */}
-        <div className="hidden flex items-start gap-3 sm:flex lg:hidden">
-          {cols3.map((col, i) => (
-            <div key={`col3-${i}`} className="min-w-0 flex-1">
-              {col}
-            </div>
-          ))}
-        </div>
-        {/* 4 columns on lg+ */}
-        <div className="hidden flex items-start gap-3 lg:flex">
-          {cols4.map((col, i) => (
-            <div key={`col4-${i}`} className="min-w-0 flex-1">
+        <div className="flex items-start gap-3">
+          {columns.map((col, i) => (
+            <div key={`col-${i}`} className="min-w-0 flex-1">
               {col}
             </div>
           ))}

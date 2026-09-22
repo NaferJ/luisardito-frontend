@@ -43,6 +43,8 @@ export function LeaderboardAside({ entries }: Readonly<{ entries: LeaderboardEnt
                 <img
                   src={avatar}
                   alt={name}
+                  loading="lazy"
+                  decoding="async"
                   className="size-9 shrink-0 rounded-full object-cover"
                 />
               ) : (

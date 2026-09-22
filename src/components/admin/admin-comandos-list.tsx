@@ -14,11 +14,11 @@ import {
   CheckCircle2,
   XCircle,
   MessageSquare,
+  ChevronDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DrawerBackdrop, OverlayDrawer } from "@/components/overlay-drawer"
 import { StatCard } from "@/components/admin/shared/stat-card"
-import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
 import { Pagination } from "@/components/admin/shared/pagination"
@@ -40,7 +40,7 @@ import type { BotCommand } from "@/lib/comandos"
 
 type TypeFilter = "all" | "simple" | "dynamic"
 type StatusFilter = "all" | "enabled" | "disabled"
-type SortKey = "command" | "type" | "permission" | "uses" | "created"
+type SortKey = "command" | "type" | "permission" | "uses" | "created" | "status"
 type SortDir = "asc" | "desc"
 type ComandosDict = Dictionary["admin"]["comandos"]
 
@@ -60,10 +60,11 @@ const STATUS_OPTIONS: { value: StatusFilter; label: (t: ComandosDict) => string 
 
 const COLUMNS: { key: SortKey; label: (t: ComandosDict) => string; className: string }[] = [
   { key: "command", label: (t) => t.columns.comando, className: "min-w-0 flex-1" },
-  { key: "type", label: (t) => t.columns.tipo, className: "hidden w-20 shrink-0 sm:block" },
-  { key: "permission", label: (t) => t.columns.permiso, className: "hidden w-24 shrink-0 md:block" },
-  { key: "uses", label: (t) => t.columns.usos, className: "w-16 shrink-0 text-right" },
-  { key: "created", label: (t) => t.columns.created, className: "hidden w-28 shrink-0 lg:block" },
+  { key: "type", label: (t) => t.columns.tipo, className: "hidden w-20 shrink-0 sm:flex" },
+  { key: "permission", label: (t) => t.columns.permiso, className: "hidden w-24 shrink-0 md:flex" },
+  { key: "uses", label: (t) => t.columns.usos, className: "w-16 shrink-0" },
+  { key: "created", label: (t) => t.columns.created, className: "hidden w-28 shrink-0 lg:flex" },
+  { key: "status", label: (t) => t.columns.estado, className: "w-20 shrink-0" },
 ]
 
 const PERMISSION_OPTIONS = [
@@ -94,6 +95,42 @@ function formatRelative(d: string | null | undefined, t: ComandosDict): string {
   if (diff < 86_400_000) return interpolate(t.time.hoursAgo, { n: Math.floor(diff / 3_600_000) })
   if (diff < 30 * 86_400_000) return interpolate(t.time.daysAgo, { n: Math.floor(diff / 86_400_000) })
   return formatDate(d)
+}
+
+function FilterSelect<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: Readonly<{
+  label: string
+  options: { value: T; label: string }[]
+  value: T
+  onChange: (value: T) => void
+}>) {
+  return (
+    <label className="flex items-center gap-2 text-[12px] text-muted-foreground">
+      <span>{label}</span>
+      <span className="relative">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value as T)}
+          aria-label={label}
+          className="h-7 appearance-none rounded-full border border-border bg-secondary pl-3 pr-7 text-[12px] font-medium text-foreground focus:border-gold focus:outline-none"
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          className="pointer-events-none absolute right-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground"
+          aria-hidden="true"
+        />
+      </span>
+    </label>
+  )
 }
 
 function emptyForm(): BotCommandFormData {
@@ -228,6 +265,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
         case "permission": cmp = (a.permission_level ?? "viewer").localeCompare(b.permission_level ?? "viewer"); break
         case "uses": cmp = a.usage_count - b.usage_count; break
         case "created": cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime(); break
+        case "status": cmp = Number(a.enabled) - Number(b.enabled); break
       }
       return sortDir === "asc" ? cmp : -cmp
     })
@@ -385,17 +423,21 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
           <StatCard icon={<Zap className="size-3.5" />} label={t.stats.dynamic} value={stats.dynamic} valueClass="text-gold-bright" />
         </div>
 
-        {/* Filters row: type pills + status pills */}
-        <FilterPills
-          options={TYPE_OPTIONS.map((o) => ({ ...o, label: o.label(t) }))}
-          value={typeFilter}
-          onChange={onTypeChange}
-        />
-        <FilterPills
-          options={STATUS_OPTIONS.map((o) => ({ ...o, label: o.label(t) }))}
-          value={statusFilter}
-          onChange={onStatusChange}
-        />
+        {/* Filters row: compact labeled menus for the two independent filters. */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <FilterSelect
+            label={t.columns.tipo}
+            options={TYPE_OPTIONS.map((o) => ({ ...o, label: o.label(t) }))}
+            value={typeFilter}
+            onChange={onTypeChange}
+          />
+          <FilterSelect
+            label={t.columns.estado}
+            options={STATUS_OPTIONS.map((o) => ({ ...o, label: o.label(t) }))}
+            value={statusFilter}
+            onChange={onStatusChange}
+          />
+        </div>
 
         {/* Create/Edit form */}
         {isEditing && (
@@ -571,7 +613,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
           <section className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" aria-label={t.title}>
             {/* Column headers */}
             <SortHeader
-              columns={COLUMNS.map((c) => ({ ...c, label: c.label(t) }))}
+              columns={COLUMNS.map((c) => ({ ...c, label: c.label(t), alignRight: c.key === "uses" }))}
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
@@ -664,7 +706,7 @@ export function AdminComandosList({ commands: initialCommands }: Readonly<{ comm
                     </div>
 
                     {/* Actions */}
-                    <div className="flex w-28 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <div className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => handleToggle(cmd.id)}

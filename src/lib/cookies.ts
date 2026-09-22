@@ -12,7 +12,7 @@ function isLocalhost(): boolean {
   return host.includes('localhost') || url.includes('localhost')
 }
 
-function getCookieOptions(maxAge: number) {
+function getCookieOptions(maxAge: number, includeDomain = true) {
   const localhost = isLocalhost()
   return {
     httpOnly: true,
@@ -20,7 +20,7 @@ function getCookieOptions(maxAge: number) {
     sameSite: localhost ? ('lax' as const) : ('none' as const),
     path: '/',
     maxAge,
-    ...(localhost ? {} : { domain: '.luisardito.com' }),
+    ...(localhost || !includeDomain ? {} : { domain: '.luisardito.com' }),
   }
 }
 
@@ -47,6 +47,13 @@ export async function setAuthCookies(
 
 export async function clearAuthCookies(): Promise<void> {
   const cookieStore = await cookies()
-  cookieStore.delete(AUTH_COOKIE)
-  cookieStore.delete(REFRESH_COOKIE)
+  const expires = new Date(0)
+  const domainOptions = { ...getCookieOptions(0), expires }
+  cookieStore.set(AUTH_COOKIE, "", domainOptions)
+  cookieStore.set(REFRESH_COOKIE, "", domainOptions)
+  if (!isLocalhost()) {
+    const hostOptions = { ...getCookieOptions(0, false), expires }
+    cookieStore.set(AUTH_COOKIE, "", hostOptions)
+    cookieStore.set(REFRESH_COOKIE, "", hostOptions)
+  }
 }

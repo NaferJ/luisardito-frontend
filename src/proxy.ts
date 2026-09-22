@@ -49,8 +49,13 @@ async function refreshTokens(refreshToken: string) {
   }
 }
 
-function cookieOptions(isLocalhost: boolean, maxAge: number) {
-  return { httpOnly: true, secure: !isLocalhost, sameSite: (isLocalhost ? 'lax' : 'none') as 'lax' | 'none', path: '/', maxAge, ...(isLocalhost ? {} : { domain: '.luisardito.com' }) }
+function cookieOptions(isLocalhost: boolean, maxAge: number, includeDomain = true) {
+  return { httpOnly: true, secure: !isLocalhost, sameSite: (isLocalhost ? 'lax' : 'none') as 'lax' | 'none', path: '/', maxAge, ...(isLocalhost || !includeDomain ? {} : { domain: '.luisardito.com' }) }
+}
+
+function expireCookie(response: NextResponse, name: string, isLocalhost: boolean) {
+  response.cookies.set(name, '', cookieOptions(isLocalhost, 0))
+  if (!isLocalhost) response.cookies.set(name, '', cookieOptions(isLocalhost, 0, false))
 }
 
 function localeRedirect(request: NextRequest, locale: string) {
@@ -88,6 +93,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   const authToken = request.cookies.get(AUTH_COOKIE)?.value
+  const isLocalhost = request.nextUrl.hostname.includes('localhost')
   const redirectToShop = () => {
     const url = new URL(`/${locale}/shop`, request.url)
     return NextResponse.redirect(url)
@@ -98,15 +104,19 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value
   if (!refreshToken) {
     if (!isProtectedRoute(normalizedPath)) return NextResponse.next()
-    const response = redirectToShop(); response.cookies.delete(AUTH_COOKIE); return response
+    const response = redirectToShop()
+    expireCookie(response, AUTH_COOKIE, isLocalhost)
+    return response
   }
   const refreshed = await refreshTokens(refreshToken)
   if (!refreshed) {
     if (!isProtectedRoute(normalizedPath)) return NextResponse.next()
-    const response = redirectToShop(); response.cookies.delete(AUTH_COOKIE); response.cookies.delete(REFRESH_COOKIE); return response
+    const response = redirectToShop()
+    expireCookie(response, AUTH_COOKIE, isLocalhost)
+    expireCookie(response, REFRESH_COOKIE, isLocalhost)
+    return response
   }
   const response = NextResponse.next()
-  const isLocalhost = request.nextUrl.hostname.includes('localhost')
   response.cookies.set(AUTH_COOKIE, refreshed.accessToken, cookieOptions(isLocalhost, 30 * 24 * 60 * 60))
   if (refreshed.refreshToken) response.cookies.set(REFRESH_COOKIE, refreshed.refreshToken, cookieOptions(isLocalhost, 90 * 24 * 60 * 60))
   response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
