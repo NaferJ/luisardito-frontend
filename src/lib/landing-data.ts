@@ -251,9 +251,11 @@ export const faqItems: FaqItem[] = [
   },
 ]
 
+export const siteUrl = "https://luisardito.com"
 export const shopUrl = "https://shop.luisardito.com"
 export const discordUrl = "https://discord.gg/z3Q24jennz"
 export const redditUrl = "https://www.reddit.com/r/OSITOGANG/"
+export const xUrl = "https://x.com/NaferJ1"
 
 export type MakerSocial = {
   label: string
@@ -263,7 +265,7 @@ export type MakerSocial = {
 export const makerSocials: MakerSocial[] = [
   { label: "GitHub", href: "https://github.com/NaferJ" },
   { label: "Instagram", href: "https://www.instagram.com/naferjml/" },
-  { label: "X", href: "https://x.com/NaferJ1" },
+  { label: "X", href: xUrl },
 ]
 
 // Placeholder — create the account at ko-fi.com and update this URL.

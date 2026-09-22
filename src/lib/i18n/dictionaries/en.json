@@ -39,6 +39,18 @@
     "subtitle": "Redeem your points for rewards.",
     "productNotFoundMeta": "Product not found — Luisardito Shop"
   },
+  "maker": {
+    "title": "NaferJ",
+    "subtitle": "Developer",
+    "text": "Tell me your suggestions and help me improve the site.",
+    "ariaLabel": "Visit NaferJ on X"
+  },
+  "minecraft": {
+    "title": "Minecraft Server",
+    "subtitle": "Discord",
+    "text": "A new public Minecraft server has been created for the community.",
+    "ariaLabel": "Join the community Discord"
+  },
   "info": {
     "tagline": "Made by the community, for the community.",
     "p1": "Luisardito is a community-driven project that brings together content, rewards, and tools for everyone who hangs out on stream.",

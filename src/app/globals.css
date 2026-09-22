@@ -409,3 +409,26 @@
     animation: none;
   }
 }
+
+/* Sidebar promo cards — sponsor-slot rotation (after recent.design's
+   "featured sponsor" card): cards crossfade via opacity/blur transitions
+   while a thin bar tracks the rotation interval. */
+@keyframes promo-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.promo-progress {
+  transform-origin: left;
+  animation: promo-progress var(--promo-duration, 8s) linear forwards;
+}
+
+.promo-progress.paused {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-progress-track {
+    display: none;
+  }
+}

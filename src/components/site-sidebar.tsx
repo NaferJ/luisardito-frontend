@@ -8,6 +8,8 @@ import { useI18n } from "@/components/i18n/provider"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { browseLinks, accountLinks, adminLinks, avatarColors } from "@/lib/nav-data"
+import { landingHref } from "@/components/i18n/locale-link"
+import { SidebarPromoCards } from "@/components/sidebar-promo-cards"
 import { getKickOAuthUrl } from "@/lib/kick-auth"
 import { useUser } from "@/components/user-provider"
 import { PendingCanjesBadge } from "@/components/pending-canjes-badge"
@@ -34,9 +36,9 @@ function getActiveHref(pathname: string, hrefs: readonly string[]): string {
   return best
 }
 
-function Logo() {
+function Logo({ homeHref }: Readonly<{ homeHref: string }>) {
   return (
-    <Link href="/" aria-label="Luisardito" className="inline-block shrink-0 text-foreground">
+    <Link href={homeHref} aria-label="Luisardito" className="inline-block shrink-0 text-foreground">
       <Image src="/icon.svg" alt="Luisardito" width={26} height={26} className="text-foreground" />
     </Link>
   )
@@ -185,15 +187,18 @@ function SidebarFooter({
   isRedirecting,
   onLogin,
   mobile = false,
+  shopHost = false,
 }: Readonly<{
   user: ReturnType<typeof useUser>
   isRedirecting: boolean
   onLogin: () => void
   mobile?: boolean
+  shopHost?: boolean
 }>) {
-  const { dictionary } = useI18n()
+  const { dictionary, locale } = useI18n()
   return (
     <div className="flex flex-col gap-3">
+      <SidebarPromoCards />
       <p className="text-[13px] leading-relaxed font-medium text-foreground">
         {dictionary.common.communityHub}
       </p>
@@ -251,10 +256,10 @@ function SidebarFooter({
         )}
       >
         <span>© 2026</span>
-        <Link href="/info" className="hover:text-foreground">
+        <Link href={landingHref("/info", locale, shopHost)} className="hover:text-foreground">
           {dictionary.common.info}
         </Link>
-        <Link href="/changelog" className="hover:text-foreground">
+        <Link href={landingHref("/changelog", locale, shopHost)} className="hover:text-foreground">
           {dictionary.common.changelog}
         </Link>
         <LocaleSwitcher />
@@ -270,8 +275,9 @@ function SidebarFooter({
 function MobileDrawer({
   open,
   onClose,
+  homeHref,
   children,
-}: Readonly<{ open: boolean; onClose: () => void; children: ReactNode }>) {
+}: Readonly<{ open: boolean; onClose: () => void; homeHref: string; children: ReactNode }>) {
   const { dictionary } = useI18n()
   const [visible, setVisible] = useState(false)
 
@@ -297,7 +303,7 @@ function MobileDrawer({
       )}
     >
       <div className="flex items-center justify-between pb-6">
-        <Logo />
+        <Logo homeHref={homeHref} />
         <button
           type="button"
           onClick={onClose}
@@ -312,8 +318,8 @@ function MobileDrawer({
   )
 }
 
-export function SiteSidebar() {
-  const { dictionary } = useI18n()
+export function SiteSidebar({ shopHost }: Readonly<{ shopHost: boolean }>) {
+  const { dictionary, locale } = useI18n()
   const pathname = usePathname()
   const [isRedirecting, setIsRedirecting] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -341,6 +347,7 @@ export function SiteSidebar() {
     ...(user && user.rol_id >= 3 ? adminLinks.map((l) => l.href) : []),
   ]
   const activeHref = getActiveHref(pathname, visibleHrefs)
+  const homeHref = landingHref("/", locale, shopHost)
 
   return (
     <>
@@ -355,7 +362,7 @@ export function SiteSidebar() {
           balance while browsing, without opening the drawer. */}
       <div className="sticky top-0 z-20 -mt-4 flex items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-4 pt-4 pb-4 backdrop-blur-sm xl:hidden">
         <div className="flex min-w-0 items-center gap-3">
-          <Logo />
+          <Logo homeHref={homeHref} />
           <OnlineStatus />
         </div>
         <div className="flex items-center gap-2">
@@ -371,12 +378,12 @@ export function SiteSidebar() {
         </div>
       </div>
 
-      <MobileDrawer open={mobileOpen} onClose={() => setMobileOpen(false)}>
+      <MobileDrawer open={mobileOpen} onClose={() => setMobileOpen(false)} homeHref={homeHref}>
         <div className="flex h-full flex-col gap-6 overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             <NavSections user={user} activeHref={activeHref} />
           </div>
-          <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} mobile />
+          <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} mobile shopHost={shopHost} />
         </div>
       </MobileDrawer>
 
@@ -384,12 +391,12 @@ export function SiteSidebar() {
       <aside className="z-20 hidden xl:fixed xl:inset-y-0 xl:left-[max(1rem,calc((100vw-1680px)/2+1rem))] xl:flex xl:w-[220px] xl:flex-col xl:justify-between xl:py-8">
         <div className="flex flex-col gap-8">
           <div className="flex items-center justify-between">
-            <Logo />
+            <Logo homeHref={homeHref} />
             <AccountPill user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} />
           </div>
           <NavSections user={user} activeHref={activeHref} />
         </div>
-        <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} />
+        <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} shopHost={shopHost} />
       </aside>
     </>
   )
