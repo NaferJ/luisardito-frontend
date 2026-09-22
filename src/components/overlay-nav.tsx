@@ -16,7 +16,7 @@ const navButtonClass = {
   sidebar:
     "flex size-7 items-center justify-center rounded-full bg-secondary text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-90 disabled:opacity-40 disabled:hover:bg-secondary",
   glass:
-    "flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm transition-[colors,transform] duration-150 hover:bg-background/95 active:scale-90 disabled:opacity-40 disabled:hover:bg-background/80",
+    "flex size-8 items-center justify-center rounded-full bg-background/90 text-foreground transition-[colors,transform] duration-150 hover:bg-background active:scale-90 disabled:opacity-40 disabled:hover:bg-background/90",
 } as const
 
 type NavVariant = keyof typeof navButtonClass

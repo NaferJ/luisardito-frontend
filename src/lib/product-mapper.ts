@@ -58,7 +58,6 @@ export function productToCard(
     aspectStyle: hasRealDimensions
       ? { aspectRatio: `${product.imagen_width} / ${product.imagen_height}` }
       : undefined,
-    useNaturalAspect: !hasRealDimensions,
     avatarColor: AVATAR_COLORS[index % AVATAR_COLORS.length],
     badge: hasDiscount ? "star" : undefined,
     tag: hasDiscount ? labels.sale : labels.product,

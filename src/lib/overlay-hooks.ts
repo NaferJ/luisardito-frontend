@@ -35,7 +35,7 @@ export function useOverlayKeyboardNav(
  * `resetKey` (the id of the displayed item) changes, resetting the scroll
  * position and header height.
  */
-export function useCollapsingOverlayHeader(resetKey: unknown) {
+export function useCollapsingOverlayHeader(resetKey: unknown, collapseHeader = true) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLDivElement>(null)
@@ -56,14 +56,15 @@ export function useCollapsingOverlayHeader(resetKey: unknown) {
       const scrollY = overlay.scrollTop
       const titleThreshold = Math.max(0, initialHeaderHeight - 80)
 
-      const newHeight = Math.max(80, initialHeaderHeight - scrollY * 0.6)
-      header.style.height = `${newHeight}px`
-      header.style.minHeight = "0px"
+      if (collapseHeader) {
+        const newHeight = Math.max(80, initialHeaderHeight - scrollY * 0.6)
+        header.style.height = `${newHeight}px`
+        header.style.minHeight = "0px"
+      }
 
       const titleProgress = Math.min(1, Math.max(0, (scrollY - titleThreshold) / 80))
 
       title.classList.toggle("bg-background/95", titleProgress > 0.01)
-      title.classList.toggle("backdrop-blur-sm", titleProgress > 0.01)
       titleText.style.opacity = String(titleProgress)
     }
 
@@ -78,10 +79,12 @@ export function useCollapsingOverlayHeader(resetKey: unknown) {
       header.style.height = ""
       header.style.minHeight = ""
       initialHeaderHeight = header.clientHeight
-      header.style.height = `${initialHeaderHeight}px`
-      header.style.minHeight = "0px"
+      if (collapseHeader) {
+        header.style.height = `${initialHeaderHeight}px`
+        header.style.minHeight = "0px"
+      }
       titleText.style.opacity = "0"
-      title.classList.remove("bg-background/95", "backdrop-blur-sm")
+      title.classList.remove("bg-background/95")
     }
 
     reset()
@@ -91,7 +94,7 @@ export function useCollapsingOverlayHeader(resetKey: unknown) {
       overlay.removeEventListener("scroll", onScroll)
       if (raf) cancelAnimationFrame(raf)
     }
-  }, [resetKey])
+  }, [resetKey, collapseHeader])
 
   return { overlayRef, headerRef, titleRef, titleTextRef }
 }

@@ -38,7 +38,7 @@ export function ProfileView({
   onLogout,
 }: Readonly<{
   user: Usuario
-  onLogout: () => Promise<void>
+  onLogout: () => Promise<string>
 }>) {
   const { dictionary } = useI18n()
   const locale = useLocale()
@@ -54,7 +54,8 @@ export function ProfileView({
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
-    await onLogout()
+    const destination = await onLogout()
+    window.location.replace(destination)
   }
 
   return (

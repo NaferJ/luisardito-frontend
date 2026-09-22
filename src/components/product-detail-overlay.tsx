@@ -97,6 +97,13 @@ function productImageSrc(product: Producto): string {
     : rawSrc
 }
 
+function productBackgroundSrc(product: Producto): string {
+  const rawSrc = product.imagen || product.imagen_url || "/placeholder.svg"
+  return rawSrc.includes("res.cloudinary.com") && rawSrc.includes("/image/upload/")
+    ? rawSrc.replace("/image/upload/", "/image/upload/f_auto,q_30,e_blur:1000,c_limit,w_160/")
+    : rawSrc
+}
+
 function useProductImageSize(product: Producto) {
   const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null)
 
@@ -218,7 +225,7 @@ export function ProductDetailOverlay({
     t,
   )
 
-  const { overlayRef, headerRef, titleRef, titleTextRef } = useCollapsingOverlayHeader(product?.id)
+  const { overlayRef, headerRef, titleRef, titleTextRef } = useCollapsingOverlayHeader(product?.id, false)
 
   if (!product) return null
 
@@ -229,6 +236,8 @@ export function ProductDetailOverlay({
   const canRedeem = canRedeemProduct(user, product, price)
   const statRows = buildStatRows(product, Boolean(hasDiscount), t)
   const redeemButtonContent = renderRedeemButtonContent(redeeming, cooldown, t)
+  const backgroundSrc = productBackgroundSrc(product)
+  const backgroundIsCloudinary = backgroundSrc.includes("res.cloudinary.com")
 
   return (
     <>
@@ -239,18 +248,18 @@ export function ProductDetailOverlay({
           tapping arrows. */}
       <div
         ref={overlayRef}
-        className="overlay-enter fixed inset-0 z-20 overflow-y-auto xl:hidden"
+        className="overlay-enter fixed inset-0 z-20 touch-pan-y overflow-y-auto overscroll-contain xl:hidden"
       >
         {/* Blurred product image fills the background so the page subtly
             takes on the product's colors and the image "bleeds" into the page. */}
         <div className="absolute inset-0 -z-20" aria-hidden="true">
           <Image
-            src={product.imagen || product.imagen_url || "/placeholder.svg"}
+            src={backgroundSrc}
             alt=""
             fill
             sizes="100vw"
             quality={30}
-            className="object-cover blur-3xl opacity-40"
+            className={cn("object-cover opacity-40", !backgroundIsCloudinary && "blur-3xl")}
           />
         </div>
         <div className="absolute inset-0 -z-10 bg-background/80" aria-hidden="true" />
@@ -270,7 +279,7 @@ export function ProductDetailOverlay({
           product={product}
           headerRef={headerRef}
         />
-        <div className="relative z-10 flex min-h-[calc(100vh-240px)] flex-col rounded-t-3xl bg-background/75 ring-1 ring-border/20 backdrop-blur-[14px]">
+        <div className="relative z-10 flex min-h-[calc(100vh-240px)] flex-col rounded-t-3xl bg-background/95 ring-1 ring-border/20">
           <div
             key={product.id}
             className="overlay-content flex min-h-0 flex-1 flex-col gap-6 px-5 pt-6 pb-40"
@@ -294,7 +303,7 @@ export function ProductDetailOverlay({
           the "More products" grid once content grew past the sticky item's
           static flow position). */}
       <div
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/20 bg-background/95 px-5 py-4 pb-[max(env(safe-area-inset-bottom)+2.5rem,2.5rem)] backdrop-blur-md xl:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/20 bg-background px-5 py-4 pb-[max(env(safe-area-inset-bottom)+2.5rem,2.5rem)] xl:hidden"
       >
         <RedeemSection
           user={user}
@@ -564,34 +573,22 @@ function MoreProducts({
   t: ProductDict
 }>) {
   const { dictionary } = useI18n()
-  const [imageAspects, setImageAspects] = useState<Record<string, number>>({})
   const columns: ReactNode[][] = [[], []]
   const heights = [0, 0]
 
   products.forEach((product, index) => {
     if (index === currentIndex) return
-    const baseCard = productToCard(product, index, dictionary.card)
-    const measuredAspect = imageAspects[baseCard.id]
-    const card = measuredAspect
-      ? { ...baseCard, aspectStyle: { aspectRatio: String(measuredAspect) }, useNaturalAspect: false }
-      : baseCard
+    const card = productToCard(product, index, dictionary.card)
     const columnIndex = heights.indexOf(Math.min(...heights))
-    const aspectRatio = measuredAspect ?? (
-      product.imagen_width && product.imagen_height
-        ? product.imagen_width / product.imagen_height
-        : 1
-    )
+    const aspectRatio = product.imagen_width && product.imagen_height
+      ? product.imagen_width / product.imagen_height
+      : 1
 
     columns[columnIndex].push(
       <DesignCard
         key={card.id}
         card={card}
         onOpen={() => onSelect(index)}
-        onAspectRatio={(ratio) => {
-          setImageAspects((current) => current[card.id] === ratio
-            ? current
-            : { ...current, [card.id]: ratio })
-        }}
       />,
     )
     heights[columnIndex] += 1 / aspectRatio

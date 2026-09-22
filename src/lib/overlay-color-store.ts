@@ -16,7 +16,6 @@ import { extractDominantColors } from "@/lib/extract-color"
 
 let currentColors: string[] | null = null
 const listeners = new Set<() => void>()
-
 export function setOverlayColors(colors: string[] | null): void {
   // Compare by reference + length to avoid spurious notifications.
   if (colors === currentColors) return

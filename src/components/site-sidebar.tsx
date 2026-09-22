@@ -193,6 +193,10 @@ function SidebarFooter({
   mobile?: boolean
 }>) {
   const { dictionary } = useI18n()
+  const handleLogout = async () => {
+    const destination = await logout()
+    window.location.replace(destination)
+  }
   return (
     <div className="flex flex-col gap-3">
       <p className="text-[13px] leading-relaxed font-medium text-foreground">
@@ -204,14 +208,13 @@ function SidebarFooter({
             <span className="text-gold-bright">{formatCompactNumber(user.puntos)}</span>
             <span className="text-muted-foreground">{dictionary.common.points}</span>
           </div>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="h-8 rounded-full bg-secondary px-4 text-[13px] font-medium text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-95"
-            >
-              {dictionary.common.logout}
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="h-8 rounded-full bg-secondary px-4 text-[13px] font-medium text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-95"
+          >
+            {dictionary.common.logout}
+          </button>
         </div>
       ) : (
         <div className="flex items-center gap-2">
@@ -333,7 +336,7 @@ export function SiteSidebar() {
 
   const handleKickLogin = () => {
     setIsRedirecting(true)
-    window.location.href = getKickOAuthUrl()
+    window.location.replace(getKickOAuthUrl())
   }
 
   const visibleHrefs: string[] = [
