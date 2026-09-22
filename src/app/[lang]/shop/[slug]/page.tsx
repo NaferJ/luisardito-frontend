@@ -9,14 +9,7 @@ interface SlugPageProps {
   readonly params: Promise<{ lang: string; slug: string }>
 }
 
-/**
- * Pre-render known product slugs at build time. Products without a slug fall
- * back to their numeric ID, which is also handled by getProductBySlug.
- */
-export async function generateStaticParams() {
-  const products = await getProducts()
-  return products.map((p) => ({ slug: p.slug || String(p.id) }))
-}
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { lang, slug } = await params
