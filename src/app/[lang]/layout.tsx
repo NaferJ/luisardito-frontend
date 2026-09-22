@@ -28,11 +28,29 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
   const locale: Locale = lang
+  const title = `Luisardito — ${dictionaries[locale].landing.title}`
+  const description = dictionaries[locale].landing.description
   return {
-    title: `Luisardito — ${dictionaries[locale].landing.title}`,
-    description: dictionaries[locale].landing.description,
+    metadataBase: new URL('https://luisardito.com'),
+    title,
+    description,
     generator: 'v0.app',
-    icons: { icon: '/icon.svg', apple: '/apple-icon.png' },
+    icons: { icon: '/icon.svg' },
+    openGraph: {
+      title,
+      description,
+      url: `/${locale}`,
+      siteName: 'Luisardito',
+      images: [{ url: '/landing/hero.png', width: 2302, height: 1024, alt: 'Luisardito' }],
+      locale: locale === 'es' ? 'es_ES' : 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/landing/hero.png'],
+    },
   }
 }
 
