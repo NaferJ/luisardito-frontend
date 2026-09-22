@@ -9,7 +9,6 @@ import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { browseLinks, accountLinks, adminLinks, avatarColors } from "@/lib/nav-data"
 import { getKickOAuthUrl } from "@/lib/kick-auth"
-import { logout } from "@/app/[lang]/shop/auth/actions"
 import { useUser } from "@/components/user-provider"
 import { PendingCanjesBadge } from "@/components/pending-canjes-badge"
 import { OnlineStatus } from "@/components/online-status"
@@ -193,10 +192,6 @@ function SidebarFooter({
   mobile?: boolean
 }>) {
   const { dictionary } = useI18n()
-  const handleLogout = async () => {
-    const destination = await logout()
-    window.location.replace(destination)
-  }
   return (
     <div className="flex flex-col gap-3">
       <p className="text-[13px] leading-relaxed font-medium text-foreground">
@@ -208,13 +203,14 @@ function SidebarFooter({
             <span className="text-gold-bright">{formatCompactNumber(user.puntos)}</span>
             <span className="text-muted-foreground">{dictionary.common.points}</span>
           </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="h-8 rounded-full bg-secondary px-4 text-[13px] font-medium text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-95"
-          >
-            {dictionary.common.logout}
-          </button>
+          <form action="/shop/auth/logout" method="post">
+            <button
+              type="submit"
+              className="h-8 rounded-full bg-secondary px-4 text-[13px] font-medium text-foreground transition-[colors,transform] duration-150 hover:bg-accent active:scale-95"
+            >
+              {dictionary.common.logout}
+            </button>
+          </form>
         </div>
       ) : (
         <div className="flex items-center gap-2">

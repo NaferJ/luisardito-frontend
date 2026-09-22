@@ -35,6 +35,10 @@ export function useOverlayKeyboardNav(
  * `resetKey` (the id of the displayed item) changes, resetting the scroll
  * position and header height.
  */
+/** Frosted-glass classes applied to the sticky title bar once it is scrolled
+ *  over content — translucent rather than fully opaque, but readable. */
+const SCROLLED_TITLE_CLASSES = ["bg-background/70", "backdrop-blur-md", "shadow-sm"]
+
 export function useCollapsingOverlayHeader(resetKey: unknown, collapseHeader = true) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -64,7 +68,8 @@ export function useCollapsingOverlayHeader(resetKey: unknown, collapseHeader = t
 
       const titleProgress = Math.min(1, Math.max(0, (scrollY - titleThreshold) / 80))
 
-      title.classList.toggle("bg-background/95", titleProgress > 0.01)
+      const scrolled = titleProgress > 0.01
+      for (const cls of SCROLLED_TITLE_CLASSES) title.classList.toggle(cls, scrolled)
       titleText.style.opacity = String(titleProgress)
     }
 
@@ -84,7 +89,7 @@ export function useCollapsingOverlayHeader(resetKey: unknown, collapseHeader = t
         header.style.minHeight = "0px"
       }
       titleText.style.opacity = "0"
-      title.classList.remove("bg-background/95")
+      title.classList.remove(...SCROLLED_TITLE_CLASSES)
     }
 
     reset()

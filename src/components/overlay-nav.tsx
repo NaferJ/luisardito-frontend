@@ -98,9 +98,9 @@ export function OverlayNavHeader(
   )
 }
 
-/** Sticky mobile title bar. The bar background and the title fade in as the
- *  media header scrolls away (driven by useCollapsingOverlayHeader), so the
- *  controls always stay reachable. */
+/** Sticky mobile title bar. A frosted-glass background and the title fade in
+ *  as the media header scrolls away (driven by useCollapsingOverlayHeader), so
+ *  the controls always stay reachable and readable over the image. */
 export function OverlayTitleBar({
   titleRef,
   titleTextRef,

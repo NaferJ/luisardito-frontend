@@ -133,7 +133,7 @@ export function DesignCard({
     <article ref={cardRef} className="mb-3 break-inside-avoid">
       <div
         className={cn(
-          "group relative overflow-hidden rounded-sm bg-secondary",
+          "group relative isolate overflow-hidden rounded-sm bg-secondary",
           // Only apply the Tailwind aspect class when there's no inline style.
           aspectStyle ? undefined : card.aspect,
         )}
