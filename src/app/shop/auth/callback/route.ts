@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+import { NextResponse } from 'next/server'
 import { API_BASE_URL } from '@/lib/api'
 import { setAuthCookies } from '@/lib/cookies'
 import { getRequestLocale } from '@/lib/i18n/request-locale'
@@ -15,14 +15,14 @@ export async function GET(request: Request): Promise<Response> {
   const code = searchParams.get('code')
   const state = searchParams.get('state')
   const oauthError = searchParams.get('error')
-  const locale = await getRequestLocale()
-  const shopUrl = (error?: string) => {
+  const locale = await getRequestLocale(request)
+  const redirectToShop = (error?: string) => {
     const query = error ? `?error=${encodeURIComponent(error)}` : ''
-    return `/${locale}/shop${query}`
+    return NextResponse.redirect(new URL(`/${locale}/shop${query}`, request.url), 303)
   }
 
   if (oauthError) {
-    redirect(shopUrl(oauthError))
+    return redirectToShop(oauthError)
   }
 
   let tokens: TokenResponse = {}
@@ -37,21 +37,21 @@ export async function GET(request: Request): Promise<Response> {
         { cache: 'no-store' },
       )
       if (!response.ok) {
-        redirect(shopUrl('callback_exchange_failed'))
+        return redirectToShop('callback_exchange_failed')
       }
       tokens = (await response.json()) as TokenResponse
     } else {
-      redirect(shopUrl('missing_params'))
+      return redirectToShop('missing_params')
     }
 
     const accessToken = tokens.accessToken ?? tokens.token
     if (!accessToken) {
-      redirect(shopUrl('no_token'))
+      return redirectToShop('no_token')
     }
 
     await setAuthCookies(accessToken, tokens.refreshToken)
-    redirect(shopUrl())
+    return redirectToShop()
   } catch {
-    redirect(shopUrl('callback_failed'))
+    return redirectToShop('callback_failed')
   }
 }

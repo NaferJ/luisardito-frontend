@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import Image from "next/image"
 import { ArrowUpRight, Star } from "lucide-react"
 import { useI18n } from "@/components/i18n/provider"
@@ -15,7 +15,6 @@ export type DesignCardData = {
   readonly aspect: string
   /** Inline aspect-ratio style from real image dimensions. Takes precedence over `aspect`. */
   readonly aspectStyle?: { aspectRatio: string }
-  readonly useNaturalAspect?: boolean
   readonly avatarColor: string
   readonly badge?: "star" | number
   readonly tag: string
@@ -36,21 +35,73 @@ export type DesignCardData = {
   readonly avatar?: string
 }
 
+function cloudinaryImageLoader({
+  src,
+  width,
+  quality,
+}: {
+  src: string
+  width: number
+  quality?: number
+}): string {
+  if (!src.includes("res.cloudinary.com") || !src.includes("/image/upload/")) {
+    return src
+  }
+  return src.replace(
+    "/image/upload/",
+    `/image/upload/f_auto,q_${quality ?? "auto"},c_limit,w_${width}/`,
+  )
+}
+
 export function DesignCard({
   card,
   onOpen,
-  onAspectRatio,
   eager = false,
 }: Readonly<{
   card: DesignCardData
   onOpen: () => void
-  onAspectRatio?: (ratio: number) => void
   eager?: boolean
 }>) {
   const { dictionary } = useI18n()
   const t = dictionary.card
-  const [naturalAspect, setNaturalAspect] = useState<string>()
-  const aspectStyle = card.aspectStyle ?? (naturalAspect ? { aspectRatio: naturalAspect } : undefined)
+  const cardRef = useRef<HTMLElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
+  const imageSrc = card.image || "/placeholder.svg"
+  const [loadImage, setLoadImage] = useState(eager)
+  const [loadedImageSrc, setLoadedImageSrc] = useState<string>()
+  const imageLoaded = loadedImageSrc === imageSrc
+  const aspectStyle = card.aspectStyle
+
+  useEffect(() => {
+    if (loadImage) return
+    if (eager || !cardRef.current || !("IntersectionObserver" in window)) {
+      setLoadImage(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setLoadImage(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "1200px 0px" },
+    )
+    observer.observe(cardRef.current)
+    return () => observer.disconnect()
+  }, [eager, loadImage])
+
+  const handleImageSettled = useCallback(() => {
+    setLoadedImageSrc(imageSrc)
+  }, [imageSrc])
+
+  useEffect(() => {
+    if (imageRef.current?.complete) {
+      handleImageSettled()
+    }
+  }, [handleImageSettled])
+
   let avatarElement: ReactNode
   if (card.lastRedeemer?.avatar) {
     avatarElement = (
@@ -79,7 +130,7 @@ export function DesignCard({
   }
 
   return (
-    <article className="mb-3 break-inside-avoid">
+    <article ref={cardRef} className="mb-3 break-inside-avoid">
       <div
         className={cn(
           "group relative overflow-hidden rounded-sm bg-secondary",
@@ -89,22 +140,34 @@ export function DesignCard({
         style={aspectStyle}
       >
         <Image
-          src={card.image || "/placeholder.svg"}
+          ref={imageRef}
+          src={imageSrc}
           alt={card.alt}
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
           quality={90}
-          loading={eager ? "eager" : "lazy"}
-          className="object-cover"
-          onLoad={(event) => {
-            if (!card.useNaturalAspect || card.aspectStyle) return
-            const { naturalWidth, naturalHeight } = event.currentTarget
-            if (naturalWidth > 0 && naturalHeight > 0) {
-              setNaturalAspect(`${naturalWidth} / ${naturalHeight}`)
-              onAspectRatio?.(naturalWidth / naturalHeight)
-            }
-          }}
+          loader={cloudinaryImageLoader}
+          loading={loadImage ? "eager" : "lazy"}
+          preload={eager}
+          decoding="async"
+          className={cn(
+            "object-cover transition-opacity duration-200 motion-reduce:transition-none",
+            imageLoaded ? "opacity-100" : "opacity-0",
+          )}
+          onLoad={handleImageSettled}
+          onError={() => setLoadedImageSrc(imageSrc)}
         />
+
+        {!imageLoaded && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-40 overflow-hidden rounded-sm bg-secondary"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-muted/70 via-secondary to-muted/50 lg:animate-pulse motion-reduce:animate-none" />
+            <div className="absolute bottom-3 left-3 h-7 w-20 rounded-full bg-background/35" />
+            <div className="absolute bottom-3 right-3 size-7 rounded-full bg-background/35" />
+          </div>
+        )}
 
         {/* Main click target — absolute overlay so sibling buttons don't nest */}
         <button
@@ -137,7 +200,7 @@ export function DesignCard({
         )}
 
         {/* Open arrow — bottom-right, always visible */}
-        <span className="absolute bottom-2.5 right-2.5 z-10 flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-sm">
+        <span className="absolute bottom-2.5 right-2.5 z-10 flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground">
           <ArrowUpRight className="size-3.5" aria-hidden="true" />
         </span>
 

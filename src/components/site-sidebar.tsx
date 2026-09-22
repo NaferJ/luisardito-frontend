@@ -336,7 +336,7 @@ export function SiteSidebar() {
 
   const handleKickLogin = () => {
     setIsRedirecting(true)
-    window.location.href = getKickOAuthUrl()
+    window.location.replace(getKickOAuthUrl())
   }
 
   const visibleHrefs: string[] = [

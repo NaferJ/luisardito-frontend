@@ -65,7 +65,6 @@ export function useCollapsingOverlayHeader(resetKey: unknown, collapseHeader = t
       const titleProgress = Math.min(1, Math.max(0, (scrollY - titleThreshold) / 80))
 
       title.classList.toggle("bg-background/95", titleProgress > 0.01)
-      title.classList.toggle("backdrop-blur-sm", titleProgress > 0.01)
       titleText.style.opacity = String(titleProgress)
     }
 
@@ -85,7 +84,7 @@ export function useCollapsingOverlayHeader(resetKey: unknown, collapseHeader = t
         header.style.minHeight = "0px"
       }
       titleText.style.opacity = "0"
-      title.classList.remove("bg-background/95", "backdrop-blur-sm")
+      title.classList.remove("bg-background/95")
     }
 
     reset()
