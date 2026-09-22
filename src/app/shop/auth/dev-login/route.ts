@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { setAuthCookies } from '@/lib/cookies'
 import { API_BASE_URL } from '@/lib/api'
 import { getRequestLocale } from '@/lib/i18n/request-locale'
+import { publicPathUrl } from '@/lib/request-url'
 
 interface LoginResponse {
   accessToken?: string
@@ -12,7 +13,7 @@ interface LoginResponse {
 export async function POST(request: Request): Promise<Response> {
   const locale = await getRequestLocale(request)
   const redirectTo = (path: string) =>
-    NextResponse.redirect(new URL(path, request.url), 303)
+    NextResponse.redirect(publicPathUrl(request, path), 303)
   const devLoginUrl = (error: string) =>
     `/${locale}/shop/auth/dev-login?error=${encodeURIComponent(error)}`
 

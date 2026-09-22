@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { requireAuth } from '@/lib/auth'
 import { ProfileView } from '@/components/shop/profile-view'
-import { logout } from '@/app/[lang]/shop/auth/actions'
 import { dictionaries, getDictionary, hasLocale, type Locale } from '@/lib/i18n'
 
 export async function generateMetadata({
@@ -31,7 +30,7 @@ export default async function PerfilPage() {
         </p>
       </div>
 
-      <ProfileView user={user} onLogout={logout} />
+      <ProfileView user={user} />
     </div>
   )
 }

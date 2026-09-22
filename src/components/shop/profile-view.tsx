@@ -35,10 +35,8 @@ function formatVipExpiry(expiresAt: string | undefined, t: Dictionary["profile"]
 
 export function ProfileView({
   user,
-  onLogout,
 }: Readonly<{
   user: Usuario
-  onLogout: () => Promise<string>
 }>) {
   const { dictionary } = useI18n()
   const locale = useLocale()
@@ -52,11 +50,6 @@ export function ProfileView({
   const subDuration = user.subscriber_status?.subscription_duration_months
   const discordLinked = user.discord_info?.linked ?? user.discordLinked ?? false
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true)
-    const destination = await onLogout()
-    window.location.replace(destination)
-  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -126,19 +119,20 @@ export function ProfileView({
         </div>
 
         {/* Logout */}
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3 text-[13px] font-medium text-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
-        >
-          {isLoggingOut ? (
-            <RefreshCw className="size-3.5 animate-spin" aria-hidden="true" />
-          ) : (
-            <LogOut className="size-3.5" aria-hidden="true" />
-          )}
-          {isLoggingOut ? "..." : t.logout}
-        </button>
+        <form action="/shop/auth/logout" method="post" onSubmit={() => setIsLoggingOut(true)}>
+          <button
+            type="submit"
+            disabled={isLoggingOut}
+            className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3 text-[13px] font-medium text-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
+          >
+            {isLoggingOut ? (
+              <RefreshCw className="size-3.5 animate-spin" aria-hidden="true" />
+            ) : (
+              <LogOut className="size-3.5" aria-hidden="true" />
+            )}
+            {isLoggingOut ? "..." : t.logout}
+          </button>
+        </form>
       </div>
 
       {/* Connected accounts */}

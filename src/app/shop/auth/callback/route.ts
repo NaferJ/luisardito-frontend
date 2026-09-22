@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { API_BASE_URL } from '@/lib/api'
 import { setAuthCookies } from '@/lib/cookies'
 import { getRequestLocale } from '@/lib/i18n/request-locale'
+import { publicPathUrl } from '@/lib/request-url'
 
 interface TokenResponse {
   accessToken?: string
@@ -18,7 +19,7 @@ export async function GET(request: Request): Promise<Response> {
   const locale = await getRequestLocale(request)
   const redirectToShop = (error?: string) => {
     const query = error ? `?error=${encodeURIComponent(error)}` : ''
-    return NextResponse.redirect(new URL(`/${locale}/shop${query}`, request.url), 303)
+    return NextResponse.redirect(publicPathUrl(request, `/${locale}/shop${query}`), 303)
   }
 
   if (oauthError) {

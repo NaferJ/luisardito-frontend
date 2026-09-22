@@ -1,26 +1,20 @@
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+import { getRequestHostContext, type RequestHostContext } from '@/lib/request-url'
 
-const AUTH_COOKIE = 'auth_token'
-const REFRESH_COOKIE = 'refresh_token'
+export const AUTH_COOKIE = 'auth_token'
+export const REFRESH_COOKIE = 'refresh_token'
 
 const AUTH_MAX_AGE = 30 * 24 * 60 * 60
 const REFRESH_MAX_AGE = 90 * 24 * 60 * 60
 
-function isLocalhost(): boolean {
-  const host = process.env.NEXT_PUBLIC_VERCEL_URL ?? ''
-  const url = process.env.NEXT_PUBLIC_API_URL ?? ''
-  return host.includes('localhost') || url.includes('localhost')
-}
-
-function getCookieOptions(maxAge: number, includeDomain = true) {
-  const localhost = isLocalhost()
+function getCookieOptions(context: RequestHostContext, maxAge: number, includeDomain = true) {
   return {
     httpOnly: true,
-    secure: !localhost,
-    sameSite: localhost ? ('lax' as const) : ('none' as const),
+    secure: context.secure,
+    sameSite: context.secure ? ('none' as const) : ('lax' as const),
     path: '/',
     maxAge,
-    ...(localhost || !includeDomain ? {} : { domain: '.luisardito.com' }),
+    ...(includeDomain && context.cookieDomain ? { domain: context.cookieDomain } : {}),
   }
 }
 
@@ -39,21 +33,18 @@ export async function setAuthCookies(
   refreshToken?: string,
 ): Promise<void> {
   const cookieStore = await cookies()
-  cookieStore.set(AUTH_COOKIE, accessToken, getCookieOptions(AUTH_MAX_AGE))
+  const context = getRequestHostContext(await headers())
+  cookieStore.set(AUTH_COOKIE, accessToken, getCookieOptions(context, AUTH_MAX_AGE))
   if (refreshToken) {
-    cookieStore.set(REFRESH_COOKIE, refreshToken, getCookieOptions(REFRESH_MAX_AGE))
+    cookieStore.set(REFRESH_COOKIE, refreshToken, getCookieOptions(context, REFRESH_MAX_AGE))
   }
 }
 
 export async function clearAuthCookies(): Promise<void> {
   const cookieStore = await cookies()
+  const context = getRequestHostContext(await headers())
   const expires = new Date(0)
-  const domainOptions = { ...getCookieOptions(0), expires }
-  cookieStore.set(AUTH_COOKIE, "", domainOptions)
-  cookieStore.set(REFRESH_COOKIE, "", domainOptions)
-  if (!isLocalhost()) {
-    const hostOptions = { ...getCookieOptions(0, false), expires }
-    cookieStore.set(AUTH_COOKIE, "", hostOptions)
-    cookieStore.set(REFRESH_COOKIE, "", hostOptions)
-  }
+  const options = { ...getCookieOptions(context, 0), expires }
+  cookieStore.set(AUTH_COOKIE, '', options)
+  cookieStore.set(REFRESH_COOKIE, '', options)
 }

@@ -1,4 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import {
+  appendExpiredCookie,
+  getRequestHostContext,
+  publicPathUrl,
+  type RequestHostContext,
+} from '@/lib/request-url'
 
 const AUTH_COOKIE = 'auth_token'
 const REFRESH_COOKIE = 'refresh_token'
@@ -49,19 +55,24 @@ async function refreshTokens(refreshToken: string) {
   }
 }
 
-function cookieOptions(isLocalhost: boolean, maxAge: number, includeDomain = true) {
-  return { httpOnly: true, secure: !isLocalhost, sameSite: (isLocalhost ? 'lax' : 'none') as 'lax' | 'none', path: '/', maxAge, ...(isLocalhost || !includeDomain ? {} : { domain: '.luisardito.com' }) }
+function cookieOptions(context: RequestHostContext, maxAge: number, includeDomain = true) {
+  return {
+    httpOnly: true,
+    secure: context.secure,
+    sameSite: (context.secure ? 'none' : 'lax') as 'lax' | 'none',
+    path: '/',
+    maxAge,
+    ...(includeDomain && context.cookieDomain ? { domain: context.cookieDomain } : {}),
+  }
 }
 
-function expireCookie(response: NextResponse, name: string, isLocalhost: boolean) {
-  response.cookies.set(name, '', cookieOptions(isLocalhost, 0))
-  if (!isLocalhost) response.cookies.set(name, '', cookieOptions(isLocalhost, 0, false))
+function expireCookie(response: NextResponse, name: string, context: RequestHostContext) {
+  appendExpiredCookie(response, name, context)
 }
 
 function localeRedirect(request: NextRequest, locale: string) {
-  const url = request.nextUrl.clone()
-  url.pathname = `/${locale}${url.pathname === '/' ? '' : url.pathname}`
-  const response = NextResponse.redirect(url)
+  const path = `/${locale}${request.nextUrl.pathname === '/' ? '' : request.nextUrl.pathname}${request.nextUrl.search}`
+  const response = NextResponse.redirect(publicPathUrl(request, path))
   response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
   return response
 }
@@ -80,9 +91,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const locale = firstSegment
   const normalizedPath = pathname.slice(`/${locale}`.length) || '/'
   if (normalizedPath === '/auth/callback') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/shop/auth/callback'
-    const response = NextResponse.redirect(url)
+    const response = NextResponse.redirect(
+      publicPathUrl(request, `/shop/auth/callback${request.nextUrl.search}`),
+    )
     response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
     return response
   }
@@ -93,11 +104,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   const authToken = request.cookies.get(AUTH_COOKIE)?.value
-  const isLocalhost = request.nextUrl.hostname.includes('localhost')
-  const redirectToShop = () => {
-    const url = new URL(`/${locale}/shop`, request.url)
-    return NextResponse.redirect(url)
-  }
+  const context = getRequestHostContext(request.headers)
+  const redirectToShop = () =>
+    NextResponse.redirect(publicPathUrl(request, `/${locale}/shop`))
   if (!authToken) return isProtectedRoute(normalizedPath) ? redirectToShop() : NextResponse.next()
   if (!isJwtExpired(authToken)) return NextResponse.next()
 
@@ -105,20 +114,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (!refreshToken) {
     if (!isProtectedRoute(normalizedPath)) return NextResponse.next()
     const response = redirectToShop()
-    expireCookie(response, AUTH_COOKIE, isLocalhost)
+    expireCookie(response, AUTH_COOKIE, context)
     return response
   }
   const refreshed = await refreshTokens(refreshToken)
   if (!refreshed) {
     if (!isProtectedRoute(normalizedPath)) return NextResponse.next()
     const response = redirectToShop()
-    expireCookie(response, AUTH_COOKIE, isLocalhost)
-    expireCookie(response, REFRESH_COOKIE, isLocalhost)
+    expireCookie(response, AUTH_COOKIE, context)
+    expireCookie(response, REFRESH_COOKIE, context)
     return response
   }
   const response = NextResponse.next()
-  response.cookies.set(AUTH_COOKIE, refreshed.accessToken, cookieOptions(isLocalhost, 30 * 24 * 60 * 60))
-  if (refreshed.refreshToken) response.cookies.set(REFRESH_COOKIE, refreshed.refreshToken, cookieOptions(isLocalhost, 90 * 24 * 60 * 60))
+  response.cookies.set(AUTH_COOKIE, refreshed.accessToken, cookieOptions(context, 30 * 24 * 60 * 60))
+  if (refreshed.refreshToken) response.cookies.set(REFRESH_COOKIE, refreshed.refreshToken, cookieOptions(context, 90 * 24 * 60 * 60))
   response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
   return response
 }
