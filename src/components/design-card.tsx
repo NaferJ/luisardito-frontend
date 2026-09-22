@@ -56,6 +56,8 @@ export function DesignCard({
       <img
         src={card.lastRedeemer.avatar}
         alt={card.lastRedeemer.name}
+        loading="lazy"
+        decoding="async"
         className="size-7 rounded-full object-cover ring-1 ring-background/80"
       />
     )
@@ -65,6 +67,8 @@ export function DesignCard({
       <img
         src={card.avatar}
         alt={card.author}
+        loading="lazy"
+        decoding="async"
         className="size-7 rounded-full object-cover ring-1 ring-background/80"
       />
     )

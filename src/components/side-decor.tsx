@@ -135,6 +135,7 @@ export function SideDecor({ side }: SideDecorProps) {
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
+  const [canAnimate, setCanAnimate] = useState(false)
 
   useEffect(() => {
     const checkDark = () => {
@@ -147,6 +148,7 @@ export function SideDecor({ side }: SideDecorProps) {
     const update = () => {
       setIsDark(checkDark())
       setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      setCanAnimate(window.matchMedia("(min-width: 1024px)").matches)
       setMounted(true)
     }
     update()
@@ -159,11 +161,14 @@ export function SideDecor({ side }: SideDecorProps) {
 
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
     motionQuery.addEventListener("change", update)
+    const desktopQuery = window.matchMedia("(min-width: 1024px)")
+    desktopQuery.addEventListener("change", update)
 
     return () => {
       observer.disconnect()
       mediaQuery.removeEventListener("change", update)
       motionQuery.removeEventListener("change", update)
+      desktopQuery.removeEventListener("change", update)
     }
   }, [])
 
@@ -251,7 +256,7 @@ export function SideDecor({ side }: SideDecorProps) {
         shape="wave"
         type="4x4"
         size={2}
-        speed={reducedMotion ? 0 : 0.5}
+        speed={reducedMotion || !canAnimate ? 0 : 0.5}
         frame={frameOffset}
         scale={0.8}
         rotation={90}

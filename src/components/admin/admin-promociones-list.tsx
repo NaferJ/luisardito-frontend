@@ -62,8 +62,8 @@ const ESTADO_STYLES: Record<string, { icon: typeof Clock; className: string; lab
 const COLUMNS: { key: SortKey; label: (t: PromosDict) => string; className: string }[] = [
   { key: "nombre", label: (t) => t.columns.nombre, className: "min-w-0 flex-1" },
   { key: "descuento", label: (t) => t.columns.descuento, className: "w-24 shrink-0 text-right" },
-  { key: "inicio", label: (t) => t.columns.inicio, className: "hidden w-28 shrink-0 sm:block" },
-  { key: "fin", label: (t) => t.columns.fin, className: "hidden w-28 shrink-0 sm:block" },
+  { key: "inicio", label: (t) => t.columns.inicio, className: "hidden w-28 shrink-0 sm:flex" },
+  { key: "fin", label: (t) => t.columns.fin, className: "hidden w-28 shrink-0 sm:flex" },
   { key: "usos", label: (t) => t.columns.usos, className: "w-20 shrink-0 text-right" },
   { key: "estado", label: (t) => t.columns.estado, className: "w-24 shrink-0" },
 ]

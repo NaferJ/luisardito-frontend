@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { ChevronDown, Search, X } from "lucide-react"
 import { ProductFeed } from "@/components/product-feed"
+import { trackPageView } from "@/lib/analytics"
 import { useI18n, useLocale } from "@/components/i18n/provider"
 import { interpolate } from "@/lib/i18n/shared"
 import type { Dictionary } from "@/lib/i18n/shared"
@@ -63,6 +64,10 @@ function slugFromPathname(pathname: string): string | null {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+function trackCurrentPage(): void {
+  trackPageView(`${window.location.pathname}${window.location.search}`)
+}
+
 export function ShopBrowse({
   products,
   leaderboard = [],
@@ -88,6 +93,7 @@ export function ShopBrowse({
     const handlePopState = () => {
       const slug = slugFromPathname(window.location.pathname)
       setOpenSlug(slug)
+      trackCurrentPage()
     }
     window.addEventListener("popstate", handlePopState)
     return () => window.removeEventListener("popstate", handlePopState)
@@ -113,6 +119,11 @@ export function ShopBrowse({
     const idx = visibleProducts.findIndex((p) => productSlug(p) === openSlug)
     return idx >= 0 ? idx : null
   }, [visibleProducts, openSlug])
+
+  const updateShopUrl = (path: string) => {
+    window.history.pushState(null, "", path)
+    trackCurrentPage()
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -218,18 +229,18 @@ export function ShopBrowse({
           initialOpenIndex={openIndex}
           onCardOpen={(slug) => {
             setOpenSlug(slug)
-            window.history.pushState(null, "", `/${locale}/shop/${slug}`)
+            updateShopUrl(`/${locale}/shop/${slug}`)
           }}
           onOverlayClose={() => {
             setOpenSlug(null)
-            window.history.pushState(null, "", `/${locale}/shop`)
+            updateShopUrl(`/${locale}/shop`)
           }}
           onOverlayNavigate={(nextIndex) => {
             const product = visibleProducts[nextIndex]
             if (product) {
               const slug = productSlug(product)
               setOpenSlug(slug)
-              window.history.pushState(null, "", `/${locale}/shop/${slug}`)
+              updateShopUrl(`/${locale}/shop/${slug}`)
             }
           }}
         />

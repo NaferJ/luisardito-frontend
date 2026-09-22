@@ -7,6 +7,7 @@ import { SideDecor } from '@/components/side-decor'
 import { UserProvider } from '@/components/user-provider'
 import { I18nProvider } from '@/components/i18n/provider'
 import { getCurrentUser } from '@/lib/auth'
+import { GA_MEASUREMENT_ID } from '@/lib/analytics'
 import { dictionaries, hasLocale, locales, type Locale } from '@/lib/i18n'
 import '../globals.css'
 
@@ -22,8 +23,6 @@ export const viewport: Viewport = {
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }))
 }
-
-export const dynamicParams = false
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -44,13 +43,13 @@ export default async function RootLayout({ children, params }: Readonly<{ childr
   return (
     <html lang={lang} className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
       <head>
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-41BXX3T8F1" strategy="afterInteractive" />
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-41BXX3T8F1');
+            gtag('config', ${JSON.stringify(GA_MEASUREMENT_ID)});
           `}
         </Script>
       </head>
