@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { ShopBrowse } from "@/components/shop-browse"
 import { getProducts, getProductBySlug } from "@/lib/products"
 import { getTopLeaderboard } from "@/lib/leaderboard"
-import { getDictionary, hasLocale, type Locale } from "@/lib/i18n"
+import { getDictionary, hasLocale } from "@/lib/i18n"
 
 interface SlugPageProps {
   readonly params: Promise<{ lang: string; slug: string }>
@@ -14,7 +14,6 @@ export const dynamic = 'force-dynamic'
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { lang, slug } = await params
   if (!hasLocale(lang)) notFound()
-  const locale: Locale = lang
   const product = await getProductBySlug(slug)
   if (!product) notFound()
 
