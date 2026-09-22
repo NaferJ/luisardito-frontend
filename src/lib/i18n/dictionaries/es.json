@@ -39,6 +39,18 @@
     "subtitle": "Canjea tus puntos por recompensas.",
     "productNotFoundMeta": "Producto no encontrado — Luisardito Shop"
   },
+  "maker": {
+    "title": "NaferJ",
+    "subtitle": "Developer",
+    "text": "Coméntame tus sugerencias y ayúdame a mejorar la web.",
+    "ariaLabel": "Visita a NaferJ en X"
+  },
+  "minecraft": {
+    "title": "Minecraft Server",
+    "subtitle": "Discord",
+    "text": "Se ha creado un nuevo server público de Minecraft para la comunidad.",
+    "ariaLabel": "Únete al Discord de la comunidad"
+  },
   "info": {
     "tagline": "Hecho por la comunidad, para la comunidad.",
     "p1": "Luisardito es un proyecto impulsado por la comunidad que reúne contenido, recompensas y herramientas para todos los que pasan el rato en el stream.",

@@ -40,6 +40,19 @@ export function XLogo({ className }: Readonly<{ className?: string }>) {
   )
 }
 
+export function MinecraftLogo({ className }: Readonly<{ className?: string }>) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M3 3h6v6H3Zm12 0h6v6h-6ZM9 9h6v3H9Zm-3 3h12v6H6Zm0 6h3v6H6Zm9 0h3v6h-3Z" />
+    </svg>
+  )
+}
+
 export function GitHubLogo({ className }: Readonly<{ className?: string }>) {
   return (
     <svg

@@ -38,6 +38,10 @@ function isPublicHostname(hostname: string): boolean {
   return hostname === PUBLIC_HOST || hostname === `shop.${PUBLIC_HOST}`
 }
 
+export function isShopHostname(host: string): boolean {
+  return normalizeHostname(host) === `shop.${PUBLIC_HOST}`
+}
+
 function requestHost(headers: Headers): string {
   const candidates = [
     firstHeaderValue(headers.get('x-forwarded-host')),

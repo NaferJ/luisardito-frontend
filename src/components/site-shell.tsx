@@ -1,12 +1,15 @@
 import type { ReactNode } from "react"
-import { LocaleLink } from "@/components/i18n/locale-link"
+import { headers } from "next/headers"
+import { LandingLink } from "@/components/i18n/locale-link"
 import { SiteSidebar } from "@/components/site-sidebar"
 import { OnlineStatus } from "@/components/online-status"
+import { getRequestHostContext, isShopHostname } from "@/lib/request-url"
 
-export function SiteShell({ children }: Readonly<{ children: ReactNode }>) {
+export async function SiteShell({ children }: Readonly<{ children: ReactNode }>) {
+  const shopHost = isShopHostname(getRequestHostContext(await headers()).host)
   return (
     <div className="relative mx-auto flex min-h-screen w-full max-w-[1680px] flex-col gap-4 p-4 xl:flex-row xl:gap-8">
-      <SiteSidebar />
+      <SiteSidebar shopHost={shopHost} />
       <div className="flex min-w-0 flex-1 flex-col gap-6 xl:pl-[236px]">
         {/* Desktop only — on mobile this lives in the compact top bar
             instead of taking its own row above the page content. */}
@@ -24,12 +27,12 @@ export function SiteShell({ children }: Readonly<{ children: ReactNode }>) {
           <div className="flex items-center justify-between">
             <span>&copy; 2026</span>
             <div className="flex items-center gap-4">
-              <LocaleLink href="/info" className="transition-colors hover:text-foreground">
+              <LandingLink href="/info" shopHost={shopHost} className="transition-colors hover:text-foreground">
                 Info
-              </LocaleLink>
-              <LocaleLink href="/changelog" className="transition-colors hover:text-foreground">
+              </LandingLink>
+              <LandingLink href="/changelog" shopHost={shopHost} className="transition-colors hover:text-foreground">
                 Changelog
-              </LocaleLink>
+              </LandingLink>
             </div>
           </div>
         </footer>
