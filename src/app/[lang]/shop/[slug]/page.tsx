@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { ShopBrowse } from "@/components/shop-browse"
 import { getProducts, getProductBySlug } from "@/lib/products"
 import { getTopLeaderboard } from "@/lib/leaderboard"
-import { dictionaries, getDictionary, hasLocale, type Locale } from "@/lib/i18n"
+import { getDictionary, hasLocale, type Locale } from "@/lib/i18n"
 
 interface SlugPageProps {
   readonly params: Promise<{ lang: string; slug: string }>
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   if (!hasLocale(lang)) notFound()
   const locale: Locale = lang
   const product = await getProductBySlug(slug)
-  if (!product) return { title: dictionaries[locale].shop.productNotFoundMeta }
+  if (!product) notFound()
 
   const title = `${product.nombre} — Luisardito Shop`
   const description = product.descripcion.slice(0, 160)
