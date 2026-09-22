@@ -3,27 +3,19 @@ import { notFound } from "next/navigation"
 import { ShopBrowse } from "@/components/shop-browse"
 import { getProducts, getProductBySlug } from "@/lib/products"
 import { getTopLeaderboard } from "@/lib/leaderboard"
-import { dictionaries, getDictionary, hasLocale, type Locale } from "@/lib/i18n"
+import { getDictionary, hasLocale } from "@/lib/i18n"
 
 interface SlugPageProps {
   readonly params: Promise<{ lang: string; slug: string }>
 }
 
-/**
- * Pre-render known product slugs at build time. Products without a slug fall
- * back to their numeric ID, which is also handled by getProductBySlug.
- */
-export async function generateStaticParams() {
-  const products = await getProducts()
-  return products.map((p) => ({ slug: p.slug || String(p.id) }))
-}
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { lang, slug } = await params
   if (!hasLocale(lang)) notFound()
-  const locale: Locale = lang
   const product = await getProductBySlug(slug)
-  if (!product) return { title: dictionaries[locale].shop.productNotFoundMeta }
+  if (!product) notFound()
 
   const title = `${product.nombre} — Luisardito Shop`
   const description = product.descripcion.slice(0, 160)
