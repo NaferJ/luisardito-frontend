@@ -218,7 +218,7 @@ export function ProductDetailOverlay({
     t,
   )
 
-  const { overlayRef, headerRef, titleRef, titleTextRef } = useCollapsingOverlayHeader(product?.id)
+  const { overlayRef, headerRef, titleRef, titleTextRef } = useCollapsingOverlayHeader(product?.id, false)
 
   if (!product) return null
 

@@ -495,7 +495,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
       {paginated.length > 0 ? (
         <section className="overflow-x-auto overscroll-x-contain rounded-lg border border-border" aria-label={t.title}>
           {/* Column headers */}
-          <div className="flex min-w-[1120px] items-center gap-4 border-b border-border bg-secondary/50 px-4 py-2.5">
+          <div className="flex min-w-[1200px] items-center gap-4 border-b border-border bg-secondary/50 px-4 py-2.5">
             {/* Bulk select checkbox */}
             <button
               type="button"
@@ -530,7 +530,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
             <span className="w-24 shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {t.columns.estado}
             </span>
-            <span className="w-36 shrink-0 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="w-52 shrink-0 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {t.actions}
             </span>
           </div>
@@ -557,7 +557,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "flex min-w-[1120px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30",
+                    "flex min-w-[1200px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30",
                     isSelected && "bg-gold/5",
                   )}
                   onClick={() => setDrawerIndex(filtered.indexOf(canje))}
@@ -670,7 +670,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                   </div>
 
                   {/* Actions */}
-                  <div className="flex w-36 shrink-0 items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                  <div className="flex w-52 shrink-0 items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                     {canje.estado === "pendiente" && (
                       <>
                         <ActionBtn
@@ -678,6 +678,11 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                           onClick={() => handleUpdate(canje.id, "entregado")}
                           disabled={pending}
                           primary
+                        />
+                        <ActionBtn
+                          label={t.return}
+                          onClick={() => openReturnModal(canje)}
+                          disabled={pending}
                         />
                         <ActionBtn
                           label={t.cancel}

@@ -40,10 +40,12 @@ export function DesignCard({
   card,
   onOpen,
   onAspectRatio,
+  eager = false,
 }: Readonly<{
   card: DesignCardData
   onOpen: () => void
   onAspectRatio?: (ratio: number) => void
+  eager?: boolean
 }>) {
   const { dictionary } = useI18n()
   const t = dictionary.card
@@ -92,6 +94,7 @@ export function DesignCard({
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
           quality={90}
+          loading={eager ? "eager" : "lazy"}
           className="object-cover"
           onLoad={(event) => {
             if (!card.useNaturalAspect || card.aspectStyle) return

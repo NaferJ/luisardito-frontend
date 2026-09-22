@@ -90,6 +90,7 @@ function distributeColumns(
         card={card}
         onOpen={() => onOpen(i)}
         onAspectRatio={(ratio) => onAspectRatio(card.id, ratio)}
+        eager={i < columnCount * 2}
       />,
     )
     heights[columnIndex] += 1 / aspectRatio
