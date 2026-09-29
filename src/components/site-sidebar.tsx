@@ -16,7 +16,42 @@ import { PendingCanjesBadge } from "@/components/pending-canjes-badge"
 import { OnlineStatus } from "@/components/online-status"
 import { SubscriberBadge } from "@/components/subscriber-badge"
 import { VipBadge } from "@/components/vip-badge"
-import { cn, formatCompactNumber } from "@/lib/utils"
+import { publicApiFetch } from "@/lib/public-api"
+import { cn, formatCompactNumber, safeImageUrl } from "@/lib/utils"
+import type { LeaderboardEntry } from "@/lib/leaderboard"
+
+interface SidebarMember {
+  id: number
+  name: string
+  avatar: string | null
+}
+
+/** Random community members for the logged-out sidebar avatar stack,
+ * sampled from the public leaderboard — members with Kick photos are
+ * ranked first so the circles show real avatars whenever they exist. */
+async function fetchSidebarMembers(limit = 5): Promise<SidebarMember[]> {
+  try {
+    const { data } = await publicApiFetch<{ data?: LeaderboardEntry[] }>("/api/leaderboard?limit=100")
+    const shuffled = [...(data ?? [])]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      const tmp = shuffled[i]
+      shuffled[i] = shuffled[j]
+      shuffled[j] = tmp
+    }
+    const ranked = [
+      ...shuffled.filter((e) => e.kick_data?.avatar_url),
+      ...shuffled.filter((e) => !e.kick_data?.avatar_url),
+    ]
+    return ranked.slice(0, limit).map((entry) => ({
+      id: entry.usuario_id,
+      name: entry.kick_data?.username ?? entry.nickname ?? "Member",
+      avatar: entry.kick_data?.avatar_url ?? null,
+    }))
+  } catch {
+    return []
+  }
+}
 
 /**
  * Returns the single nav href that best matches `pathname`.
@@ -186,12 +221,14 @@ function SidebarFooter({
   user,
   isRedirecting,
   onLogin,
+  members,
   mobile = false,
   shopHost = false,
 }: Readonly<{
   user: ReturnType<typeof useUser>
   isRedirecting: boolean
   onLogin: () => void
+  members: SidebarMember[]
   mobile?: boolean
   shopHost?: boolean
 }>) {
@@ -228,16 +265,43 @@ function SidebarFooter({
             {isRedirecting ? dictionary.common.connecting : dictionary.common.signup}
           </button>
           <div className="flex -space-x-2">
-            {avatarColors.map((color, i) => (
-              <span
-                key={i}
-                aria-hidden="true"
-                className={cn("size-7 rounded-full border-2 border-background", color)}
-              />
-            ))}
-            <span className="flex size-7 items-center justify-center rounded-full border-2 border-background bg-gold-core text-[11px] font-medium text-background">
-              H
-            </span>
+            {members.length > 0
+              ? members.map((member, i) => {
+                  const avatar = safeImageUrl(member.avatar)
+                  return avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={member.id}
+                      src={avatar}
+                      alt={member.name}
+                      decoding="async"
+                      className="size-7 rounded-full border-2 border-background object-cover"
+                    />
+                  ) : (
+                    <span
+                      key={member.id}
+                      aria-hidden="true"
+                      className={cn(
+                        "flex size-7 items-center justify-center rounded-full border-2 border-background text-[11px] font-medium text-background",
+                        avatarColors[i % avatarColors.length],
+                      )}
+                    >
+                      {member.name.charAt(0).toUpperCase()}
+                    </span>
+                  )
+                })
+              : avatarColors.map((color, i) => (
+                  <span
+                    key={i}
+                    aria-hidden="true"
+                    className={cn("size-7 rounded-full border-2 border-background", color)}
+                  />
+                ))}
+            {members.length === 0 && (
+              <span className="flex size-7 items-center justify-center rounded-full border-2 border-background bg-gold-core text-[11px] font-medium text-background">
+                H
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -324,6 +388,20 @@ export function SiteSidebar({ shopHost }: Readonly<{ shopHost: boolean }>) {
   const [isRedirecting, setIsRedirecting] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const user = useUser()
+  const [members, setMembers] = useState<SidebarMember[]>([])
+
+  // The member avatar stack only renders for logged-out visitors, so the
+  // fetch is skipped entirely once a session exists.
+  useEffect(() => {
+    if (user) return
+    let cancelled = false
+    fetchSidebarMembers().then((result) => {
+      if (!cancelled) setMembers(result)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   // Close the drawer automatically when the route changes (e.g. after
   // tapping a nav link) instead of leaving it open over the new page.
@@ -383,7 +461,7 @@ export function SiteSidebar({ shopHost }: Readonly<{ shopHost: boolean }>) {
           <div className="flex-1 overflow-y-auto">
             <NavSections user={user} activeHref={activeHref} />
           </div>
-          <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} mobile shopHost={shopHost} />
+          <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} members={members} mobile shopHost={shopHost} />
         </div>
       </MobileDrawer>
 
@@ -396,7 +474,7 @@ export function SiteSidebar({ shopHost }: Readonly<{ shopHost: boolean }>) {
           </div>
           <NavSections user={user} activeHref={activeHref} />
         </div>
-        <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} shopHost={shopHost} />
+        <SidebarFooter user={user} isRedirecting={isRedirecting} onLogin={handleKickLogin} members={members} shopHost={shopHost} />
       </aside>
     </>
   )

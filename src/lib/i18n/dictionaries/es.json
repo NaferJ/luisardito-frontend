@@ -88,6 +88,15 @@
     "improved": "Mejorado",
     "fixed": "Corregido"
   },
+  "community": {
+    "title": "Comunidad",
+    "description": "Pregunta o comparte cualquier cosa...",
+    "composerPlaceholder": "Escribe aquí...",
+    "addPhoto": "Añadir foto",
+    "post": "Publicar",
+    "removeImage": "Quitar imagen",
+    "pinnedTitle": "Fijados"
+  },
   "language": {
     "es": "Español",
     "en": "English"

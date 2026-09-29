@@ -88,6 +88,15 @@
     "improved": "Improved",
     "fixed": "Fixed"
   },
+  "community": {
+    "title": "Community",
+    "description": "Ask or share anything...",
+    "composerPlaceholder": "Type here...",
+    "addPhoto": "Add photo",
+    "post": "Post",
+    "removeImage": "Remove image",
+    "pinnedTitle": "Pinned posts"
+  },
   "language": {
     "es": "Español",
     "en": "English"
