@@ -3,6 +3,12 @@ name: CD - Production
 on:
   push:
     branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Existing image tag (commit SHA) to redeploy; leave empty to build the selected ref"
+        required: false
+        type: string
 
 concurrency:
   group: production-deployment
@@ -11,12 +17,25 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  IMAGE: ghcr.io/naferj/luisardito-frontend
+
 jobs:
-  deploy:
-    runs-on: [self-hosted, linux]
-    timeout-minutes: 20
-    env:
-      IMAGE_NAME: luisardito-frontend
+  build:
+    if: inputs.image_tag == ''
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            platform_pair: linux-amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            platform_pair: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,85 +49,207 @@ jobs:
           test -n "${API_URL}"
           test -n "${CLOUDINARY_CLOUD_NAME}"
           test -n "${CLOUDINARY_UPLOAD_PRESET}"
-          docker version
           docker compose version
 
-      - name: Build Docker image
-        env:
-          API_URL: ${{ secrets.FRONTEND_API_URL_PROD }}
-          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME_PROD }}
-          CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_PROD }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.FRONTEND_API_URL_PROD }}
+            NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME_PROD }}
+            NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=${{ secrets.CLOUDINARY_UPLOAD_PRESET_PROD }}
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.platform_pair }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform_pair }}
+
+      - name: Export digest
         run: |
-          docker build \
-            --build-arg "NEXT_PUBLIC_API_URL=${API_URL}" \
-            --build-arg "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}" \
-            --build-arg "NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=${CLOUDINARY_UPLOAD_PRESET}" \
-            --tag "${IMAGE_NAME}:${GITHUB_SHA}" .
+          mkdir -p "${{ runner.temp }}/digests"
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
 
-      - name: Deploy on production VPS
-        env:
-          API_URL: ${{ secrets.FRONTEND_API_URL_PROD }}
-          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME_PROD }}
-          CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_PROD }}
+      - name: Upload digest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: digests-${{ matrix.platform_pair }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-arch manifest
+        working-directory: ${{ runner.temp }}/digests
         run: |
-          set -eu
-          DEPLOY_DIR="$HOME/apps/luisardito-frontend"
-          COMPOSE_FILE="$DEPLOY_DIR/docker-compose.frontend.yml"
-          COMPOSE_ROLLBACK_FILE="$DEPLOY_DIR/docker-compose.frontend.rollback.yml"
-          LEGACY_COMPOSE_FILE="$HOME/apps/luisardito-shop-frontend/docker-compose.frontend.yml"
-          ENV_FILE="$HOME/.env.luisardito-frontend.production"
-          ENV_ROLLBACK_FILE="$HOME/.env.luisardito-frontend.rollback"
-          STABLE_IMAGE="$IMAGE_NAME:production"
-          ROLLBACK_IMAGE="$IMAGE_NAME:rollback"
-
-          mkdir -p "$DEPLOY_DIR"
-          if [ -f "$COMPOSE_FILE" ]; then
-            cp -p "$COMPOSE_FILE" "$COMPOSE_ROLLBACK_FILE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            docker buildx imagetools create \
+              -t "${{ env.IMAGE }}:${{ github.sha }}" \
+              -t "${{ env.IMAGE }}:main" \
+              $(printf '${{ env.IMAGE }}@sha256:%s ' *)
+          else
+            docker buildx imagetools create \
+              -t "${{ env.IMAGE }}:${{ github.sha }}" \
+              $(printf '${{ env.IMAGE }}@sha256:%s ' *)
           fi
-          if [ -f "$ENV_FILE" ]; then
-            cp -p "$ENV_FILE" "$ENV_ROLLBACK_FILE"
-          fi
-          install -m 644 docker-compose.frontend.yml "$COMPOSE_FILE"
-          printf '%s\n' \
-            'NODE_ENV=production' \
-            'PORT=3000' \
-            "NEXT_PUBLIC_API_URL=${API_URL}" \
-            "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}" \
-            "NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=${CLOUDINARY_UPLOAD_PRESET}" \
-            > "$ENV_FILE"
-          chmod 600 "$ENV_FILE"
-          docker compose -f "$COMPOSE_FILE" config --quiet
+          docker buildx imagetools inspect "${{ env.IMAGE }}:${{ github.sha }}"
 
-          if docker image inspect "$STABLE_IMAGE" >/dev/null 2>&1; then
-            docker tag "$STABLE_IMAGE" "$ROLLBACK_IMAGE"
-          fi
-          docker tag "$IMAGE_NAME:${GITHUB_SHA}" "$STABLE_IMAGE"
+  deploy:
+    needs: [merge]
+    if: always() && (needs.merge.result == 'success' || (needs.merge.result == 'skipped' && inputs.image_tag != ''))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      IMAGE_TAG: ${{ inputs.image_tag || github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-          if [ -f "$LEGACY_COMPOSE_FILE" ]; then
-            docker compose -f "$LEGACY_COMPOSE_FILE" down --remove-orphans || true
-          fi
-          docker rm -f app-prod luisardito-shop-frontend luisardito-frontend 2>/dev/null || true
+      - name: Validate SSH secrets
+        shell: bash
+        env:
+          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          PROD_SSH_PORT: ${{ secrets.PROD_SSH_PORT }}
+        run: |
+          [ "$PROD_SSH_HOST" != "" ] || { echo "PROD_SSH_HOST secret is missing"; exit 1; }
+          [ "$PROD_SSH_USER" != "" ] || { echo "PROD_SSH_USER secret is missing"; exit 1; }
+          [ "$PROD_SSH_KEY" != "" ] || { echo "PROD_SSH_KEY secret is missing"; exit 1; }
+          [ "$PROD_SSH_PORT" != "" ] || { echo "PROD_SSH_PORT secret is missing"; exit 1; }
+          echo "All required PROD_SSH_* secrets are present."
 
-          if ! docker compose -f "$COMPOSE_FILE" up -d --force-recreate --wait --wait-timeout 90; then
-            docker compose -f "$COMPOSE_FILE" logs --tail=100
-            docker compose -f "$COMPOSE_FILE" down || true
-            if docker image inspect "$ROLLBACK_IMAGE" >/dev/null 2>&1; then
-              docker tag "$ROLLBACK_IMAGE" "$STABLE_IMAGE"
-              if [ -f "$COMPOSE_ROLLBACK_FILE" ]; then
-                cp -p "$COMPOSE_ROLLBACK_FILE" "$COMPOSE_FILE"
-              fi
-              if [ -f "$ENV_ROLLBACK_FILE" ]; then
-                cp -p "$ENV_ROLLBACK_FILE" "$ENV_FILE"
-              fi
-              docker compose -f "$COMPOSE_FILE" up -d --force-recreate --wait --wait-timeout 90
-            elif [ -f "$LEGACY_COMPOSE_FILE" ]; then
-              docker compose -f "$LEGACY_COMPOSE_FILE" up -d
+      - name: Prepare compose file
+        id: compose
+        run: echo "data=$(base64 -w0 docker-compose.frontend.yml)" >> "$GITHUB_OUTPUT"
+
+      - name: Test SSH connection
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          passphrase: ${{ secrets.PROD_SSH_PASSPHRASE }}
+          port: ${{ secrets.PROD_SSH_PORT }}
+          script: |
+            whoami
+            echo "SSH OK"
+
+      - name: Deploy on production server
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
+        env:
+          COMPOSE_B64: ${{ steps.compose.outputs.data }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.FRONTEND_API_URL_PROD }}
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME_PROD }}
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_PROD }}
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          passphrase: ${{ secrets.PROD_SSH_PASSPHRASE }}
+          port: ${{ secrets.PROD_SSH_PORT }}
+          envs: COMPOSE_B64,IMAGE_TAG,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+          script: |
+            set -eu
+            DEPLOY_DIR="$HOME/apps/luisardito-frontend"
+            COMPOSE_FILE="$DEPLOY_DIR/docker-compose.frontend.yml"
+            COMPOSE_ROLLBACK_FILE="$DEPLOY_DIR/docker-compose.frontend.rollback.yml"
+            LEGACY_COMPOSE_FILE="$HOME/apps/luisardito-shop-frontend/docker-compose.frontend.yml"
+            ENV_FILE="$HOME/.env.luisardito-frontend.production"
+            ENV_ROLLBACK_FILE="$HOME/.env.luisardito-frontend.rollback"
+            PROJECT_ENV_FILE="$DEPLOY_DIR/.env"
+            PROJECT_ENV_ROLLBACK_FILE="$DEPLOY_DIR/.env.rollback"
+
+            mkdir -p "$DEPLOY_DIR"
+            if [ -f "$COMPOSE_FILE" ]; then
+              cp -p "$COMPOSE_FILE" "$COMPOSE_ROLLBACK_FILE"
             fi
-            exit 1
-          fi
+            if [ -f "$ENV_FILE" ]; then
+              cp -p "$ENV_FILE" "$ENV_ROLLBACK_FILE"
+            fi
+            if [ -f "$PROJECT_ENV_FILE" ]; then
+              cp -p "$PROJECT_ENV_FILE" "$PROJECT_ENV_ROLLBACK_FILE"
+            fi
 
-          docker compose -f "$COMPOSE_FILE" ps
+            printf '%s' "$COMPOSE_B64" | base64 -d > "$COMPOSE_FILE"
+            chmod 644 "$COMPOSE_FILE"
 
-      - name: Clean deployment image tag
-        if: always()
-        run: docker image rm "${IMAGE_NAME}:${GITHUB_SHA}" 2>/dev/null || true
+            printf '%s\n' \
+              'NODE_ENV=production' \
+              'PORT=3000' \
+              "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" \
+              "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}" \
+              "NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=${NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}" \
+              > "$ENV_FILE"
+            chmod 600 "$ENV_FILE"
+
+            printf 'FRONTEND_IMAGE_TAG=%s\n' "$IMAGE_TAG" > "$PROJECT_ENV_FILE"
+
+            cd "$DEPLOY_DIR"
+            docker compose -f "$COMPOSE_FILE" config --quiet
+
+            if [ -f "$LEGACY_COMPOSE_FILE" ]; then
+              docker compose -f "$LEGACY_COMPOSE_FILE" down --remove-orphans || true
+            fi
+            docker rm -f app-prod luisardito-shop-frontend luisardito-frontend 2>/dev/null || true
+
+            if ! docker compose -f "$COMPOSE_FILE" pull; then
+              echo "Image pull failed; leaving the currently running container untouched"
+              exit 1
+            fi
+
+            if ! docker compose -f "$COMPOSE_FILE" up -d --force-recreate --wait --wait-timeout 90; then
+              docker compose -f "$COMPOSE_FILE" logs --tail=100 || true
+              docker compose -f "$COMPOSE_FILE" down || true
+              if [ -f "$PROJECT_ENV_ROLLBACK_FILE" ]; then
+                cp -p "$PROJECT_ENV_ROLLBACK_FILE" "$PROJECT_ENV_FILE"
+                if [ -f "$COMPOSE_ROLLBACK_FILE" ]; then
+                  cp -p "$COMPOSE_ROLLBACK_FILE" "$COMPOSE_FILE"
+                fi
+                if [ -f "$ENV_ROLLBACK_FILE" ]; then
+                  cp -p "$ENV_ROLLBACK_FILE" "$ENV_FILE"
+                fi
+                docker compose -f "$COMPOSE_FILE" up -d --force-recreate --wait --wait-timeout 90 || true
+              elif [ -f "$LEGACY_COMPOSE_FILE" ]; then
+                docker compose -f "$LEGACY_COMPOSE_FILE" up -d || true
+              fi
+              exit 1
+            fi
+
+            docker compose -f "$COMPOSE_FILE" ps
+            docker image prune -f
