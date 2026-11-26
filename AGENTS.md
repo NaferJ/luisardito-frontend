@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Luisardito Frontend
 
-Next.js 16 (App Router) frontend for the Luisardito site. React 19, Tailwind CSS v4, strict TypeScript, ESLint 9, deployed on Vercel. The app owns UI plus a small set of route handlers for OAuth and backend proxying; it has no database or CMS. It consumes a separate backend (`luisardito-shop-backend`, read-only).
+Next.js 16 (App Router) frontend for the Luisardito site. React 19, Tailwind CSS v4, strict TypeScript, ESLint 9. Production runs as a Docker container on the production server behind nginx/Cloudflare. The app owns UI plus a small set of route handlers for OAuth and backend proxying; it has no database or CMS. It consumes a separate backend (`luisardito-shop-backend`, read-only).
 
 See `.devin/rules/luisardito-frontend.md` for full code conventions and rules.
 
@@ -62,7 +62,7 @@ All env vars are `NEXT_PUBLIC_` (inlined into the client bundle at build time). 
 - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` / `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` — unsigned image uploads
 - Kick OAuth vars are documented for completeness but the actual OAuth flow runs on the backend
 
-On Vercel, set these in Project Settings > Environment Variables. `NEXT_PUBLIC_VERCEL_URL` is provided automatically by Vercel.
+In production these are supplied as Docker build args from GitHub secrets (`FRONTEND_API_URL_PROD`, `CLOUDINARY_CLOUD_NAME_PROD`, `CLOUDINARY_UPLOAD_PRESET_PROD`) and written to the server's `$HOME/.env.luisardito-frontend.production` file at deploy time.
 
 ## Backend dependency
 
