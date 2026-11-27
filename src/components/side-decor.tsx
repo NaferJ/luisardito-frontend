@@ -122,6 +122,7 @@ function defaultColor(pathname: string, isDark: boolean): string {
   const pathSegments = pathname.split("/").filter(Boolean)
   const isLanding = pathSegments.length === 0 || (pathSegments.length === 1 && hasLocale(pathSegments[0]))
   if (isLanding) return isDark ? "#588C23" : "#05401A"
+  if (pathSegments[1] === "community") return isDark ? "#FFFFFF" : "#262626"
   return isDark ? "#D49A22" : "#8F5E0A"
 }
 
@@ -168,7 +169,7 @@ export function SideDecor({ side }: SideDecorProps) {
   }, [])
 
   const colorBack = isDark ? "#0D0D0D" : "#D9D9D9"
-  // Green palette only on the landing page; gold everywhere else.
+  // Green palette on landing, white on community, gold everywhere else.
   // When a product/design overlay is open and has published dominant image
   // colors, the most dominant color becomes the shader's front color. If that
   // color is too close to the background in luminance (e.g. a dark product

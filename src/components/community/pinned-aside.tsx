@@ -17,9 +17,9 @@ export function CommunityAside({ community }: Readonly<{ community: Dictionary["
       data-ready={ready || undefined}
       className="relative -mt-px flex min-w-0 flex-col items-end opacity-0 transition-opacity duration-200 data-[ready]:opacity-100 @min-[68rem]:mt-0 @min-[68rem]:-ml-px [&>*+*]:-mt-px"
     >
-      <div className="flex w-full flex-col border border-border bg-background p-7">
+      <div className="flex w-full flex-col border-[0.5px] border-border/50 bg-background p-7">
         <div className="min-h-12 flex-1" />
-        <div className="mt-3 flex items-center justify-end border-t border-border/60 pt-3">
+        <div className="mt-3 flex items-center justify-end border-t-[0.5px] border-border/50 pt-3">
           <span className="flex h-8 items-center gap-1.5 text-lg font-medium text-muted-foreground">
             <Pin className="size-[22px] text-gold-bright" />
             {community.pinnedTitle}
@@ -27,7 +27,7 @@ export function CommunityAside({ community }: Readonly<{ community: Dictionary["
         </div>
       </div>
       {MOCK_PINNED.map((item) => (
-        <CommunityPostCard key={item.id} post={item} />
+        <CommunityPostCard key={item.id} post={item} commentLabel={community.topComment} />
       ))}
     </aside>
   )

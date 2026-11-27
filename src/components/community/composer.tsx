@@ -30,7 +30,7 @@ export function CommunityComposer() {
   }
 
   return (
-    <div className="relative flex w-full flex-col border border-border bg-background p-7">
+    <div className="relative flex w-full flex-col border-[0.5px] border-border/50 bg-background p-7">
       <div className="flex gap-6">
         {avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -55,7 +55,7 @@ export function CommunityComposer() {
       {images.length > 0 && (
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {images.map((src, i) => (
-            <div key={src} className="group relative aspect-square overflow-hidden rounded-sm border border-border">
+            <div key={src} className="group relative aspect-square overflow-hidden rounded-sm border-[0.5px] border-border/50">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" className="size-full object-cover" />
               <button
@@ -71,7 +71,7 @@ export function CommunityComposer() {
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
+      <div className="mt-3 flex items-center justify-between border-t-[0.5px] border-border/50 pt-3">
         <div className="flex items-center gap-1">
           <button
             type="button"

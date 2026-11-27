@@ -31,11 +31,11 @@ export default async function CommunityPage() {
             <div data-community-feed className="relative flex min-w-0 flex-col items-start [&>*+*]:-mt-px">
               <CommunityComposer />
               {MOCK_POSTS.map((post) => (
-                <CommunityPostCard key={post.id} post={post} />
+                <CommunityPostCard key={post.id} post={post} commentLabel={dictionary.community.topComment} />
               ))}
             </div>
             <CommunityAside community={dictionary.community} />
-            <span aria-hidden="true" className="pointer-events-none absolute inset-0 border border-border" />
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 border-[0.5px] border-border/50" />
           </div>
         </div>
       </div>

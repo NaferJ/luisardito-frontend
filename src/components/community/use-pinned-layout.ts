@@ -78,6 +78,14 @@ export function usePinnedLayout(asideRef: RefObject<HTMLElement | null>) {
       if (!aside || !frame) return
       pinned.forEach((card) => setWidth(card, null))
 
+      // Text metrics change when fonts swap in, which can flip borderline
+      // wraps by a pixel. Skip measuring until fonts settle; `loadingdone`
+      // schedules another pass.
+      if (document.fonts.status !== "loaded") {
+        setReady(false)
+        return
+      }
+
       if (isSplit(frame)) {
         const origin = frame.getBoundingClientRect()
         const column = aside.getBoundingClientRect()
@@ -99,7 +107,7 @@ export function usePinnedLayout(asideRef: RefObject<HTMLElement | null>) {
           if (!fits) setWidth(card, null)
         }
       }
-      setReady(document.fonts.status === "loaded")
+      setReady(true)
     }
 
     function scheduleLayout() {

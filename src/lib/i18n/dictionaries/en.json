@@ -95,7 +95,8 @@
     "addPhoto": "Add photo",
     "post": "Post",
     "removeImage": "Remove image",
-    "pinnedTitle": "Pinned posts"
+    "pinnedTitle": "Pinned posts",
+    "topComment": "Top comment"
   },
   "language": {
     "es": "Español",

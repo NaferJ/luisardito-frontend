@@ -95,7 +95,8 @@
     "addPhoto": "Añadir foto",
     "post": "Publicar",
     "removeImage": "Quitar imagen",
-    "pinnedTitle": "Fijados"
+    "pinnedTitle": "Fijados",
+    "topComment": "Comentario destacado"
   },
   "language": {
     "es": "Español",

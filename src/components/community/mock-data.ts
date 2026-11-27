@@ -1,3 +1,13 @@
+export type CommunityMockComment = {
+  author: string
+  time: string
+  text: string
+  comments: string
+  likes: string
+  views: string
+  accent: string
+}
+
 export type CommunityMockPost = {
   id: number
   author: string
@@ -9,6 +19,7 @@ export type CommunityMockPost = {
   likes: string
   views: string
   accent: string
+  bestComment?: CommunityMockComment
 }
 
 export const AVATAR_ACCENTS = [
@@ -43,6 +54,15 @@ export const MOCK_POSTS: CommunityMockPost[] = [
     likes: "128",
     views: "4.7k",
     accent: AVATAR_ACCENTS[1],
+    bestComment: {
+      author: "lunita",
+      time: "2h",
+      text: "Se ve brutal ese setup, qué monitor es?",
+      comments: "6",
+      likes: "34",
+      views: "620",
+      accent: AVATAR_ACCENTS[3],
+    },
   },
   {
     id: 3,
@@ -139,6 +159,15 @@ export const MOCK_POSTS: CommunityMockPost[] = [
     likes: "512",
     views: "12k",
     accent: AVATAR_ACCENTS[4],
+    bestComment: {
+      author: "kickandopts",
+      time: "2d",
+      text: "Gracias por arreglar lo de los puntos, ya me cargan bien",
+      comments: "3",
+      likes: "67",
+      views: "1.3k",
+      accent: AVATAR_ACCENTS[2],
+    },
   },
   {
     id: 11,
@@ -163,6 +192,15 @@ export const MOCK_POSTS: CommunityMockPost[] = [
     likes: "430",
     views: "8.4k",
     accent: AVATAR_ACCENTS[1],
+    bestComment: {
+      author: "void_walker",
+      time: "4d",
+      text: "Esa última ronda la sigo viendo todos los días",
+      comments: "9",
+      likes: "51",
+      views: "940",
+      accent: AVATAR_ACCENTS[4],
+    },
   },
   {
     id: 13,
