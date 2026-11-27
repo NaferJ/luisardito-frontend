@@ -750,12 +750,9 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
           ref={returnDialogRef}
           aria-labelledby="return-canje-dialog-title"
           onClose={closeReturnModal}
-          onClick={(event) => {
-            if (event.target === event.currentTarget) closeReturnModal()
-          }}
           className="fixed inset-0 z-50 m-0! flex! h-dvh! w-full! max-w-none! max-h-none! items-center justify-center border-0! bg-black/60 p-4!"
         >
-          <div className="flex w-full max-w-md flex-col gap-4 rounded-lg border border-border bg-background p-5">
+          <div className="relative z-10 flex w-full max-w-md flex-col gap-4 rounded-lg border border-border bg-background p-5">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span id="return-canje-dialog-title" className="text-[15px] font-medium text-foreground">{t.returnModal.title}</span>
@@ -827,6 +824,12 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
               </button>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={closeReturnModal}
+            aria-label={t.returnModal.cancel}
+            className="absolute inset-0 cursor-default appearance-none border-0 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold"
+          />
         </dialog>
       )}
     </>
