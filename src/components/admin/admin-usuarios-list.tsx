@@ -285,18 +285,11 @@ export function AdminUsuariosList({
                 const idx = filtered.indexOf(u)
 
                 return (
-                  <div
+                  <button
                     key={u.id}
-                    role="button"
-                    tabIndex={0}
+                    type="button"
                     onClick={() => setDrawerIndex(idx)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault()
-                        setDrawerIndex(idx)
-                      }
-                    }}
-                    className="flex min-w-[960px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
+                    className="flex w-full min-w-[960px] cursor-pointer appearance-none items-center gap-4 border-0 border-b border-border/40 bg-transparent px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold"
                   >
                     {/* Avatar */}
                     <div className="size-10 shrink-0 overflow-hidden rounded-full bg-secondary">
@@ -356,7 +349,7 @@ export function AdminUsuariosList({
                     </div>
 
                     <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                  </div>
+                  </button>
                 )
               })}
             </div>

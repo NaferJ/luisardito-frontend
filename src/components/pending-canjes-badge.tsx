@@ -32,11 +32,15 @@ export function PendingCanjesBadge() {
       }
     }
 
-    fetchCount()
-    const interval = setInterval(fetchCount, 60_000)
+    void fetchCount()
+    const interval = setInterval(() => {
+      void fetchCount()
+    }, 60_000)
 
     // Listen for instant updates from the admin canjes list
-    const onStatusChanged = () => fetchCount()
+    const onStatusChanged = () => {
+      void fetchCount()
+    }
     window.addEventListener(CANJES_STATUS_CHANGED, onStatusChanged)
 
     return () => {

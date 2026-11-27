@@ -21,6 +21,7 @@ import { SortHeader } from "@/components/admin/shared/sort-header"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
 import { Pagination } from "@/components/admin/shared/pagination"
 import { useI18n } from "@/components/i18n/provider"
+import { LocaleLink } from "@/components/i18n/locale-link"
 import { interpolate } from "@/lib/i18n/shared"
 import type { Dictionary } from "@/lib/i18n/shared"
 import type { Producto } from "@/types"
@@ -225,17 +226,14 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
             {paginated.map((p) => (
               <div
                 key={p.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => router.push(`/shop/admin/products/${p.id}/edit`)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault()
-                    router.push(`/shop/admin/products/${p.id}/edit`)
-                  }
-                }}
-                className="flex min-w-[960px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
+                className="relative flex min-w-[960px] items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
               >
+                <LocaleLink
+                  href={`/shop/admin/products/${p.id}/edit`}
+                  className="absolute inset-0 z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold"
+                >
+                  <span className="sr-only">{p.nombre}</span>
+                </LocaleLink>
                 {/* Image */}
                 <div className="flex h-10 w-20 shrink-0">
                   <div className="size-10 overflow-hidden rounded-sm bg-secondary">
@@ -285,8 +283,8 @@ export function AdminProductList({ products }: Readonly<{ products: Producto[] }
                   {relativeTime(p.actualizado ?? p.updated_at, t)}
                 </span>
 
-                {/* Actions (stopPropagation so row click doesn't fire) */}
-                <div className="flex w-28 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                {/* Actions sit above the row link so they stay independently operable */}
+                <div className="relative z-20 flex w-28 shrink-0 items-center justify-end gap-2">
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-[11px] font-medium",

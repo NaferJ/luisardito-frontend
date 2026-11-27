@@ -77,32 +77,7 @@ function localeRedirect(request: NextRequest, locale: string) {
   return response
 }
 
-export async function proxy(request: NextRequest): Promise<NextResponse> {
-  const { pathname } = request.nextUrl
-  const lastSegment = pathname.slice(pathname.lastIndexOf('/') + 1)
-  const lastDot = lastSegment.lastIndexOf('.')
-  const hasFileExtension = lastDot !== -1 && lastDot < lastSegment.length - 1
-  if (pathname.startsWith('/_next') || pathname === '/favicon.ico' || hasFileExtension) return NextResponse.next()
-  if (pathname.startsWith('/shop/api/') || pathname.startsWith('/shop/auth/')) return NextResponse.next()
-
-  const firstSegment = pathname.split('/')[1]
-  if (!isLocale(firstSegment)) return localeRedirect(request, detectLocale(request))
-
-  const locale = firstSegment
-  const normalizedPath = pathname.slice(`/${locale}`.length) || '/'
-  if (normalizedPath === '/auth/callback') {
-    const response = NextResponse.redirect(
-      publicPathUrl(request, `/shop/auth/callback${request.nextUrl.search}`),
-    )
-    response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
-    return response
-  }
-  if (!normalizedPath.startsWith('/shop')) {
-    const response = NextResponse.next()
-    response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
-    return response
-  }
-
+async function shopProxy(request: NextRequest, locale: string, normalizedPath: string): Promise<NextResponse> {
   const authToken = request.cookies.get(AUTH_COOKIE)?.value
   const context = getRequestHostContext(request.headers)
   const redirectToShop = () =>
@@ -130,6 +105,35 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (refreshed.refreshToken) response.cookies.set(REFRESH_COOKIE, refreshed.refreshToken, cookieOptions(context, 90 * 24 * 60 * 60))
   response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
   return response
+}
+
+export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl
+  const lastSegment = pathname.slice(pathname.lastIndexOf('/') + 1)
+  const lastDot = lastSegment.lastIndexOf('.')
+  const hasFileExtension = lastDot !== -1 && lastDot < lastSegment.length - 1
+  if (pathname.startsWith('/_next') || pathname === '/favicon.ico' || hasFileExtension) return NextResponse.next()
+  if (pathname.startsWith('/shop/api/') || pathname.startsWith('/shop/auth/')) return NextResponse.next()
+
+  const firstSegment = pathname.split('/')[1]
+  if (!isLocale(firstSegment)) return localeRedirect(request, detectLocale(request))
+
+  const locale = firstSegment
+  const normalizedPath = pathname.slice(`/${locale}`.length) || '/'
+  if (normalizedPath === '/auth/callback') {
+    const response = NextResponse.redirect(
+      publicPathUrl(request, `/shop/auth/callback${request.nextUrl.search}`),
+    )
+    response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
+    return response
+  }
+  if (!normalizedPath.startsWith('/shop')) {
+    const response = NextResponse.next()
+    response.cookies.set(LOCALE_COOKIE, locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
+    return response
+  }
+
+  return shopProxy(request, locale, normalizedPath)
 }
 
 export const config = { matcher: ['/((?!_next|favicon.ico).*)'] }

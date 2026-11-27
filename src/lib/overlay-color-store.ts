@@ -50,7 +50,7 @@ export function useOverlayImageColors(imageSrc: string | null): void {
     }
 
     let cancelled = false
-    extractDominantColors(imageSrc).then((colors) => {
+    void extractDominantColors(imageSrc).then((colors) => {
       if (!cancelled) setOverlayColors(colors.length > 0 ? colors : null)
     })
     return () => {

@@ -27,6 +27,7 @@ import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SortHeader } from "@/components/admin/shared/sort-header"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
 import { Pagination } from "@/components/admin/shared/pagination"
+import { RowOverlayButton } from "@/components/admin/shared/row-overlay-button"
 import { useI18n } from "@/components/i18n/provider"
 import { interpolate } from "@/lib/i18n/shared"
 import type { Dictionary } from "@/lib/i18n/shared"
@@ -312,12 +313,12 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                 return (
                   <div
                     key={p.id}
-                    role="button"
-                    tabIndex={0}
-                    className="flex min-w-[960px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
-                    onClick={() => setDrawerIndex(filtered.indexOf(p))}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrawerIndex(filtered.indexOf(p)) } }}
+                    className="relative flex min-w-[960px] items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
                   >
+                    <RowOverlayButton
+                      onClick={() => setDrawerIndex(filtered.indexOf(p))}
+                      ariaLabel={p.titulo || p.nombre}
+                    />
                     {/* ID */}
                     <span className="w-8 shrink-0 text-[13px] tabular-nums text-muted-foreground">
                       #{p.id}
@@ -390,7 +391,7 @@ export function AdminPromocionesList({ promociones }: Readonly<{ promociones: Pr
                     </div>
 
                     {/* Actions */}
-                    <div className="flex w-24 shrink-0 items-center justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <div className="relative z-20 flex w-24 shrink-0 items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={() => router.push(`/shop/admin/promociones/${p.id}/edit`)}
