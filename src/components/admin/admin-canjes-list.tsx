@@ -30,6 +30,7 @@ import { StatCard } from "@/components/admin/shared/stat-card"
 import { FilterPills } from "@/components/admin/shared/filter-pills"
 import { SearchInput, CsvButton } from "@/components/admin/shared/list-toolbar"
 import { Pagination } from "@/components/admin/shared/pagination"
+import { RowOverlayButton } from "@/components/admin/shared/row-overlay-button"
 import { useI18n } from "@/components/i18n/provider"
 import { interpolate } from "@/lib/i18n/shared"
 import type { Dictionary } from "@/lib/i18n/shared"
@@ -204,6 +205,13 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
   const [returnTarget, setReturnTarget] = useState<Canje | null>(null)
   const [returnMotivo, setReturnMotivo] = useState("")
   const [returnError, setReturnError] = useState<string | null>(null)
+  const returnDialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    if (!returnTarget) return
+    const dialog = returnDialogRef.current
+    if (dialog && !dialog.open) dialog.showModal()
+  }, [returnTarget])
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
@@ -330,12 +338,10 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
     window.dispatchEvent(new Event(CANJES_STATUS_CHANGED))
 
     startTransition(async () => {
-      let hadError = false
-      for (const t of targets) {
-        const result = await updateCanjeEstado(String(t.id), estado)
-        if (result.error) hadError = true
-      }
-      if (hadError) router.refresh()
+      const results = await Promise.allSettled(
+        targets.map((target) => updateCanjeEstado(String(target.id), estado)),
+      )
+      if (results.some((result) => result.status === "rejected" || result.value.error)) router.refresh()
       setSelectedIds(new Set())
     })
   }
@@ -554,20 +560,20 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
               return (
                 <div
                   key={canje.id}
-                  role="button"
-                  tabIndex={0}
                   className={cn(
-                    "flex min-w-[1200px] cursor-pointer items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30",
+                    "relative flex min-w-[1200px] items-center gap-4 border-b border-border/40 px-4 py-3 transition-colors last:border-b-0 hover:bg-secondary/30",
                     isSelected && "bg-gold/5",
                   )}
-                  onClick={() => setDrawerIndex(filtered.indexOf(canje))}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrawerIndex(filtered.indexOf(canje)) } }}
                 >
+                  <RowOverlayButton
+                    onClick={() => setDrawerIndex(filtered.indexOf(canje))}
+                    ariaLabel={interpolate(t.drawer.ariaLabel, { id: canje.id })}
+                  />
                   {/* Checkbox */}
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); toggleSelect(canje.id) }}
-                    className="flex w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+                    onClick={() => toggleSelect(canje.id)}
+                    className="relative z-20 flex w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
                     aria-label={isSelected ? t.deselect : t.select}
                   >
                     {isSelected ? (
@@ -670,7 +676,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                   </div>
 
                   {/* Actions */}
-                  <div className="flex w-52 shrink-0 items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                  <div className="relative z-20 flex w-52 shrink-0 items-center justify-end gap-1.5">
                     {canje.estado === "pendiente" && (
                       <>
                         <ActionBtn
@@ -740,18 +746,22 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
 
       {/* ─── Return modal (also outside the shifting div) ─── */}
       {returnTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={closeReturnModal} onKeyDown={(e) => { if (e.key === "Escape") closeReturnModal() }}>
-          <div
-            className="flex w-full max-w-md flex-col gap-4 rounded-lg border border-border bg-background p-5"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
+        <dialog
+          ref={returnDialogRef}
+          aria-labelledby="return-canje-dialog-title"
+          onClose={closeReturnModal}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeReturnModal()
+          }}
+          className="fixed inset-0 z-50 m-0! flex! h-dvh! w-full! max-w-none! max-h-none! items-center justify-center border-0! bg-black/60 p-4!"
+        >
+          <div className="flex w-full max-w-md flex-col gap-4 rounded-lg border border-border bg-background p-5">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-[15px] font-medium text-foreground">{t.returnModal.title}</span>
+                <span id="return-canje-dialog-title" className="text-[15px] font-medium text-foreground">{t.returnModal.title}</span>
                 <span className="text-[12px] text-muted-foreground">#{returnTarget.id}</span>
               </div>
-              <button type="button" onClick={closeReturnModal} className="text-muted-foreground hover:text-foreground">
+              <button type="button" onClick={closeReturnModal} aria-label={t.returnModal.cancel} className="text-muted-foreground hover:text-foreground">
                 <X className="size-4" />
               </button>
             </div>
@@ -789,7 +799,6 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
                 placeholder={t.returnModal.reasonPlaceholder}
                 rows={3}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-gold focus:outline-none"
-                autoFocus
               />
             </label>
 
@@ -818,7 +827,7 @@ export function AdminCanjesList({ canjes: initialCanjes }: Readonly<{ canjes: Ca
               </button>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
     </>
   )
@@ -957,9 +966,6 @@ function DetailDrawer({
           the table behind it. Only shown on xl+ when there's a product image. */}
       {productImg && (
         <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={canjeProduct(canje)}
           className="fixed inset-y-0 left-0 right-0 z-40 hidden flex-row overflow-hidden pointer-events-none xl:flex xl:left-[max(252px,calc(50vw-588px))]"
         >
           <div

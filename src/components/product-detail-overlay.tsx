@@ -615,9 +615,6 @@ function ProductLightbox({ product }: Readonly<{ product: Producto }>) {
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={product.nombre}
       className="fixed inset-y-0 left-0 right-0 z-40 hidden flex-row overflow-hidden pointer-events-none xl:flex xl:left-[max(252px,calc(50vw-588px))]"
     >
       <div

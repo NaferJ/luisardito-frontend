@@ -69,7 +69,10 @@ export function getRequestHostContext(headers: Headers): RequestHostContext {
   const hostname = normalizeHostname(host)
   const isLocal = isLocalHostname(hostname)
   const forwardedProto = firstHeaderValue(headers.get('x-forwarded-proto'))
-  const protocol = isLocal ? (forwardedProto === 'https' ? 'https' : 'http') : 'https'
+  let protocol: RequestHostContext['protocol'] = 'https'
+  if (isLocal && forwardedProto !== 'https') {
+    protocol = 'http'
+  }
 
   return {
     host,

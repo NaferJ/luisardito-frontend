@@ -116,7 +116,7 @@ export function ImageUpload({
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) startUpload(file)
+    if (file) void startUpload(file)
   }
 
   const onDragOver = (e: React.DragEvent) => {
@@ -137,7 +137,7 @@ export function ImageUpload({
     setIsDragging(false)
     if (isUploading) return
     const file = e.dataTransfer.files?.[0]
-    if (file) startUpload(file)
+    if (file) void startUpload(file)
   }
 
   const handleRemove = () => {
@@ -182,21 +182,15 @@ export function ImageUpload({
           </div>
         </div>
       ) : (
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => !isUploading && fileInputRef.current?.click()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault()
-              fileInputRef.current?.click()
-            }
-          }}
+        <button
+          type="button"
+          disabled={isUploading}
+          onClick={() => fileInputRef.current?.click()}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           className={cn(
-            "flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-sm border-2 border-dashed p-5 text-center transition-colors",
+            "flex w-full cursor-pointer appearance-none flex-col items-center justify-center gap-1.5 rounded-sm border-2 border-dashed p-5 text-center transition-colors",
             isDragging ? "border-gold bg-gold/5" : "border-border bg-secondary hover:border-muted-foreground",
             isUploading && "cursor-not-allowed opacity-60",
           )}
@@ -207,7 +201,7 @@ export function ImageUpload({
           <span className="text-[11px] text-muted-foreground">
             {interpolate(t.acceptedTypes, { n: maxSizeMB })}
           </span>
-        </div>
+        </button>
       )}
 
       <input

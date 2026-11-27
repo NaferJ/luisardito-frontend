@@ -66,15 +66,17 @@ export function SortHeader<T extends string>({
   )
 }
 
+interface SortIconProps<T extends string> {
+  readonly column: T
+  readonly sortKey: T
+  readonly sortDir: "asc" | "desc"
+}
+
 function SortIcon<T extends string>({
   column,
   sortKey,
   sortDir,
-}: {
-  column: T
-  sortKey: T
-  sortDir: "asc" | "desc"
-}) {
+}: SortIconProps<T>) {
   if (sortKey !== column) return <ArrowUpDown className="size-3 opacity-40" />
   return sortDir === "asc"
     ? <ArrowUp className="size-3 text-gold-bright" />

@@ -80,13 +80,21 @@ export async function getProducts(): Promise<Producto[]> {
   try {
     const products = await apiFetch<Producto[]>('/api/productos')
     const signal = AbortSignal.timeout(2500)
-    const enrichedProducts: Producto[] = []
+    const batchStarts = Array.from(
+      { length: Math.ceil(products.length / 6) },
+      (_, index) => index * 6,
+    )
 
-    for (let i = 0; i < products.length; i += 6) {
-      enrichedProducts.push(...await Promise.all(products.slice(i, i + 6).map((product) => withImageDimensions(product, signal))))
-    }
-
-    return enrichedProducts
+    return await batchStarts.reduce<Promise<Producto[]>>(
+      async (enrichedPromise, start) => {
+        const enriched = await enrichedPromise
+        const batch = await Promise.all(
+          products.slice(start, start + 6).map((product) => withImageDimensions(product, signal)),
+        )
+        return enriched.concat(batch)
+      },
+      Promise.resolve([]),
+    )
   } catch {
     return []
   }

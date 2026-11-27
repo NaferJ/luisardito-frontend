@@ -109,9 +109,6 @@ export function DesignDetailOverlay({
       </OverlayDrawer>
 
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={card.title}
         className="fixed inset-y-0 left-0 right-0 z-40 hidden flex-row overflow-hidden pointer-events-none xl:flex xl:left-[max(252px,calc(50vw-588px))]"
       >
         <div
